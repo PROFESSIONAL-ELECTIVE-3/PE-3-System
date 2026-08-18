@@ -10,7 +10,7 @@ export default function RiskDistributionChart({ riskDistribution }) {
   ];
 
   return (
-    <div className="panel p-5 flex flex-col justify-between">
+    <div className="panel panel-interactive p-5 flex flex-col justify-between">
       <div className="section-head mb-4">
         <h3 className="text-sm font-bold text-slate-800 mb-1">Attrition Risk Classification</h3>
         <p className="text-xs text-slate-500">Model distribution across the current student cohort</p>
@@ -18,12 +18,12 @@ export default function RiskDistributionChart({ riskDistribution }) {
       <div className="h-64 flex items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={pieData} cx="50%" cy="50%" innerRadius={62} outerRadius={86} paddingAngle={3} dataKey="value">
+            <Pie data={pieData} cx="50%" cy="50%" innerRadius={62} outerRadius={86} paddingAngle={3} dataKey="value" animationDuration={600} animationEasing="ease-out">
               {pieData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} stroke="#fff" strokeWidth={2} />
               ))}
             </Pie>
-            <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid var(--line)', fontSize: 12 }} />
+            <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid var(--line)', fontSize: 12, boxShadow: 'var(--shadow-md)' }} />
             <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: 12 }} />
           </PieChart>
         </ResponsiveContainer>

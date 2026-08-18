@@ -24,7 +24,12 @@ export default function StudentTable({ students, onSelectStudent }) {
             const risk = s.latest_risk?.risk_level || 'Low';
             const rt = riskTokens(risk);
             return (
-              <tr key={s.id} className="risk-ribbon" style={{ '--ribbon-color': rt.ribbon }}>
+              <tr
+                key={s.id}
+                className="risk-ribbon cursor-pointer"
+                style={{ '--ribbon-color': rt.ribbon }}
+                onClick={() => onSelectStudent(s)}
+              >
                 <td className="p-3.5 pl-5 font-mono-data font-medium text-slate-800">{s.student_id}</td>
                 <td className="p-3.5">
                   <div className="font-semibold text-slate-900">{s.first_name} {s.last_name}</div>
@@ -34,23 +39,23 @@ export default function StudentTable({ students, onSelectStudent }) {
                   <div>{s.major}</div>
                   <div className="text-[10px] text-slate-400">{s.department}</div>
                 </td>
-                <td className="p-3.5 font-semibold text-slate-800">{s.current_gpa.toFixed(2)}</td>
-                <td className="p-3.5 text-slate-700">{s.attendance_rate}%</td>
+                <td className="p-3.5 font-semibold text-slate-800 tabular-nums">{s.current_gpa.toFixed(2)}</td>
+                <td className="p-3.5 text-slate-700 tabular-nums">{s.attendance_rate}%</td>
                 <td className="p-3.5">
                   <RiskBadge level={risk} scorePct={((s.latest_risk?.risk_score || 0) * 100).toFixed(0)} />
                 </td>
-                <td className="p-3.5 font-semibold" style={{ color: 'var(--petrol-dark)' }}>
+                <td className="p-3.5 font-semibold tabular-nums" style={{ color: 'var(--petrol-dark)' }}>
                   {s.latest_forecast?.predicted_gpa.toFixed(2) || 'N/A'}
                   <span className="text-[10px] font-normal text-slate-500 ml-1">({s.latest_forecast?.grade_trajectory || 'Stable'})</span>
                 </td>
                 <td className="p-3.5 text-right">
                   <button
-                    onClick={() => onSelectStudent(s)}
-                    className="px-3 py-1.5 font-medium rounded-lg transition-colors inline-flex items-center space-x-1"
+                    onClick={(e) => { e.stopPropagation(); onSelectStudent(s); }}
+                    className="px-3 py-1.5 font-medium rounded-lg inline-flex items-center space-x-1 transition-all duration-150 hover:shadow-sm"
                     style={{ background: 'var(--petrol-light)', color: 'var(--petrol-dark)' }}
                   >
                     <span>Profile</span>
-                    <ChevronRight size={14} />
+                    <ChevronRight size={14} className="transition-transform duration-150 group-hover:translate-x-0.5" />
                   </button>
                 </td>
               </tr>

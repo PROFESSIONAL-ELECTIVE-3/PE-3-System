@@ -10,10 +10,10 @@ export default function ResultTile({ label, value, sub, pill, delta, deltaFormat
   const rt = pill ? riskTokens(pill) : null;
 
   return (
-    <div className="p-5 rounded-2xl border space-y-3" style={{ background: 'var(--sand)', borderColor: 'var(--line)' }}>
+    <div className="p-5 rounded-2xl border space-y-3 transition-all duration-300 fade-in" style={{ background: 'var(--sand)', borderColor: 'var(--line)' }}>
       <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{label}</div>
       <div className="flex items-baseline space-x-3">
-        <span className="font-display text-3xl font-semibold text-slate-900">{value}</span>
+        <span className="font-display text-3xl font-semibold text-slate-900 tabular-nums">{value}</span>
         {pill && (
           <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ color: rt.text, background: rt.bg }}>
             {pill} Risk
@@ -23,7 +23,7 @@ export default function ResultTile({ label, value, sub, pill, delta, deltaFormat
       </div>
       <div className="flex items-center gap-1.5 text-xs" style={{ color: deltaColor }}>
         <DeltaIcon size={13} />
-        <span className="font-semibold">{delta > 0 ? '+' : ''}{deltaFormat(delta)}</span>
+        <span className="font-semibold tabular-nums">{delta > 0 ? '+' : ''}{deltaFormat(delta)}</span>
         <span className="text-slate-400 font-normal">· {baseline}</span>
       </div>
     </div>

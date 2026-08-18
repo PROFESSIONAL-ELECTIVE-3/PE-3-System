@@ -18,11 +18,25 @@ export default function DashboardView() {
       .catch(() => { setFailed(true); setLoading(false); });
   }, []);
 
-  if (loading) return <LoadingState label="Loading analytics dashboard" />;
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="dashboard-hero rounded-2xl px-6 py-10 sm:px-9 sm:py-12" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="panel p-5 h-[92px] flex items-center">
+              <div className="skeleton w-full h-10 rounded-lg" />
+            </div>
+          ))}
+        </div>
+        <div className="panel"><LoadingState label="Loading analytics dashboard" rows={4} /></div>
+      </div>
+    );
+  }
   if (failed || !data) return <ErrorState message="Couldn't load analytics. Confirm the backend service is running, then reload." />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 fade-in">
       <section className="dashboard-hero rounded-2xl px-6 py-8 sm:px-9 sm:py-10 text-white">
         <div className="relative z-10 max-w-2xl">
           <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] mb-3" style={{ color: '#7fd6da' }}>
@@ -41,7 +55,7 @@ export default function DashboardView() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger">
         <StatCard title="Total Enrolled Students" value={data.total_students} icon={Users} accent="var(--petrol)" />
         <StatCard title="At-Risk Students Flagged" value={data.at_risk_count} subtitle={`${data.high_risk_count} classified High Risk`} icon={AlertTriangle} accent="var(--amber)" />
         <StatCard title="Institutional Avg. GPA" value={data.average_gpa.toFixed(2)} subtitle="Scale 0.0–4.0" icon={TrendingUp} accent="var(--emerald)" />

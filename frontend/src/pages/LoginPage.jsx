@@ -31,13 +31,13 @@ export default function LoginPage({ onLoginSuccess, onBackToHome }) {
       {onBackToHome && (
         <button
           onClick={onBackToHome}
-          className="mb-6 self-start sm:self-center flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors"
+          className="mb-6 self-start sm:self-center flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors duration-150"
         >
           <ArrowLeft size={14} /> Back to homepage
         </button>
       )}
 
-      <div className="max-w-md w-full">
+      <div className="max-w-md w-full fade-in-up">
         <div className="panel shadow-xl shadow-slate-950/10 p-7 sm:p-9">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-2.5 rounded-xl text-white" style={{ background: 'var(--ink)' }}>
@@ -50,7 +50,7 @@ export default function LoginPage({ onLoginSuccess, onBackToHome }) {
           </div>
 
           {loginError && (
-            <div className="mb-5 px-3.5 py-3 rounded-lg text-sm" style={{ background: 'var(--rose-bg)', border: '1px solid #f0c7cb', color: 'var(--rose)' }}>
+            <div className="mb-5 px-3.5 py-3 rounded-lg text-sm fade-in" style={{ background: 'var(--rose-bg)', border: '1px solid #f0c7cb', color: 'var(--rose)' }}>
               {loginError}
             </div>
           )}
@@ -62,9 +62,7 @@ export default function LoginPage({ onLoginSuccess, onBackToHome }) {
                 type="text"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 text-sm transition focus:outline-none"
-                onFocus={e => { e.target.style.borderColor = 'var(--petrol)'; e.target.style.boxShadow = '0 0 0 3px var(--petrol-light)'; }}
-                onBlur={e => { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; }}
+                className="input-clean w-full px-3.5 py-2.5 bg-white rounded-lg text-slate-900 text-sm"
                 required
               />
             </div>
@@ -74,14 +72,17 @@ export default function LoginPage({ onLoginSuccess, onBackToHome }) {
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 text-sm transition focus:outline-none"
-                onFocus={e => { e.target.style.borderColor = 'var(--petrol)'; e.target.style.boxShadow = '0 0 0 3px var(--petrol-light)'; }}
-                onBlur={e => { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; }}
+                className="input-clean w-full px-3.5 py-2.5 bg-white rounded-lg text-slate-900 text-sm"
                 required
               />
             </div>
-            <button type="submit" disabled={submitting} className="btn-primary w-full py-3 font-semibold rounded-lg text-sm shadow-sm disabled:opacity-60">
-              {submitting ? 'Signing in…' : 'Sign in to portal'}
+            <button type="submit" disabled={submitting} className="btn-primary w-full py-3 font-semibold rounded-lg text-sm disabled:opacity-60">
+              {submitting ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-white spinner-smooth" />
+                  Signing in…
+                </span>
+              ) : 'Sign in to portal'}
             </button>
           </form>
         </div>

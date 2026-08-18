@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, X } from 'lucide-react';
 import { riskTokens } from '../../lib/theme';
 
 export default function StudentModal({ student, onClose }) {
@@ -7,16 +7,30 @@ export default function StudentModal({ student, onClose }) {
   const forecast = student.latest_forecast;
   const rt = riskTokens(risk?.risk_level || 'Low');
 
+  React.useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+    <div
+      className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden fade-in-up"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-5 sm:p-6 text-white flex items-center justify-between" style={{ background: 'var(--ink)' }}>
           <div>
             <div className="font-mono-data text-xs" style={{ color: '#7fd6da' }}>Student ID: {student.student_id}</div>
             <h3 className="font-display text-lg font-semibold mt-0.5">{student.first_name} {student.last_name}</h3>
             <div className="text-xs text-slate-300 mt-0.5">{student.major} · {student.department} · Cohort {student.cohort}</div>
           </div>
-          <button onClick={onClose} className="p-2 bg-white/10 hover:bg-white/20 text-slate-200 rounded-lg text-xs shrink-0">Close</button>
+          <button onClick={onClose} className="p-2 bg-white/10 hover:bg-white/20 active:bg-white/25 text-slate-200 rounded-lg text-xs shrink-0 transition-colors duration-150" aria-label="Close">
+            <X size={16} />
+          </button>
         </div>
 
         <div className="p-6 flex-1 overflow-y-auto space-y-6">
@@ -40,7 +54,7 @@ export default function StudentModal({ student, onClose }) {
               <div className="space-y-2 mt-3">
                 <div className="text-xs font-semibold" style={{ color: rt.text }}>Top contributing factors</div>
                 {risk?.top_risk_factors?.map((f, i) => (
-                  <div key={i} className="p-2.5 bg-white rounded-lg border text-xs" style={{ borderColor: rt.border }}>
+                  <div key={i} className="p-2.5 bg-white rounded-lg border text-xs transition-shadow duration-150 hover:shadow-sm" style={{ borderColor: rt.border }}>
                     <span className="font-bold" style={{ color: rt.text }}>{f.factor}:</span> {f.description}
                   </div>
                 ))}
@@ -55,15 +69,15 @@ export default function StudentModal({ student, onClose }) {
                 </span>
               </div>
               <div className="flex items-baseline space-x-2">
-                <span className="font-display text-2xl font-semibold" style={{ color: 'var(--petrol-dark)' }}>{forecast?.predicted_gpa?.toFixed(2) || 'N/A'}</span>
+                <span className="font-display text-2xl font-semibold tabular-nums" style={{ color: 'var(--petrol-dark)' }}>{forecast?.predicted_gpa?.toFixed(2) || 'N/A'}</span>
                 <span className="text-xs font-semibold" style={{ color: 'var(--petrol)' }}>Trajectory: {forecast?.grade_trajectory || 'Stable'}</span>
               </div>
-              <p className="text-xs text-slate-600">95% confidence interval: [{forecast?.lower_bound_gpa?.toFixed(2)} – {forecast?.upper_bound_gpa?.toFixed(2)}]</p>
+              <p className="text-xs text-slate-600 tabular-nums">95% confidence interval: [{forecast?.lower_bound_gpa?.toFixed(2)} – {forecast?.upper_bound_gpa?.toFixed(2)}]</p>
 
               <div className="space-y-2 mt-3">
                 <div className="text-xs font-semibold" style={{ color: 'var(--petrol-dark)' }}>Recommended advisor interventions</div>
                 {risk?.recommended_actions?.map((act, i) => (
-                  <div key={i} className="p-2 bg-white rounded-lg border text-xs text-slate-700 flex items-center space-x-2" style={{ borderColor: '#bfe2e4' }}>
+                  <div key={i} className="p-2 bg-white rounded-lg border text-xs text-slate-700 flex items-center space-x-2 transition-shadow duration-150 hover:shadow-sm" style={{ borderColor: '#bfe2e4' }}>
                     <CheckCircle2 size={14} style={{ color: 'var(--petrol)' }} className="shrink-0" />
                     <span>{act}</span>
                   </div>
@@ -79,9 +93,9 @@ export default function StudentModal({ student, onClose }) {
 
 function MetricTile({ label, value, valueColor = '#0f172a' }) {
   return (
-    <div className="p-4 rounded-xl border" style={{ background: 'var(--sand)', borderColor: 'var(--line)' }}>
+    <div className="p-4 rounded-xl border transition-all duration-150 hover:-translate-y-0.5 hover:shadow-sm" style={{ background: 'var(--sand)', borderColor: 'var(--line)' }}>
       <div className="text-xs text-slate-500">{label}</div>
-      <div className="font-display text-xl font-semibold mt-1" style={{ color: valueColor }}>{value}</div>
+      <div className="font-display text-xl font-semibold mt-1 tabular-nums" style={{ color: valueColor }}>{value}</div>
     </div>
   );
 }

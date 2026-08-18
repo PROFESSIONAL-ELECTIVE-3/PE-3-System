@@ -57,7 +57,7 @@ export default function HomePage({ onNavigateLogin }) {
           </div>
           <button
             onClick={onNavigateLogin}
-            className="btn-primary px-4 py-2 rounded-lg text-xs font-semibold shadow-sm"
+            className="btn-primary px-4 py-2 rounded-lg text-xs font-semibold"
           >
             Sign in
           </button>
@@ -75,7 +75,7 @@ export default function HomePage({ onNavigateLogin }) {
           }}
         />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-14 sm:pt-24 sm:pb-20">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl fade-in-up">
             <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] mb-5 px-3 py-1.5 rounded-full" style={{ color: 'var(--petrol-dark)', background: 'var(--petrol-light)' }}>
               <Sparkles size={13} /> Student success intelligence
             </div>
@@ -90,18 +90,18 @@ export default function HomePage({ onNavigateLogin }) {
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <button
                 onClick={onNavigateLogin}
-                className="btn-primary px-5 py-3 rounded-lg text-sm font-semibold shadow-sm inline-flex items-center gap-1.5"
+                className="btn-primary px-5 py-3 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5 group"
               >
-                Sign in to your workspace <ArrowRight size={15} />
+                Sign in to your workspace <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
               </button>
-              <a href="#features" className="px-5 py-3 rounded-lg text-sm font-semibold text-slate-700 border hover:bg-white transition-colors" style={{ borderColor: 'var(--line-strong)' }}>
+              <a href="#features" className="btn-secondary px-5 py-3 rounded-lg text-sm font-semibold">
                 See what it does
               </a>
             </div>
           </div>
 
           {/* Signature visual: dashboard preview card */}
-          <div className="mt-14 sm:mt-16 panel p-4 sm:p-6 max-w-4xl shadow-xl shadow-slate-950/10">
+          <div className="mt-14 sm:mt-16 panel panel-interactive p-4 sm:p-6 max-w-4xl shadow-xl shadow-slate-950/10 fade-in-up" style={{ animationDelay: '120ms' }}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--rose)' }} />
@@ -116,9 +116,9 @@ export default function HomePage({ onNavigateLogin }) {
                 { label: 'Avg. institutional GPA', value: '3.02', accent: 'var(--emerald)' },
                 { label: 'Open alerts', value: '47', accent: 'var(--rose)' },
               ].map((s, i) => (
-                <div key={i} className="p-4 rounded-xl border" style={{ background: 'var(--sand)', borderColor: 'var(--line)' }}>
+                <div key={i} className="p-4 rounded-xl border transition-transform duration-200 hover:-translate-y-0.5" style={{ background: 'var(--sand)', borderColor: 'var(--line)' }}>
                   <div className="text-[10px] text-slate-500">{s.label}</div>
-                  <div className="font-display text-2xl font-semibold mt-1" style={{ color: s.accent }}>{s.value}</div>
+                  <div className="font-display text-2xl font-semibold mt-1 tabular-nums" style={{ color: s.accent }}>{s.value}</div>
                 </div>
               ))}
             </div>
@@ -132,9 +132,9 @@ export default function HomePage({ onNavigateLogin }) {
           <span className="eyebrow" style={{ color: 'var(--petrol-dark)' }}>How it works</span>
           <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-slate-950 mt-2">From raw records to advisor action</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 stagger">
           {STEPS.map((step, i) => (
-            <div key={i} className="panel p-6">
+            <div key={i} className="panel panel-interactive p-6">
               <span className="font-display text-3xl font-semibold" style={{ color: 'var(--petrol-light)', WebkitTextStroke: '1.5px var(--petrol)' }}>
                 {String(i + 1).padStart(2, '0')}
               </span>
@@ -151,9 +151,9 @@ export default function HomePage({ onNavigateLogin }) {
           <span className="eyebrow" style={{ color: 'var(--petrol-dark)' }}>What's inside</span>
           <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-slate-950 mt-2">Everything an advising team needs in one workspace</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
           {FEATURES.map((f, i) => (
-            <div key={i} className="panel p-5">
+            <div key={i} className="panel panel-interactive p-5">
               <div className="p-2.5 rounded-lg inline-flex mb-4" style={{ background: 'var(--petrol-light)' }}>
                 <f.icon size={18} style={{ color: 'var(--petrol-dark)' }} />
               </div>
@@ -179,7 +179,7 @@ export default function HomePage({ onNavigateLogin }) {
           </div>
           <button
             onClick={onNavigateLogin}
-            className="relative z-10 shrink-0 px-6 py-3.5 rounded-lg text-sm font-semibold shadow-sm inline-flex items-center gap-2 transition-colors"
+            className="relative z-10 shrink-0 px-6 py-3.5 rounded-lg text-sm font-semibold inline-flex items-center gap-2 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
             style={{ background: 'white', color: 'var(--ink)' }}
           >
             Sign in to your workspace <ArrowRight size={16} />

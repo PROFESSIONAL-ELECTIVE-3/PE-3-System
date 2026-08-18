@@ -23,7 +23,7 @@ export default function StudentsView() {
   React.useEffect(() => { loadStudents(); }, [loadStudents]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 fade-in">
       <div className="panel flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4">
         <div>
           <h2 className="text-base font-bold text-slate-900">Student Academic Roster</h2>
@@ -31,22 +31,20 @@ export default function StudentsView() {
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
+            <Search className="absolute left-3 top-2.5 text-slate-400 pointer-events-none" size={16} />
             <input
               type="text"
               placeholder="Search by name, ID, major…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none transition"
+              className="input-clean w-full pl-9 pr-3 py-2 rounded-lg text-xs"
               style={{ background: 'var(--sand)' }}
-              onFocus={e => { e.target.style.borderColor = 'var(--petrol)'; }}
-              onBlur={e => { e.target.style.borderColor = ''; }}
             />
           </div>
           <select
             value={riskFilter}
             onChange={e => setRiskFilter(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none"
+            className="input-clean px-3 py-2 rounded-lg text-xs"
             style={{ background: 'var(--sand)' }}
           >
             <option value="">All risk levels</option>
@@ -59,7 +57,7 @@ export default function StudentsView() {
 
       <div className="panel overflow-hidden">
         {loading ? (
-          <LoadingState label="Loading student records" />
+          <LoadingState label="Loading student records" rows={6} />
         ) : students.length === 0 ? (
           <EmptyState
             icon={Users}

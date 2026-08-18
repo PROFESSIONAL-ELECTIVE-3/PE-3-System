@@ -15,9 +15,10 @@ function NavTab({ id, label, icon: Icon, activeTab, onSelect }) {
   return (
     <button
       onClick={() => onSelect(id)}
+      aria-current={isActive ? 'page' : undefined}
       className={`nav-tab ${isActive ? 'active' : ''} flex items-center space-x-2 py-4 px-3 font-medium text-xs sm:text-sm whitespace-nowrap`}
     >
-      <Icon size={17} />
+      <Icon size={17} className="transition-transform duration-200" style={isActive ? { color: 'var(--petrol)' } : undefined} />
       <span>{label}</span>
     </button>
   );

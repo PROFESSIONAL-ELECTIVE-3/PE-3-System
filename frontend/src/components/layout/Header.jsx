@@ -6,7 +6,7 @@ export default function Header({ user, onLogout }) {
     <header className="top-header text-white sticky top-0 z-50 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 rounded-xl text-white" style={{ background: 'var(--petrol)' }}>
+          <div className="p-2.5 rounded-xl text-white transition-transform duration-200 hover:-translate-y-0.5" style={{ background: 'var(--petrol)', boxShadow: '0 6px 16px -6px rgba(14,110,118,0.7)' }}>
             <GraduationCap size={22} />
           </div>
           <div>
@@ -27,7 +27,7 @@ export default function Header({ user, onLogout }) {
           </div>
           <button
             onClick={onLogout}
-            className="p-2.5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white rounded-xl transition-colors text-xs flex items-center space-x-1.5"
+            className="p-2.5 bg-white/5 hover:bg-white/10 active:bg-white/15 text-slate-300 hover:text-white rounded-xl transition-all duration-150 text-xs flex items-center space-x-1.5"
             title="Sign out"
           >
             <LogOut size={16} />

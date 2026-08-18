@@ -1,14 +1,15 @@
 import React from 'react';
 import { riskTokens } from '../../lib/theme';
 
-/** Pill badge for a risk level (Low / Medium / High), with optional score text. */
+/** Pill badge for a risk level (Low / Medium / High), with optional score text and a status dot. */
 export function RiskBadge({ level, scorePct }) {
   const rt = riskTokens(level);
   return (
     <span
-      className="px-2.5 py-1 rounded-full text-[10px] font-bold border"
+      className="px-2.5 py-1 rounded-full text-[10px] font-bold border inline-flex items-center gap-1.5 transition-transform duration-150 hover:scale-[1.03]"
       style={{ color: rt.text, background: rt.bg, borderColor: rt.border }}
     >
+      <span className="dot" style={{ background: rt.text }} />
       {level} Risk{scorePct != null ? ` · ${scorePct}%` : ''}
     </span>
   );

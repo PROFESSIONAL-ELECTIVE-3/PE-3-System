@@ -54,7 +54,7 @@ export default function SimulatorView() {
   React.useEffect(() => { runSimulation(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 fade-in">
       <div className="panel p-5">
         <h2 className="text-base font-bold text-slate-900">What-If Academic Intervention Simulator</h2>
         <p className="text-xs text-slate-500 mt-0.5">Adjust behavioral parameters to forecast the immediate impact on attrition risk and GPA trajectory.</p>
@@ -73,9 +73,14 @@ export default function SimulatorView() {
           <button
             onClick={runSimulation}
             disabled={loading}
-            className="btn-primary w-full py-2.5 font-semibold rounded-xl text-xs shadow-sm disabled:opacity-60"
+            className="btn-primary w-full py-2.5 font-semibold rounded-xl text-xs disabled:opacity-60"
           >
-            {loading ? 'Running…' : 'Run ML Simulation'}
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full border-2 border-white/40 border-t-white spinner-smooth" />
+                Running…
+              </span>
+            ) : 'Run ML Simulation'}
           </button>
         </div>
 
@@ -110,7 +115,7 @@ export default function SimulatorView() {
           )}
 
           {simResult && (
-            <div className="p-4 rounded-xl border text-xs space-y-1" style={{ background: 'var(--petrol-light)', borderColor: '#bfe2e4', color: 'var(--petrol-dark)' }}>
+            <div className="p-4 rounded-xl border text-xs space-y-1 fade-in" style={{ background: 'var(--petrol-light)', borderColor: '#bfe2e4', color: 'var(--petrol-dark)' }}>
               <span className="font-bold">Intervention impact analysis</span>
               <p className="text-slate-700">{simResult.impact_summary}</p>
             </div>

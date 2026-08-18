@@ -6,6 +6,7 @@ import { fetchAlerts, resolveAlert as resolveAlertApi } from '../../lib/api';
 export default function AlertsView() {
   const [alerts, setAlerts] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  const [resolvingId, setResolvingId] = React.useState(null);
 
   const loadAlerts = React.useCallback(() => {
     fetchAlerts().then(setAlerts).catch(() => {}).finally(() => setLoading(false));
@@ -14,12 +15,17 @@ export default function AlertsView() {
   React.useEffect(() => { loadAlerts(); }, [loadAlerts]);
 
   const handleResolve = async (id) => {
-    await resolveAlertApi(id, 'Advisor contacted student and scheduled intervention.');
-    loadAlerts();
+    setResolvingId(id);
+    try {
+      await resolveAlertApi(id, 'Advisor contacted student and scheduled intervention.');
+      loadAlerts();
+    } finally {
+      setResolvingId(null);
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 fade-in">
       <div className="panel p-5">
         <h2 className="text-base font-bold text-slate-900">Early Warning Alerts & Advising Feed</h2>
         <p className="text-xs text-slate-500 mt-0.5">Real-time notifications flagging critical student attrition risks for advisor follow-up.</p>
@@ -27,7 +33,7 @@ export default function AlertsView() {
 
       <div className="panel overflow-hidden">
         {loading ? (
-          <LoadingState label="Loading alert feed" />
+          <LoadingState label="Loading alert feed" rows={4} />
         ) : alerts.length === 0 ? (
           <EmptyState icon={Bell} title="No active warnings" description="Alerts will appear here as the risk model flags students who need outreach." />
         ) : (
@@ -35,7 +41,7 @@ export default function AlertsView() {
             {alerts.map(a => {
               const critical = a.severity === 'CRITICAL';
               return (
-                <div key={a.id} className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors hover:bg-slate-50/80">
+                <div key={a.id} className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors duration-150 hover:bg-slate-50/80">
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
                       <span
@@ -59,8 +65,12 @@ export default function AlertsView() {
                         <span>Resolved</span>
                       </span>
                     ) : (
-                      <button onClick={() => handleResolve(a.id)} className="btn-primary px-3.5 py-2 text-xs font-medium rounded-lg shadow-sm">
-                        Resolve & schedule
+                      <button
+                        onClick={() => handleResolve(a.id)}
+                        disabled={resolvingId === a.id}
+                        className="btn-primary px-3.5 py-2 text-xs font-medium rounded-lg disabled:opacity-60"
+                      >
+                        {resolvingId === a.id ? 'Resolving…' : 'Resolve & schedule'}
                       </button>
                     )}
                   </div>

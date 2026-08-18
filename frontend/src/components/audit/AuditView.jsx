@@ -12,7 +12,7 @@ export default function AuditView() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 fade-in">
       <div className="panel p-5 flex items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-slate-900">FERPA Compliance & Access Audit Trail</h2>
@@ -26,7 +26,7 @@ export default function AuditView() {
 
       <div className="panel overflow-hidden">
         {loading ? (
-          <LoadingState label="Loading audit logs" />
+          <LoadingState label="Loading audit logs" rows={6} />
         ) : logs.length === 0 ? (
           <EmptyState icon={FileText} title="No audit activity yet" description="Access and export events will be recorded here as they happen." />
         ) : (

@@ -7,6 +7,7 @@ import SimulatorView from '../components/simulator/SimulatorView';
 import ETLView from '../components/etl/ETLView';
 import AlertsView from '../components/alerts/AlertsView';
 import AuditView from '../components/audit/AuditView';
+import '../styles/index.css';
 
 const VIEWS = {
   dashboard: DashboardView,

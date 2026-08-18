@@ -3,6 +3,7 @@ import {
   GraduationCap, Sparkles, TrendingUp, Sliders, Bell, ShieldAlert, UploadCloud,
   LayoutDashboard, ArrowRight, CheckCircle2,
 } from 'lucide-react';
+import '../styles/HomePage.css'; // Make sure to import the new CSS file
 
 const FEATURES = [
   {
@@ -45,19 +46,21 @@ const STEPS = [
 
 export default function HomePage({ onNavigateLogin }) {
   return (
-    <div className="min-h-screen" style={{ background: 'var(--sand)' }}>
+    <div className="homepage-wrapper min-h-screen">
       {/* Top nav */}
-      <header className="sticky top-0 z-40 border-b backdrop-blur bg-white/90" style={{ borderColor: 'var(--line)' }}>
+      <header className="homepage-header sticky top-0 z-40 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[64px] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg text-white" style={{ background: 'var(--ink)' }}>
+            <div className="homepage-logo-icon">
               <GraduationCap size={20} />
             </div>
-            <span className="font-display font-semibold text-base tracking-tight text-slate-950">EduRisk AI</span>
+            <span className="font-display font-semibold text-base tracking-tight text-slate-950">
+              EduRisk AI
+            </span>
           </div>
           <button
             onClick={onNavigateLogin}
-            className="btn-primary px-4 py-2 rounded-lg text-xs font-semibold"
+            className="btn-primary px-4 py-2 rounded-lg text-xs font-semibold transition-transform hover:-translate-y-0.5"
           >
             Sign in
           </button>
@@ -66,17 +69,10 @@ export default function HomePage({ onNavigateLogin }) {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(16,21,31,0.07) 1px, transparent 0)',
-            backgroundSize: '22px 22px',
-            maskImage: 'linear-gradient(to bottom, black, transparent 85%)',
-          }}
-        />
+        <div className="homepage-hero-bg absolute inset-0" />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-14 sm:pt-24 sm:pb-20">
           <div className="max-w-2xl fade-in-up">
-            <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] mb-5 px-3 py-1.5 rounded-full" style={{ color: 'var(--petrol-dark)', background: 'var(--petrol-light)' }}>
+            <div className="homepage-badge inline-flex items-center gap-2 mb-5">
               <Sparkles size={13} /> Student success intelligence
             </div>
             <h1 className="font-display text-4xl sm:text-5xl leading-[1.08] font-semibold tracking-tight text-slate-950">
@@ -92,7 +88,8 @@ export default function HomePage({ onNavigateLogin }) {
                 onClick={onNavigateLogin}
                 className="btn-primary px-5 py-3 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5 group"
               >
-                Sign in to your workspace <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+                Sign in to your workspace{' '}
+                <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
               </button>
               <a href="#features" className="btn-secondary px-5 py-3 rounded-lg text-sm font-semibold">
                 See what it does
@@ -101,24 +98,28 @@ export default function HomePage({ onNavigateLogin }) {
           </div>
 
           {/* Signature visual: dashboard preview card */}
-          <div className="mt-14 sm:mt-16 panel panel-interactive p-4 sm:p-6 max-w-4xl shadow-xl shadow-slate-950/10 fade-in-up" style={{ animationDelay: '120ms' }}>
+          <div className="homepage-preview-panel mt-14 sm:mt-16 p-4 sm:p-6 max-w-4xl shadow-xl fade-in-up">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--rose)' }} />
-                <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--amber)' }} />
-                <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--emerald)' }} />
+                <span className="dot dot-rose" />
+                <span className="dot dot-amber" />
+                <span className="dot dot-emerald" />
               </div>
-              <span className="eyebrow text-slate-400">Executive Dashboard preview</span>
+              <span className="eyebrow text-slate-400 uppercase text-xs font-semibold tracking-wider">
+                Executive Dashboard preview
+              </span>
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: 'At-risk flagged', value: '312', accent: 'var(--amber)' },
-                { label: 'Avg. institutional GPA', value: '3.02', accent: 'var(--emerald)' },
-                { label: 'Open alerts', value: '47', accent: 'var(--rose)' },
+                { label: 'At-risk flagged', value: '312', dotClass: 'text-amber-500' },
+                { label: 'Avg. institutional GPA', value: '3.02', dotClass: 'text-emerald-500' },
+                { label: 'Open alerts', value: '47', dotClass: 'text-rose-500' },
               ].map((s, i) => (
-                <div key={i} className="p-4 rounded-xl border transition-transform duration-200 hover:-translate-y-0.5" style={{ background: 'var(--sand)', borderColor: 'var(--line)' }}>
-                  <div className="text-[10px] text-slate-500">{s.label}</div>
-                  <div className="font-display text-2xl font-semibold mt-1 tabular-nums" style={{ color: s.accent }}>{s.value}</div>
+                <div key={i} className="homepage-stat-card p-4 transition-transform duration-200 hover:-translate-y-0.5">
+                  <div className="text-[10px] text-slate-500 font-medium uppercase tracking-wide">{s.label}</div>
+                  <div className={`font-display text-2xl font-semibold mt-1 tabular-nums ${s.dotClass}`}>
+                    {s.value}
+                  </div>
                 </div>
               ))}
             </div>
@@ -129,13 +130,15 @@ export default function HomePage({ onNavigateLogin }) {
       {/* How it works */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
         <div className="max-w-xl mb-10">
-          <span className="eyebrow" style={{ color: 'var(--petrol-dark)' }}>How it works</span>
-          <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-slate-950 mt-2">From raw records to advisor action</h2>
+          <span className="eyebrow homepage-text-petrol uppercase text-xs font-semibold tracking-wider">How it works</span>
+          <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-slate-950 mt-2">
+            From raw records to advisor action
+          </h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 stagger">
           {STEPS.map((step, i) => (
-            <div key={i} className="panel panel-interactive p-6">
-              <span className="font-display text-3xl font-semibold" style={{ color: 'var(--petrol-light)', WebkitTextStroke: '1.5px var(--petrol)' }}>
+            <div key={i} className="homepage-panel p-6">
+              <span className="homepage-step-number font-display text-3xl font-semibold">
                 {String(i + 1).padStart(2, '0')}
               </span>
               <h3 className="text-sm font-bold text-slate-900 mt-3">{step.title}</h3>
@@ -146,16 +149,18 @@ export default function HomePage({ onNavigateLogin }) {
       </section>
 
       {/* Feature grid */}
-      <section id="features" className="max-w-6xl mx-auto px-4 sm:px-6 py-14 sm:py-20 border-t" style={{ borderColor: 'var(--line)' }}>
+      <section id="features" className="homepage-features-section max-w-6xl mx-auto px-4 sm:px-6 py-14 sm:py-20 border-t">
         <div className="max-w-xl mb-10">
-          <span className="eyebrow" style={{ color: 'var(--petrol-dark)' }}>What's inside</span>
-          <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-slate-950 mt-2">Everything an advising team needs in one workspace</h2>
+          <span className="eyebrow homepage-text-petrol uppercase text-xs font-semibold tracking-wider">What's inside</span>
+          <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-slate-950 mt-2">
+            Everything an advising team needs in one workspace
+          </h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
           {FEATURES.map((f, i) => (
-            <div key={i} className="panel panel-interactive p-5">
-              <div className="p-2.5 rounded-lg inline-flex mb-4" style={{ background: 'var(--petrol-light)' }}>
-                <f.icon size={18} style={{ color: 'var(--petrol-dark)' }} />
+            <div key={i} className="homepage-panel p-5">
+              <div className="homepage-icon-wrapper p-2.5 rounded-lg inline-flex mb-4">
+                <f.icon size={18} />
               </div>
               <h3 className="text-sm font-bold text-slate-900">{f.title}</h3>
               <p className="text-xs text-slate-500 mt-1.5 leading-5">{f.description}</p>
@@ -166,21 +171,22 @@ export default function HomePage({ onNavigateLogin }) {
 
       {/* CTA band */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
-        <div className="dashboard-hero rounded-2xl px-6 py-10 sm:px-12 sm:py-14 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="homepage-cta-band rounded-2xl px-6 py-10 sm:px-12 sm:py-14 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="relative z-10 max-w-lg">
-            <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight">Ready to see it on your own roster?</h2>
-            <ul className="mt-4 space-y-2 text-sm text-slate-300">
+            <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight">
+              Ready to see it on your own roster?
+            </h2>
+            <ul className="mt-4 space-y-2 text-sm text-white/80">
               {['FERPA-compliant audit trail', 'Real-time risk scoring', 'No setup required for the demo workspace'].map((item, i) => (
                 <li key={i} className="flex items-center gap-2">
-                  <CheckCircle2 size={15} style={{ color: '#7fd6da' }} /> {item}
+                  <CheckCircle2 size={15} className="homepage-check-icon" /> {item}
                 </li>
               ))}
             </ul>
           </div>
           <button
             onClick={onNavigateLogin}
-            className="relative z-10 shrink-0 px-6 py-3.5 rounded-lg text-sm font-semibold inline-flex items-center gap-2 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
-            style={{ background: 'white', color: 'var(--ink)' }}
+            className="homepage-cta-btn relative z-10 shrink-0 px-6 py-3.5 rounded-lg text-sm font-semibold inline-flex items-center gap-2 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
           >
             Sign in to your workspace <ArrowRight size={16} />
           </button>
@@ -188,7 +194,7 @@ export default function HomePage({ onNavigateLogin }) {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-8" style={{ borderColor: 'var(--line)' }}>
+      <footer className="homepage-footer py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
           <div className="flex items-center gap-2">
             <GraduationCap size={14} />

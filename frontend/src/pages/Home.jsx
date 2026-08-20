@@ -1,7 +1,10 @@
 import React from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import '../styles/Home.css';
 
 const Home = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="home-container">
       {/* Navigation Bar */}
@@ -9,13 +12,13 @@ const Home = () => {
         <div className="navbar-logo">
           <span className="logo-highlight">Edu</span>Forecaster
         </div>
-        <ul className="navbar-links">
-          <li><a href="#home">Home</a></li>
-          <li><a href="#features">Features</a></li>
-          <li><a href="#about">About</a></li>
-        </ul>
         <div className="navbar-actions">
-          <button className="btn-login">Log In</button>
+          <button className="btn-signup" onClick={() => navigate('/register')}>
+            Sign Up
+          </button>
+          <button className="btn-login" onClick={() => navigate('/login')}>
+            Log In
+          </button>
         </div>
       </nav>
 
@@ -29,8 +32,12 @@ const Home = () => {
             data-driven interventions to improve student retention and success.
           </p>
           <div className="hero-buttons">
-            <button className="btn-primary">Go to Dashboard</button>
-            <button className="btn-secondary">Run New Prediction</button>
+            <button className="btn-primary" onClick={() => navigate('/login')}>
+              Go to Dashboard
+            </button>
+            <button className="btn-secondary" onClick={() => navigate('/login')}>
+              Run New Prediction
+            </button>
           </div>
         </div>
       </header>
@@ -68,9 +75,8 @@ const Home = () => {
         <div className="footer-content">
           <p>&copy; {new Date().getFullYear()} Student Academic Attrition Risk Classification & Performance Forecasting System. All rights reserved.</p>
           <div className="footer-links">
-            <a href="#privacy">Privacy Policy</a>
-            <a href="#terms">Terms of Service</a>
-            <a href="#support">Help & Support</a>
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/terms">Terms of Service</Link>
           </div>
         </div>
       </footer>

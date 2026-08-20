@@ -63,6 +63,28 @@ body {
   color: var(--primary-color);
 }
 
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-signup {
+  padding: 0.5rem 1.5rem;
+  border: none;
+  background: var(--primary-color);
+  color: var(--white);
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-signup:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
 .btn-login {
   padding: 0.5rem 1.5rem;
   border: 2px solid var(--primary-color);
@@ -249,6 +271,10 @@ body {
   .navbar-links {
     margin: 1rem 0;
     flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .navbar-actions {
     justify-content: center;
   }
   

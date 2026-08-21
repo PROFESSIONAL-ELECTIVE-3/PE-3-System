@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +45,6 @@ const Login = () => {
 
     setIsSubmitting(true);
     try {
-      // TODO: replace with your actual authentication endpoint
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -99,6 +99,12 @@ const Login = () => {
             <h2>Log In</h2>
             <p>Enter your credentials to access your account.</p>
           </div>
+
+          {location.state?.successMessage && (
+            <div className="login-success" role="status">
+              {location.state.successMessage}
+            </div>
+          )}
 
           {serverError && (
             <div className="login-alert" role="alert">

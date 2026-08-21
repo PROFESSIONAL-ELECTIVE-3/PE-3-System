@@ -122,7 +122,6 @@ const Register = () => {
 
     setIsSubmitting(true);
     try {
-      // TODO: replace with your actual registration endpoint
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -140,10 +139,10 @@ const Register = () => {
         throw new Error(data.message || 'Could not create your account. Please try again.');
       }
 
-      const data = await response.json();
-      // TODO: persist auth token / session, or redirect to a "verify your email" step
-      console.log('Registration successful:', data);
-      navigate('/login');
+      await response.json();
+      navigate('/login', {
+        state: { successMessage: 'Account created successfully. Please log in.' },
+      });
     } catch (err) {
       setServerError(err.message || 'Something went wrong. Please try again.');
     } finally {

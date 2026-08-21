@@ -1,43 +1,44 @@
-import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import '../styles/Login.css';
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import BrandLogo from "../components/BrandLogo";
+import "../styles/Login.css";
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const location = useLocation();
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [serverError, setServerError] = useState('');
+  const [serverError, setServerError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const validate = () => {
     const newErrors = {};
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required.';
+      newErrors.email = "Email is required.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Enter a valid email address.';
+      newErrors.email = "Enter a valid email address.";
     }
     if (!formData.password) {
-      newErrors.password = 'Password is required.';
+      newErrors.password = "Password is required.";
     }
     return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setServerError('');
+    setServerError("");
 
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -47,9 +48,9 @@ const Login = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
@@ -59,14 +60,14 @@ const Login = () => {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.message || 'Invalid email or password.');
+        throw new Error(data.message || "Invalid email or password.");
       }
 
       const data = await response.json();
       login(data, rememberMe);
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (err) {
-      setServerError(err.message || 'Something went wrong. Please try again.');
+      setServerError(err.message || "Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -77,9 +78,7 @@ const Login = () => {
       {/* Brand Panel */}
       <div className="login-brand-panel">
         <div className="login-brand-content">
-          <Link to="/" className="login-logo">
-            <span className="logo-highlight">Edu</span>Forecaster
-          </Link>
+          <BrandLogo className="login-logo" inverse />
           <h1>Welcome back to your academic command center.</h1>
           <p>
             Sign in to access attrition risk models, performance forecasts, and
@@ -124,9 +123,11 @@ const Login = () => {
                 placeholder="you@university.edu"
                 value={formData.email}
                 onChange={handleChange}
-                className={errors.email ? 'input-error' : ''}
+                className={errors.email ? "input-error" : ""}
               />
-              {errors.email && <span className="field-error">{errors.email}</span>}
+              {errors.email && (
+                <span className="field-error">{errors.email}</span>
+              )}
             </div>
 
             <div className="form-group">
@@ -138,25 +139,27 @@ const Login = () => {
               </div>
               <div className="password-input-wrapper">
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   id="password"
                   name="password"
                   autoComplete="current-password"
                   placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={errors.password ? 'input-error' : ''}
+                  className={errors.password ? "input-error" : ""}
                 />
                 <button
                   type="button"
                   className="toggle-password"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? 'Hide' : 'Show'}
+                  {showPassword ? "Hide" : "Show"}
                 </button>
               </div>
-              {errors.password && <span className="field-error">{errors.password}</span>}
+              {errors.password && (
+                <span className="field-error">{errors.password}</span>
+              )}
             </div>
 
             <div className="form-remember-row">
@@ -170,8 +173,12 @@ const Login = () => {
               </label>
             </div>
 
-            <button type="submit" className="btn-login-submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Signing In…' : 'Log In'}
+            <button
+              type="submit"
+              className="btn-login-submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Signing In…" : "Log In"}
             </button>
           </form>
 

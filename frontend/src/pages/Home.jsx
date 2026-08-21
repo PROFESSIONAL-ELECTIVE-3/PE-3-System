@@ -1,87 +1,131 @@
-import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import '../styles/Home.css';
+import { ArrowRight, BarChart3, ShieldCheck, UsersRound } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import BrandLogo from "../components/BrandLogo";
+import { useAuth } from "../context/AuthContext";
+import "../styles/Home.css";
 
-const Home = () => {
+const features = [
+  {
+    icon: <BarChart3 size={20} />,
+    title: "Review academic trends",
+    text: "Bring approved records into a single, accessible workspace.",
+  },
+  {
+    icon: <UsersRound size={20} />,
+    title: "Focus support efforts",
+    text: "Identify students who may benefit from a timely conversation.",
+  },
+  {
+    icon: <ShieldCheck size={20} />,
+    title: "Keep people in control",
+    text: "Use forecasts as context—not as automatic academic decisions.",
+  },
+];
+
+export default function Home() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const destination = isAuthenticated ? "/dashboard" : "/register";
+  const actionLabel = isAuthenticated ? "Open workspace" : "Get started";
 
   return (
-    <div className="home-container">
-      {/* Navigation Bar */}
-      <nav className="navbar">
-        <div className="navbar-logo">
-          <span className="logo-highlight">Edu</span>Forecaster
-        </div>
-        <div className="navbar-actions">
-          <button className="btn-signup" onClick={() => navigate('/register')}>
-            Sign Up
-          </button>
-          <button className="btn-login" onClick={() => navigate('/login')}>
-            Log In
-          </button>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <header className="hero-section" id="home">
-        <div className="hero-content">
-          <h1>Student Academic Attrition Risk Classification <br/> & Performance Forecasting System</h1>
-          <p>
-            Empowering educators and administrators with predictive analytics. 
-            Identify at-risk students early, forecast academic trajectories, and implement 
-            data-driven interventions to improve student retention and success.
-          </p>
-          <div className="hero-buttons">
-            <button className="btn-primary" onClick={() => navigate('/login')}>
-              Go to Dashboard
+    <div className="home-shell">
+      <header className="home-header">
+        <BrandLogo />
+        <nav className="home-nav" aria-label="Primary navigation">
+          <a href="#features">Platform</a>
+          <a href="#responsible">Responsible use</a>
+        </nav>
+        <div className="home-actions">
+          {!isAuthenticated && (
+            <button className="home-signin" onClick={() => navigate("/login")}>
+              Sign in
             </button>
-            <button className="btn-secondary" onClick={() => navigate('/login')}>
-              Run New Prediction
-            </button>
-          </div>
+          )}
+          <button
+            className="home-primary home-primary--small"
+            onClick={() => navigate(destination)}
+          >
+            {actionLabel}
+            <ArrowRight size={16} />
+          </button>
         </div>
       </header>
-
-      {/* Features Section */}
-      <section className="features-section" id="features">
-        <div className="section-header">
-          <h2>System Capabilities</h2>
-          <p>Advanced machine learning models designed for institutional success.</p>
+      <main>
+        <section className="home-hero">
+          <div>
+            <p className="home-eyebrow">Student success, with better context</p>
+            <h1>Make earlier, more thoughtful academic support possible.</h1>
+            <p>
+              EduForecaster helps authorized teams review academic trends and
+              use decision-support insights to guide the next conversation.
+            </p>
+            <div className="home-hero-actions">
+              <button
+                className="home-primary"
+                onClick={() => navigate(destination)}
+              >
+                {actionLabel}
+                <ArrowRight size={17} />
+              </button>
+              <a className="home-secondary" href="#features">
+                Explore the platform
+              </a>
+            </div>
+          </div>
+        </section>
+        <section className="home-features" id="features">
+          <div className="home-section-heading">
+            <p className="home-eyebrow">The platform</p>
+            <h2>A clear workspace for academic teams.</h2>
+            <p>
+              Designed around the real work of reviewing context, coordinating
+              support, and documenting thoughtful follow-through.
+            </p>
+          </div>
+          <div className="feature-grid">
+            {features.map((feature) => (
+              <article className="home-feature" key={feature.title}>
+                <span>{feature.icon}</span>
+                <h3>{feature.title}</h3>
+                <p>{feature.text}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+        <section className="home-responsible" id="responsible">
+          <ShieldCheck size={25} />
+          <div>
+            <p className="home-eyebrow">Responsible use</p>
+            <h2>Insight informs action. People make decisions.</h2>
+            <p>
+              Attrition classifications and performance forecasts are
+              statistical estimates. They should always be considered alongside
+              student context, professional judgment, and institutional policy.
+            </p>
+          </div>
+        </section>
+        <section className="home-closing">
+          <h2>Ready to create a more proactive support practice?</h2>
+          <button
+            className="home-primary"
+            onClick={() => navigate(destination)}
+          >
+            {actionLabel}
+            <ArrowRight size={17} />
+          </button>
+        </section>
+      </main>
+      <footer className="home-footer">
+        <div>
+          <BrandLogo inverse />
+          <p>Academic insight for thoughtful student support.</p>
         </div>
-        
-        <div className="features-grid">
-          <div className="feature-card">
-            <div className="feature-icon">⚠️</div>
-            <h3>Attrition Risk Classification</h3>
-            <p>Automatically flag students who are at a high risk of dropping out based on historical data, attendance, and current academic standing.</p>
-          </div>
-          
-          <div className="feature-card">
-            <div className="feature-icon">📈</div>
-            <h3>Performance Forecasting</h3>
-            <p>Predict future GPA and course outcomes for individual students, allowing advisors to guide course selection and study habits.</p>
-          </div>
-          
-          <div className="feature-card">
-            <div className="feature-icon">📊</div>
-            <h3>Data Visualization</h3>
-            <p>Interactive charts and comprehensive dashboards that provide a bird's-eye view of department-wide or university-wide academic health.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="footer">
-        <div className="footer-content">
-          <p>&copy; {new Date().getFullYear()} Student Academic Attrition Risk Classification & Performance Forecasting System. All rights reserved.</p>
-          <div className="footer-links">
-            <Link to="/privacy">Privacy Policy</Link>
-            <Link to="/terms">Terms of Service</Link>
-          </div>
+        <div>
+          <Link to="/privacy">Privacy Policy</Link>
+          <Link to="/terms">Terms of Service</Link>
         </div>
       </footer>
     </div>
   );
-};
-
-export default Home;
+}

@@ -3,11 +3,26 @@
 > vite --host 127.0.0.1
 
 
-  VITE v5.4.21  ready in 505 ms
+  VITE v5.4.21  ready in 357 ms
 
   ➜  Local:   http://127.0.0.1:3000/
   ➜  press h + enter to show help
-1:00:32 AM [vite] hmr update /src/pages/Home.jsx
-1:00:32 AM [vite] hmr update /src/styles/Home.css
-1:00:50 AM [vite] hmr update /src/styles/Home.css
-1:00:52 AM [vite] hmr update /src/pages/Home.jsx
+1:24:40 AM [vite] page reload src/Main.jsx
+1:28:16 AM [vite] hmr update /src/components/BrandLogo.css
+1:28:16 AM [vite] hmr update /src/components/BrandLogo.jsx
+1:28:16 AM [vite] hmr update /src/components/ProtectedRoute.jsx
+1:28:16 AM [vite] hmr update /src/context/AuthContext.jsx
+1:28:16 AM [vite] page reload src/Main.jsx
+1:28:16 AM [vite] hmr update /src/pages/Dashboard.jsx
+1:28:16 AM [vite] hmr update /src/pages/ForgotPassword.jsx
+1:28:16 AM [vite] hmr update /src/pages/Home.jsx
+1:28:16 AM [vite] hmr update /src/pages/Login.jsx
+1:28:16 AM [vite] hmr update /src/pages/PrivacyPolicy.jsx
+1:28:16 AM [vite] hmr update /src/pages/Register.jsx
+1:28:16 AM [vite] hmr update /src/pages/ResetPassword.jsx
+1:28:16 AM [vite] hmr update /src/pages/Termsofservice.jsx
+1:28:17 AM [vite] hmr update /src/styles/Dashboard.css
+1:28:17 AM [vite] hmr update /src/styles/Home.css
+1:28:17 AM [vite] hmr update /src/styles/Legal.css
+1:28:17 AM [vite] hmr update /src/styles/Login.css
+1:28:17 AM [vite] hmr update /src/styles/Register.css

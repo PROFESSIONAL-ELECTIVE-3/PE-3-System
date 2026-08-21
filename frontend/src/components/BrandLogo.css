@@ -1,0 +1,23 @@
+.brand-logo {
+  display: inline-flex;
+  align-items: baseline;
+  color: #102b4a;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.brand-logo__accent {
+  color: #e56957;
+}
+.brand-logo--inverse {
+  color: #fff;
+}
+.brand-logo:focus-visible {
+  outline: 3px solid rgba(116, 191, 249, 0.75);
+  outline-offset: 4px;
+  border-radius: 2px;
+}

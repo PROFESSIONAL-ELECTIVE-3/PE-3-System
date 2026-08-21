@@ -27,6 +27,8 @@ const userSchema = new mongoose.Schema(
     // rate limiter in Server.js for defense in depth.
     failedLoginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date, default: null },
+    passwordResetToken: { type: String, select: false },
+    passwordResetExpires: { type: Date, select: false },
   },
   { timestamps: true }
 );

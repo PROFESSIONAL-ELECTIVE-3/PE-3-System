@@ -1,5 +1,7 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const crypto = require('crypto');
+const axios = require('axios');
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_TIME_MS = 15 * 60 * 1000; // 15 minutes
@@ -102,7 +104,22 @@ exports.login = async (req, res, next) => {
   }
 };
 
-// @desc    Request a password reset (stub — wire up real email sending)
+const RESET_TOKEN_LIFETIME_MS = 60 * 60 * 1000;
+
+const createResetEmail = (resetUrl) => `
+  <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
+    <h1 style="color: #0d47a1;">Reset your EduForecaster password</h1>
+    <p>We received a request to reset your password.</p>
+    <p>
+      <a href="${resetUrl}" style="display: inline-block; padding: 12px 20px; background: #e74c3c; color: #ffffff; border-radius: 4px; text-decoration: none; font-weight: 600;">
+        Reset password
+      </a>
+    </p>
+    <p>This link expires in one hour. If you did not request a password reset, you can safely ignore this email.</p>
+  </div>
+`;
+
+// @desc    Request a password reset
 // @route   POST /api/auth/forgot-password
 exports.forgotPassword = async (req, res, next) => {
   try {
@@ -111,16 +128,96 @@ exports.forgotPassword = async (req, res, next) => {
       return res.status(400).json({ message: 'Email is required.' });
     }
 
+    if (!process.env.BREVO_API_KEY || !process.env.BREVO_SENDER_EMAIL) {
+      console.error('Password reset email is not configured.');
+      return res.status(200).json({
+        message: 'If an account exists for this email, a reset link has been sent.',
+      });
+    }
+
     const user = await User.findOne({ email: email.toLowerCase() });
     if (user) {
-      // TODO: generate a reset token, store its hash + expiry on the user,
-      // and email a reset link containing the raw token.
+
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      user.passwordResetToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+      user.passwordResetExpires = new Date(Date.now() + RESET_TOKEN_LIFETIME_MS);
+      await user.save({ validateBeforeSave: false });
+
+      const clientOrigin = (process.env.CLIENT_ORIGIN || 'http://localhost:3000').replace(/\/$/, '');
+      const resetUrl = `${clientOrigin}/reset-password/${resetToken}`;
+      try {
+        await axios.post(
+          'https://api.brevo.com/v3/smtp/email',
+          {
+            sender: {
+              email: process.env.BREVO_SENDER_EMAIL,
+              name: process.env.BREVO_SENDER_NAME || 'EduForecaster',
+            },
+            to: [{ email: user.email, name: user.fullName }],
+            subject: 'Reset your EduForecaster password',
+            htmlContent: createResetEmail(resetUrl),
+          },
+          {
+            headers: {
+              'api-key': process.env.BREVO_API_KEY,
+              accept: 'application/json',
+              'content-type': 'application/json',
+            },
+          }
+        );
+      } catch (error) {
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+        await user.save({ validateBeforeSave: false });
+        console.error(
+          'Unable to send password reset email:',
+          error.response?.data || error.message
+        );
+      }
     }
 
     // Always respond identically whether or not the account exists.
     res.status(200).json({
       message: 'If an account exists for this email, a reset link has been sent.',
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Reset a password using a valid reset token
+// @route   POST /api/auth/reset-password/:token
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { password } = req.body;
+    if (!password || password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+    }
+
+    const passwordResetToken = crypto
+      .createHash('sha256')
+      .update(req.params.token)
+      .digest('hex');
+    const user = await User.findOne({
+      passwordResetToken,
+      passwordResetExpires: { $gt: new Date() },
+    }).select('+password +passwordResetToken +passwordResetExpires');
+
+    if (!user) {
+      return res.status(400).json({ message: 'This password reset link is invalid or has expired.' });
+    }
+
+    user.password = password;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successfully. You can now log in.' });
   } catch (err) {
     next(err);
   }

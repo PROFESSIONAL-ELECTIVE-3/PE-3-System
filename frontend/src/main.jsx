@@ -8,11 +8,15 @@ import ResetPassword from './pages/ResetPassword.jsx';
 import Register from './pages/Register.jsx';
 import TermsOfService from './pages/TermsOfService.jsx';
 import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+import { AuthProvider } from './context/AuthContext.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 
 // This finds the <div id="root"> in your index.html and renders the app inside it
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
+      <AuthProvider>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -21,7 +25,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/register" element={<Register />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       </Routes>
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

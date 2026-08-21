@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import '../styles/Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const location = useLocation();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [rememberMe, setRememberMe] = useState(false);
@@ -61,8 +63,7 @@ const Login = () => {
       }
 
       const data = await response.json();
-      // TODO: persist auth token / session and redirect to dashboard
-      console.log('Login successful:', data);
+      login(data, rememberMe);
       navigate('/dashboard');
     } catch (err) {
       setServerError(err.message || 'Something went wrong. Please try again.');

@@ -104,6 +104,13 @@ exports.login = async (req, res, next) => {
   }
 };
 
+// @desc    Return the authenticated user's current profile
+// @route   GET /api/auth/me
+// @access  Private
+exports.getCurrentUser = async (req, res) => {
+  res.status(200).json({ user: publicUser(req.user) });
+};
+
 const RESET_TOKEN_LIFETIME_MS = 60 * 60 * 1000;
 
 const createResetEmail = (resetUrl) => `

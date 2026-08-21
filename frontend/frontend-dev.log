@@ -1,0 +1,13 @@
+
+> academic-attrition-frontend@1.0.0 dev
+> vite --host 127.0.0.1
+
+
+  VITE v5.4.21  ready in 505 ms
+
+  ➜  Local:   http://127.0.0.1:3000/
+  ➜  press h + enter to show help
+1:00:32 AM [vite] hmr update /src/pages/Home.jsx
+1:00:32 AM [vite] hmr update /src/styles/Home.css
+1:00:50 AM [vite] hmr update /src/styles/Home.css
+1:00:52 AM [vite] hmr update /src/pages/Home.jsx

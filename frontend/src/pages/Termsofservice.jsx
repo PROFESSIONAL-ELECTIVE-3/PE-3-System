@@ -11,7 +11,7 @@ const TermsOfService = () => {
       <header className="legal-header">
         <BrandLogo className="legal-logo" />
         <Link to="/" className="legal-back-link">
-          ← Back to home
+           Back to home
         </Link>
       </header>
 

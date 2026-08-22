@@ -425,7 +425,7 @@ const Register = () => {
           </p>
 
           <Link to="/" className="login-back-home">
-            ← Back to home
+             Back to home
           </Link>
         </div>
       </div>

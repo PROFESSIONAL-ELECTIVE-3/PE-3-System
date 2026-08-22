@@ -135,7 +135,7 @@ const ForgotPassword = () => {
               width: "100%",
             }}
           >
-            ← Back to log in
+            Back to log in
           </button>
         </div>
       </div>

@@ -42,7 +42,7 @@ const PrivacyPolicy = () => {
           <p className="legal-intro">
             This Privacy Policy explains how the Student Academic Attrition Risk
             Classification &amp; Performance Forecasting System
-            (&quot;EduForecaster,&quot; &quot;we,&quot; &quot;us,&quot; or
+            (&quot;Retainify,&quot; &quot;we,&quot; &quot;us,&quot; or
             &quot;our&quot;) collects, uses, discloses, and protects personal
             data. This Policy is written to comply with the{" "}
             <strong>Data Privacy Act of 2012 (Republic Act No. 10173)</strong>,
@@ -55,13 +55,13 @@ const PrivacyPolicy = () => {
           <section id="introduction">
             <h2>1. Introduction</h2>
             <p>
-              EduForecaster processes academic records, attendance data, and
+              Retainify processes academic records, attendance data, and
               related information on behalf of participating educational
               institutions in order to identify students at risk of attrition
               and to forecast academic performance. In most cases, your
               institution is the{" "}
               <strong>Personal Information Controller</strong> that determines
-              what data is collected and why, and EduForecaster acts as a{" "}
+              what data is collected and why, and Retainify acts as a{" "}
               <strong>Personal Information Processor</strong> on the
               institution&apos;s behalf. Where we determine the purposes and
               means of processing ourselves (for example, for account
@@ -320,7 +320,7 @@ const PrivacyPolicy = () => {
           <section id="minors">
             <h2>11. Data of Minors</h2>
             <p>
-              Some students using EduForecaster may be minors. Where required,
+              Some students using Retainify may be minors. Where required,
               we rely on the applicable consent and safeguards under RA 10173
               for processing the personal data of minors, generally obtained
               through the enrolling institution or, where required, a parent or
@@ -366,7 +366,7 @@ const PrivacyPolicy = () => {
               To exercise your data privacy rights or to ask questions about
               this Policy, contact our Data Protection Officer through the Help
               &amp; Support link in the footer, or your institution&apos;s
-              EduForecaster administrator.
+              Retainify administrator.
             </p>
             <p>
               If you believe your concern has not been adequately addressed, you

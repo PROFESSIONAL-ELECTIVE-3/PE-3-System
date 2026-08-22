@@ -10,10 +10,10 @@ export default function BrandLogo({
     <Link
       to={to}
       className={`brand-logo${inverse ? " brand-logo--inverse" : ""}${className ? ` ${className}` : ""}`}
-      aria-label="EduForecaster home"
+      aria-label="Retainify"
     >
-      <span className="brand-logo__accent">Edu</span>
-      <span>Forecaster</span>
+      <span className="brand-logo__accent">Retain</span>
+      <span>ify</span>
     </Link>
   );
 }

@@ -37,11 +37,7 @@ export default function Home() {
           <a href="#responsible">Responsible use</a>
         </nav>
         <div className="home-actions">
-          {!isAuthenticated && (
-            <button className="home-signin" onClick={() => navigate("/login")}>
-              Sign in
-            </button>
-          )}
+          
           <button
             className="home-primary home-primary--small"
             onClick={() => navigate(destination)}
@@ -57,7 +53,7 @@ export default function Home() {
             <p className="home-eyebrow">Student success, with better context</p>
             <h1>Make earlier, more thoughtful academic support possible.</h1>
             <p>
-              EduForecaster helps authorized teams review academic trends and
+              Retainify helps authorized teams review academic trends and
               use decision-support insights to guide the next conversation.
             </p>
             <div className="home-hero-actions">

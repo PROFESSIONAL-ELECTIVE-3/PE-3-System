@@ -14,6 +14,7 @@
   background: #f6f8fb;
   color: #1c334a;
   font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  overflow: hidden;
 }
 .app-sidebar {
   background: #102b4a;
@@ -21,6 +22,8 @@
   padding: 1.6rem 1rem;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
 }
 .app-brand,
 .mobile-brand {
@@ -30,7 +33,7 @@
   color: #fff;
   margin: 0 0.55rem 2.5rem;
 }
-.app-brand span,
+
 .mobile-brand span {
   color: #f0715e;
 }
@@ -78,6 +81,9 @@
   width: 100%;
   margin: auto;
   padding: 0 5% 3rem;
+  height: 100vh; /* Matches full screen height */
+  overflow-y: auto; /* Makes only the main workspace area scroll vertically */
+  box-sizing: border-box;
 }
 .app-topbar {
   height: 78px;

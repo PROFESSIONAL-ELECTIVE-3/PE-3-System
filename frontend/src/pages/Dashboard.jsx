@@ -6,12 +6,17 @@ import {
   LayoutDashboard,
   LogOut,
   ShieldCheck,
+  TimelineIcon,
   UsersRound,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import BrandLogo from "../components/BrandLogo";
 import "../styles/Dashboard.css";
+import { useState } from "react";
+
+import ProfessorDashboardView from "./ProfessorDashboardView.jsx";
+import AdminDashboardView from "./AdminDashboardView.jsx";
 
 const nextStepByRole = {
   administrator: {
@@ -37,6 +42,7 @@ const nextStepByRole = {
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("overview");
   const nextStep = nextStepByRole[user.role] ?? nextStepByRole.student;
   const roleLabel = user.role.charAt(0).toUpperCase() + user.role.slice(1);
   const handleLogout = () => {
@@ -48,15 +54,25 @@ export default function Dashboard() {
       <aside className="app-sidebar">
         <BrandLogo className="app-brand" inverse to="/dashboard" />
         <nav aria-label="Dashboard navigation">
-          <a className="active" href="#overview">
+           <a className={activeTab === "overview" ? "active" : ""} href="#overview" onClick={() => setActiveTab("overview")}>
             <LayoutDashboard size={18} /> Overview
           </a>
-          <a href="#data">
-            <Database size={18} /> Data workspace
+          <a className={activeTab === "data" ? "active" : ""} href="#data" onClick={() => setActiveTab("data")}>
+            <Database size={18} /> Data Workspace
           </a>
-          <a href="#insights">
+          <a className={activeTab === "insights" ? "active" : ""} href="#insights" onClick={() => setActiveTab("insights")}>
             <BarChart3 size={18} /> Insights
           </a>
+          {user.role === "student" && (
+            <a className={activeTab === "history" ? "active" : ""} href="#history" onClick={() => setActiveTab("history")}>
+              <TimelineIcon size={18} /> History
+            </a>
+          )}
+          {user.role === "professor" && (
+            <a className={activeTab === "history" ? "active" : ""} href="#history" onClick={() => setActiveTab("history")}>
+              <TimelineIcon size={18} /> History
+            </a>
+          )}
         </nav>
         <div className="sidebar-support">
           <ShieldCheck size={18} />
@@ -87,6 +103,11 @@ export default function Dashboard() {
             </button>
           </div>
         </header>
+
+        {user.role === "professor" && <ProfessorDashboardView user={user} nextStep={nextStep} />}
+        {user.role === "administrator" && <AdminDashboardView user={user} nextStep={nextStep} />}
+        
+        {/* Hindi ko muna alisin -Oli*/}
         <section className="dashboard-intro">
           <p className="dashboard-eyebrow">
             {user.institution || "Your academic workspace"}

@@ -37,6 +37,11 @@ export default function Home() {
           <a href="#responsible">Responsible use</a>
         </nav>
         <div className="home-actions">
+           {!isAuthenticated && (
+            <button className="home-signin" onClick={() => navigate("/login")}>
+              Sign in
+            </button>
+          )}
           
           <button
             className="home-primary home-primary--small"

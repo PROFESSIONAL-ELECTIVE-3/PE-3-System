@@ -2,6 +2,57 @@
   max-width: 440px;
 }
 
+.institution-search {
+  position: relative;
+}
+
+.institution-results {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  left: 0;
+  max-height: 15rem;
+  overflow-y: auto;
+  border: 1px solid #cbd8e5;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 12px 24px rgba(24, 50, 75, 0.14);
+}
+
+.institution-result {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 0.85rem;
+  border: 0;
+  border-bottom: 1px solid #e5edf4;
+  background: #fff;
+  color: #18324b;
+  font: inherit;
+  font-size: 0.88rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.institution-result:hover,
+.institution-result:focus-visible {
+  background: #f2f8ff;
+  outline: none;
+}
+
+.institution-result small,
+.institution-search-status {
+  color: #657a91;
+  font-size: 0.75rem;
+}
+
+.institution-search-status {
+  margin: 0;
+  padding: 0.8rem 0.85rem;
+}
+
 .register-progress {
   display: flex;
   align-items: center;

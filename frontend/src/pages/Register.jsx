@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/Login.css";
 import "../styles/Register.css";
@@ -47,10 +47,51 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
+  const [institutionResults, setInstitutionResults] = useState([]);
+  const [isSearchingInstitutions, setIsSearchingInstitutions] = useState(false);
+  const [isInstitutionMenuOpen, setIsInstitutionMenuOpen] = useState(false);
+  const [selectedInstitutionId, setSelectedInstitutionId] = useState("");
+  const institutionSearchController = useRef(null);
+
+  useEffect(() => {
+    const query = formData.institution.trim();
+    if (query.length < 2 || !isInstitutionMenuOpen) {
+      setInstitutionResults([]);
+      setIsSearchingInstitutions(false);
+      return undefined;
+    }
+
+    const timeout = window.setTimeout(async () => {
+      institutionSearchController.current?.abort();
+      const controller = new AbortController();
+      institutionSearchController.current = controller;
+      setIsSearchingInstitutions(true);
+
+      try {
+        const response = await fetch(
+          `/api/institutions?query=${encodeURIComponent(query)}`,
+          { signal: controller.signal },
+        );
+        if (!response.ok) throw new Error("Institution search failed.");
+        const data = await response.json();
+        setInstitutionResults(data.institutions || []);
+      } catch (error) {
+        if (error.name !== "AbortError") setInstitutionResults([]);
+      } finally {
+        if (!controller.signal.aborted) setIsSearchingInstitutions(false);
+      }
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeout);
+      institutionSearchController.current?.abort();
+    };
+  }, [formData.institution, isInstitutionMenuOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "institution") setSelectedInstitutionId("");
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -59,6 +100,14 @@ const Register = () => {
   const selectRole = (value) => {
     setFormData((prev) => ({ ...prev, role: value }));
     if (errors.role) setErrors((prev) => ({ ...prev, role: "" }));
+  };
+
+  const selectInstitution = (institution) => {
+    setFormData((prev) => ({ ...prev, institution: institution.name }));
+    setSelectedInstitutionId(institution.id);
+    setInstitutionResults([]);
+    setIsInstitutionMenuOpen(false);
+    if (errors.institution) setErrors((prev) => ({ ...prev, institution: "" }));
   };
 
   const validateStep = (targetStep) => {
@@ -74,6 +123,8 @@ const Register = () => {
       }
       if (!formData.institution.trim())
         newErrors.institution = "Institution name is required.";
+      else if (!selectedInstitutionId)
+        newErrors.institution = "Select an institution from the CHED directory.";
     }
 
     if (targetStep === 2) {
@@ -147,7 +198,7 @@ const Register = () => {
       await response.json();
       navigate("/login", {
         state: {
-          successMessage: "Account created successfully. Please log in.",
+          successMessage: "Account created. Check your email, verify your address, then log in.",
         },
       });
     } catch (err) {
@@ -268,16 +319,48 @@ const Register = () => {
 
                 <div className="form-group">
                   <label htmlFor="institution">Institution</label>
-                  <input
-                    type="text"
-                    id="institution"
-                    name="institution"
-                    autoComplete="organization"
-                    placeholder="Riverside State University"
-                    value={formData.institution}
-                    onChange={handleChange}
-                    className={errors.institution ? "input-error" : ""}
-                  />
+                  <div className="institution-search">
+                    <input
+                      type="text"
+                      id="institution"
+                      name="institution"
+                      autoComplete="organization"
+                      placeholder="Search Philippine institutions..."
+                      value={formData.institution}
+                      onChange={handleChange}
+                      onFocus={() => setIsInstitutionMenuOpen(true)}
+                      onBlur={() => window.setTimeout(() => setIsInstitutionMenuOpen(false), 150)}
+                      aria-autocomplete="list"
+                      aria-controls="institution-results"
+                      aria-expanded={isInstitutionMenuOpen}
+                      className={errors.institution ? "input-error" : ""}
+                    />
+                    {isInstitutionMenuOpen && formData.institution.trim().length >= 2 && (
+                      <div id="institution-results" className="institution-results" role="listbox">
+                        {isSearchingInstitutions && <p className="institution-search-status">Searching CHED directory…</p>}
+                        {!isSearchingInstitutions && institutionResults.length === 0 && (
+                          <p className="institution-search-status">No matching institution found.</p>
+                        )}
+                        {institutionResults.map((institution) => (
+                          <button
+                            type="button"
+                            key={institution.id}
+                            className="institution-result"
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => selectInstitution(institution)}
+                            role="option"
+                          >
+                            <span>{institution.name}</span>
+                            <small>
+                              {institution.source === "CHED HEIDA"
+                                ? `CHED HEI code: ${institution.id}`
+                                : `Verified source: ${institution.source}`}
+                            </small>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   {errors.institution && (
                     <span className="field-error">{errors.institution}</span>
                   )}

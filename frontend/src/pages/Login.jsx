@@ -14,6 +14,9 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+  const [isResending, setIsResending] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,6 +42,8 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setServerError("");
+    setNeedsVerification(false);
+    setResendMessage("");
 
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -60,6 +65,7 @@ const Login = () => {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
+        if (data.code === "EMAIL_NOT_VERIFIED") setNeedsVerification(true);
         throw new Error(data.message || "Invalid email or password.");
       }
 
@@ -70,6 +76,25 @@ const Login = () => {
       setServerError(err.message || "Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const resendVerification = async () => {
+    setIsResending(true);
+    setResendMessage("");
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Could not resend the verification email.");
+      setResendMessage(data.message);
+    } catch (error) {
+      setResendMessage(error.message || "Could not resend the verification email.");
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -109,6 +134,15 @@ const Login = () => {
           {serverError && (
             <div className="login-alert" role="alert">
               {serverError}
+            </div>
+          )}
+          {needsVerification && (
+            <div className="login-success" role="status">
+              <p>Didn&apos;t receive it?</p>
+              <button type="button" className="resend-verification" onClick={resendVerification} disabled={isResending}>
+                {isResending ? "Sending…" : "Resend verification email"}
+              </button>
+              {resendMessage && <span>{resendMessage}</span>}
             </div>
           )}
 

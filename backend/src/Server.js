@@ -11,6 +11,7 @@ const rateLimit = require('express-rate-limit');
 
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const institutionRoutes = require('./routes/institutionRoutes');
 const mlRoutes = require('./routes/mlRoutes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
@@ -43,12 +44,23 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
 app.use('/api/auth/reset-password', authLimiter);
+app.use('/api/auth/resend-verification', authLimiter);
+
+const institutionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
+  message: { message: 'Too many institution searches. Please try again shortly.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/institutions', institutionLimiter);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'eduforecaster-backend' });
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/institutions', institutionRoutes);
 app.use('/api/ml', mlRoutes);
 
 app.use(notFound);

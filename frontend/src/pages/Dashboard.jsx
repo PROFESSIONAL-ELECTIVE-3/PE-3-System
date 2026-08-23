@@ -9,14 +9,14 @@ import {
   TimelineIcon,
   UsersRound,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import BrandLogo from "../components/BrandLogo";
 import "../styles/Dashboard.css";
-import { useState } from "react";
 
 import ProfessorDashboardView from "./ProfessorDashboardView.jsx";
 import AdminDashboardView from "./AdminDashboardView.jsx";
+import HistoryView from "./HistoryView.jsx";
 
 const nextStepByRole = {
   administrator: {
@@ -32,46 +32,57 @@ const nextStepByRole = {
     action: "View access status",
   },
   student: {
-    label: "Await your academic record",
+    label: "Review your academic record",
     detail:
-      "Your personal outlook will be available after your institution connects approved data.",
-    action: "Learn about forecasts",
+      "Your personal outlook will appear after your institution connects approved data. You can view your own record, but only authorized staff can manage institutional data.",
+    action: "No action required",
   },
 };
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("overview");
+  const location = useLocation();
+  const tabByPath = {
+    "/dashboard": "overview",
+    "/dashboard/data": "data",
+    "/dashboard/insights": "insights",
+    "/dashboard/history": "history",
+  };
+  const activeTab = tabByPath[location.pathname] || "overview";
   const nextStep = nextStepByRole[user.role] ?? nextStepByRole.student;
   const roleLabel = user.role.charAt(0).toUpperCase() + user.role.slice(1);
   const handleLogout = () => {
     logout();
     navigate("/login", { replace: true });
   };
+  const DashboardNavLink = ({ tab, children }) => {
+    const path = tab === "overview" ? "/dashboard" : `/dashboard/${tab}`;
+    return (
+      <NavLink to={path} end={tab === "overview"} className={({ isActive }) => (isActive ? "active" : "")} aria-current={activeTab === tab ? "page" : undefined}>
+        {children}
+      </NavLink>
+    );
+  };
+
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
         <BrandLogo className="app-brand" inverse to="/dashboard" />
         <nav aria-label="Dashboard navigation">
-           <a className={activeTab === "overview" ? "active" : ""} href="#overview" onClick={() => setActiveTab("overview")}>
+          <DashboardNavLink tab="overview">
             <LayoutDashboard size={18} /> Overview
-          </a>
-          <a className={activeTab === "data" ? "active" : ""} href="#data" onClick={() => setActiveTab("data")}>
+          </DashboardNavLink>
+          <DashboardNavLink tab="data">
             <Database size={18} /> Data Workspace
-          </a>
-          <a className={activeTab === "insights" ? "active" : ""} href="#insights" onClick={() => setActiveTab("insights")}>
+          </DashboardNavLink>
+          <DashboardNavLink tab="insights">
             <BarChart3 size={18} /> Insights
-          </a>
-          {user.role === "student" && (
-            <a className={activeTab === "history" ? "active" : ""} href="#history" onClick={() => setActiveTab("history")}>
+          </DashboardNavLink>
+          {(
+            <DashboardNavLink tab="history">
               <TimelineIcon size={18} /> History
-            </a>
-          )}
-          {user.role === "professor" && (
-            <a className={activeTab === "history" ? "active" : ""} href="#history" onClick={() => setActiveTab("history")}>
-              <TimelineIcon size={18} /> History
-            </a>
+            </DashboardNavLink>
           )}
         </nav>
         <div className="sidebar-support">
@@ -83,7 +94,7 @@ export default function Dashboard() {
           </p>
         </div>
       </aside>
-      <main className="app-main" id="overview">
+      <main className="app-main">
         <header className="app-topbar">
           <BrandLogo className="mobile-brand" to="/dashboard" />
           <div className="account-menu">
@@ -103,20 +114,26 @@ export default function Dashboard() {
             </button>
           </div>
         </header>
+        <nav className="mobile-dashboard-nav" aria-label="Dashboard navigation">
+          <DashboardNavLink tab="overview">Overview</DashboardNavLink>
+          <DashboardNavLink tab="data">Data</DashboardNavLink>
+          <DashboardNavLink tab="insights">Insights</DashboardNavLink>
+          <DashboardNavLink tab="history">History</DashboardNavLink>
+        </nav>
 
-        {user.role === "professor" && <ProfessorDashboardView user={user} nextStep={nextStep} />}
-        {user.role === "administrator" && <AdminDashboardView user={user} nextStep={nextStep} />}
+        {user.role === "professor" && <ProfessorDashboardView user={user} nextStep={nextStep} activeTab={activeTab} />}
+        {user.role === "administrator" && <AdminDashboardView user={user} nextStep={nextStep} activeTab={activeTab} />}
         
-        {/* Hindi ko muna alisin -Oli*/}
-        <section className="dashboard-intro">
+        {user.role === "student" && activeTab === "overview" && <>
+        <section className="dashboard-intro" id="overview">
           <p className="dashboard-eyebrow">
             {user.institution || "Your academic workspace"}
           </p>
           <h1>Good to see you, {user.fullName.split(" ")[0]}.</h1>
           <p>
-            Start by preparing your approved data. When it’s ready, you’ll see a
-            clear view of academic trends and students who may benefit from
-            support.
+            Your personal academic outlook will appear here once your
+            institution connects approved data. Your dashboard only shows your
+            own record and support information.
           </p>
         </section>
         <section className="dashboard-summary" aria-label="Workspace status">
@@ -126,7 +143,7 @@ export default function Dashboard() {
             </span>
             <div>
               <strong>—</strong>
-              <small>Students in scope</small>
+              <small>Your enrolled courses</small>
             </div>
           </article>
           <article>
@@ -135,7 +152,7 @@ export default function Dashboard() {
             </span>
             <div>
               <strong>—</strong>
-              <small>Signals to review</small>
+              <small>Your support signals</small>
             </div>
           </article>
           <article>
@@ -144,11 +161,12 @@ export default function Dashboard() {
             </span>
             <div>
               <strong>Not connected</strong>
-              <small>Data workspace</small>
+              <small>Academic record</small>
             </div>
           </article>
         </section>
-        <section className="workspace-section" id="data">
+        </>}
+        {user.role === "student" && activeTab === "data" && <section className="workspace-section" id="data">
           <div className="section-heading">
             <div>
               <p className="dashboard-eyebrow">Your next step</p>
@@ -174,15 +192,18 @@ export default function Dashboard() {
               </small>
             </div>
           </div>
-        </section>
-        <section className="dashboard-guidance" id="insights">
+        </section>}
+        {user.role === "student" && activeTab === "insights" && <section className="dashboard-guidance" id="insights">
           <ShieldCheck size={21} />
           <p>
-            <strong>Keep the human in the loop.</strong> Risk scores and
-            forecasts are decision-support tools. Use them with student context,
-            professional judgment, and appropriate support processes.
+            <strong>Your forecast is a guide, not a judgment.</strong> Use it
+            to start a conversation with your professor or adviser and to find
+            support early when you need it.
           </p>
-        </section>
+        </section>}
+        {user.role === "student" && activeTab === "history" && <HistoryView user={user} nextStep={nextStep} />}
+        {user.role === "professor" && activeTab === "history" && <HistoryView user={user} nextStep={nextStep} />}
+        {user.role === "administrator" && activeTab === "history" && <HistoryView user={user} nextStep={nextStep} />}
       </main>
     </div>
   );

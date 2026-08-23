@@ -5,6 +5,7 @@ const axios = require('axios');
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_TIME_MS = 15 * 60 * 1000; // 15 minutes
+const VERIFICATION_TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 const publicUser = (user) => ({
   id: user._id,
@@ -12,7 +13,56 @@ const publicUser = (user) => ({
   email: user.email,
   role: user.role,
   institution: user.institution,
+  emailVerified: user.emailVerified,
 });
+
+const createVerificationEmail = (verifyUrl) => `
+  <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
+    <h1 style="color: #0d47a1;">Verify your EduForecaster email</h1>
+    <p>Confirm your email address to activate your account and sign in.</p>
+    <p>
+      <a href="${verifyUrl}" style="display: inline-block; padding: 12px 20px; background: #0d47a1; color: #ffffff; border-radius: 4px; text-decoration: none; font-weight: 600;">
+        Verify email address
+      </a>
+    </p>
+    <p>This link expires in 24 hours. If you did not create an account, you can safely ignore this email.</p>
+  </div>
+`;
+
+const createEmailVerificationToken = (user) => {
+  const token = crypto.randomBytes(32).toString('hex');
+  user.emailVerificationToken = crypto.createHash('sha256').update(token).digest('hex');
+  user.emailVerificationExpires = new Date(Date.now() + VERIFICATION_TOKEN_LIFETIME_MS);
+  return token;
+};
+
+const sendVerificationEmail = async (user, token) => {
+  if (!process.env.BREVO_API_KEY || !process.env.BREVO_SENDER_EMAIL) {
+    throw new Error('Email verification is not configured. Please contact support.');
+  }
+
+  const clientOrigin = (process.env.CLIENT_ORIGIN || 'http://localhost:3000').replace(/\/$/, '');
+  const verifyUrl = `${clientOrigin}/verify-email/${token}`;
+  await axios.post(
+    'https://api.brevo.com/v3/smtp/email',
+    {
+      sender: {
+        email: process.env.BREVO_SENDER_EMAIL,
+        name: process.env.BREVO_SENDER_NAME || 'EduForecaster',
+      },
+      to: [{ email: user.email, name: user.fullName }],
+      subject: 'Verify your EduForecaster email address',
+      htmlContent: createVerificationEmail(verifyUrl),
+    },
+    {
+      headers: {
+        'api-key': process.env.BREVO_API_KEY,
+        accept: 'application/json',
+        'content-type': 'application/json',
+      },
+    }
+  );
+};
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -20,7 +70,7 @@ exports.register = async (req, res, next) => {
   try {
     const { fullName, email, institution, role, password } = req.body;
 
-    if (!fullName || !email || !password || !role) {
+    if (!fullName || !email || !institution || !password || !role) {
       return res.status(400).json({ message: 'Missing required fields.' });
     }
     if (password.length < 8) {
@@ -36,6 +86,10 @@ exports.register = async (req, res, next) => {
         .json({ message: 'An account with this email already exists.' });
     }
 
+    if (!process.env.BREVO_API_KEY || !process.env.BREVO_SENDER_EMAIL) {
+      return res.status(503).json({ message: 'Email verification is temporarily unavailable. Please try again later.' });
+    }
+
     const user = await User.create({
       fullName,
       email,
@@ -44,8 +98,16 @@ exports.register = async (req, res, next) => {
       password,
     });
 
-    const token = generateToken(user._id);
-    res.status(201).json({ token, user: publicUser(user) });
+    try {
+      const verificationToken = createEmailVerificationToken(user);
+      await user.save({ validateBeforeSave: false });
+      await sendVerificationEmail(user, verificationToken);
+    } catch (error) {
+      await user.deleteOne();
+      throw error;
+    }
+
+    res.status(201).json({ message: 'Account created. Check your email to verify your address before signing in.' });
   } catch (err) {
     next(err);
   }
@@ -92,6 +154,13 @@ exports.login = async (req, res, next) => {
       return res.status(401).json(invalidMsg);
     }
 
+    if (!user.emailVerified) {
+      return res.status(403).json({
+        message: 'Verify your email address before signing in.',
+        code: 'EMAIL_NOT_VERIFIED',
+      });
+    }
+
     // Successful login — reset lockout counters
     user.failedLoginAttempts = 0;
     user.lockUntil = null;
@@ -99,6 +168,52 @@ exports.login = async (req, res, next) => {
 
     const token = generateToken(user._id);
     res.status(200).json({ token, user: publicUser(user) });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Verify an email address using a one-time token
+// @route   POST /api/auth/verify-email/:token
+exports.verifyEmail = async (req, res, next) => {
+  try {
+    const emailVerificationToken = crypto
+      .createHash('sha256')
+      .update(req.params.token)
+      .digest('hex');
+    const user = await User.findOne({
+      emailVerificationToken,
+      emailVerificationExpires: { $gt: new Date() },
+    }).select('+emailVerificationToken +emailVerificationExpires');
+
+    if (!user) {
+      return res.status(400).json({ message: 'This verification link is invalid or has expired.' });
+    }
+
+    user.emailVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+    res.status(200).json({ message: 'Email verified. You can now sign in.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Resend an email verification link
+// @route   POST /api/auth/resend-verification
+exports.resendVerification = async (req, res, next) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    if (email) {
+      const user = await User.findOne({ email });
+      if (user && !user.emailVerified) {
+        const verificationToken = createEmailVerificationToken(user);
+        await user.save({ validateBeforeSave: false });
+        await sendVerificationEmail(user, verificationToken);
+      }
+    }
+    res.status(200).json({ message: 'If an unverified account exists, a new verification link has been sent.' });
   } catch (err) {
     next(err);
   }

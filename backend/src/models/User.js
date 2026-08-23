@@ -23,6 +23,9 @@ const userSchema = new mongoose.Schema(
       minlength: 8,
       select: false, // never returned by default queries
     },
+    emailVerified: { type: Boolean, default: false },
+    emailVerificationToken: { type: String, select: false },
+    emailVerificationExpires: { type: Date, select: false },
     // Basic account-lockout support, layered on top of the route-level
     // rate limiter in Server.js for defense in depth.
     failedLoginAttempts: { type: Number, default: 0 },

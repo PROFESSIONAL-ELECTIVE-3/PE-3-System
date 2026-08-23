@@ -95,6 +95,9 @@
 .mobile-brand {
   display: none;
 }
+.mobile-dashboard-nav {
+  display: none;
+}
 .account-menu {
   display: flex;
   align-items: center;
@@ -318,6 +321,26 @@
   }
   .app-topbar {
     justify-content: space-between;
+  }
+  .mobile-dashboard-nav {
+    display: flex;
+    gap: 0.45rem;
+    overflow-x: auto;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e3eaf1;
+  }
+  .mobile-dashboard-nav a {
+    flex: 0 0 auto;
+    padding: 0.42rem 0.7rem;
+    border-radius: 999px;
+    color: #526b82;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .mobile-dashboard-nav a.active {
+    background: #ddebfc;
+    color: #0d4d9c;
   }
   .dashboard-intro {
     padding-top: 3rem;

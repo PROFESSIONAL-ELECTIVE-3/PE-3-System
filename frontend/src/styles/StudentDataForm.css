@@ -1,0 +1,75 @@
+.student-data-loading {
+  color: #62778e;
+  font-size: 0.9rem;
+  padding: 1rem 0;
+}
+.student-data-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  max-width: 620px;
+}
+.student-data-fieldset {
+  border: 1px solid #e3ebf2;
+  border-radius: 9px;
+  padding: 1.2rem 1.3rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+.student-data-fieldset legend {
+  padding: 0 0.4rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #18324b;
+}
+.student-data-hint {
+  margin: -0.2rem 0 0;
+  font-size: 0.78rem;
+  color: #8292a3;
+}
+.student-data-grade-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.yes-no-toggle {
+  display: inline-flex;
+  gap: 0.5rem;
+}
+.yes-no-option {
+  min-width: 72px;
+  padding: 0.5rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid #cbd8e5;
+  background: #fff;
+  color: #2a4b66;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.yes-no-option:hover {
+  border-color: #9ab4ce;
+}
+.yes-no-option.selected {
+  border-color: #0c5bb4;
+  background: #0c5bb4;
+  color: #fff;
+}
+.student-data-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  background: #edfff3;
+  color: #176b38;
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+@media (max-width: 460px) {
+  .student-data-grade-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -17,6 +17,7 @@ import "../styles/Dashboard.css";
 import ProfessorDashboardView from "./ProfessorDashboardView.jsx";
 import AdminDashboardView from "./AdminDashboardView.jsx";
 import HistoryView from "./HistoryView.jsx";
+import StudentDataForm from "./StudentDataForm.jsx";
 
 const nextStepByRole = {
   administrator: {
@@ -169,29 +170,15 @@ export default function Dashboard() {
         {user.role === "student" && activeTab === "data" && <section className="workspace-section" id="data">
           <div className="section-heading">
             <div>
-              <p className="dashboard-eyebrow">Your next step</p>
-              <h2>{nextStep.label}</h2>
-            </div>
-            <span className="setup-badge">Setup required</span>
-          </div>
-          <div className="empty-state">
-            <div className="empty-illustration">
-              <FileUp size={29} />
-            </div>
-            <div>
-              <h3>There’s no academic data here yet.</h3>
-              <p>
-                {nextStep.detail} The workspace will only show records you are
-                authorized to view.
-              </p>
-              <button type="button" className="dashboard-action" disabled>
-                {nextStep.action} <ChevronRight size={17} />
-              </button>
-              <small>
-                Data import is being prepared for this version of EduForecaster.
-              </small>
+              <p className="dashboard-eyebrow">Your data</p>
+              <h2>Tell us about your term</h2>
             </div>
           </div>
+          <p className="dashboard-subtext">
+           This information is used to generate your personal risk forecast.
+           Only you and authorized staff at your institution can see it.
+          </p>
+           <StudentDataForm />
         </section>}
         {user.role === "student" && activeTab === "insights" && <section className="dashboard-guidance" id="insights">
           <ShieldCheck size={21} />

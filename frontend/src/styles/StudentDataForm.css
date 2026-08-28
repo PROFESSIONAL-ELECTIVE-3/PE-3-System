@@ -6,22 +6,83 @@
 .student-data-form {
   display: flex;
   flex-direction: column;
-  gap: 1.6rem;
-  max-width: 620px;
+  gap: 1.25rem;
+  max-width: 700px;
+}
+.student-data-form__intro {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  padding: 1.05rem 1.1rem;
+  border: 1px solid #d8e8f7;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #f5faff, #fbfdff);
+}
+.student-data-form__intro-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 9px;
+  background: #ddebfc;
+  color: #0c5bb4;
+}
+.student-data-form__intro h3 {
+  margin: 0 0 0.25rem;
+  color: #18324b;
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+}
+.student-data-form__intro p {
+  max-width: 530px;
+  margin: 0;
+  color: #62778e;
+  font-size: 0.82rem;
+  line-height: 1.55;
 }
 .student-data-fieldset {
-  border: 1px solid #e3ebf2;
-  border-radius: 9px;
-  padding: 1.2rem 1.3rem 1.4rem;
+  border: 1px solid #dfe9f1;
+  border-radius: 11px;
+  padding: 1.25rem 1.3rem 1.35rem;
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 1.15rem;
+  background: #fff;
 }
 .student-data-fieldset legend {
-  padding: 0 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0 0.45rem;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   color: #18324b;
+}
+.student-data-fieldset legend svg {
+  color: #0c5bb4;
+}
+.student-data-section-description {
+  margin: -0.35rem 0 0.1rem;
+  color: #718399;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+.student-data-form .form-group {
+  gap: 0.5rem;
+}
+.student-data-form .form-group > label {
+  color: #29465f;
+  font-size: 0.82rem;
+}
+.student-data-form input,
+.student-data-form select {
+  min-height: 44px;
+  border-color: #c6d6e5;
+  border-radius: 7px;
+}
+.student-data-form input::placeholder {
+  color: #93a4b5;
 }
 .student-data-hint {
   margin: -0.2rem 0 0;
@@ -34,22 +95,29 @@
   gap: 1rem;
 }
 .yes-no-toggle {
-  display: inline-flex;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 92px));
+  gap: 0.55rem;
 }
 .yes-no-option {
-  min-width: 72px;
+  min-height: 40px;
   padding: 0.5rem 0.9rem;
-  border-radius: 6px;
+  border-radius: 7px;
   border: 1px solid #cbd8e5;
-  background: #fff;
+  background: #fbfdff;
   color: #2a4b66;
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
 }
 .yes-no-option:hover {
-  border-color: #9ab4ce;
+  border-color: #78a4cf;
+  background: #f3f8fd;
+}
+.yes-no-option:focus-visible,
+.student-data-submit-row .dashboard-action:focus-visible {
+  outline: 3px solid rgba(12, 91, 180, 0.25);
+  outline-offset: 2px;
 }
 .yes-no-option.selected {
   border-color: #0c5bb4;
@@ -68,8 +136,105 @@
   font-size: 0.83rem;
   font-weight: 600;
 }
+.student-data-summary {
+  max-width: 700px;
+  overflow: hidden;
+  border: 1px solid #dbe8f2;
+  border-radius: 11px;
+  background: #fff;
+}
+.student-data-summary__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.3rem;
+  border-bottom: 1px solid #e6eef4;
+  background: linear-gradient(120deg, #f5faff, #fff);
+}
+.student-data-summary__header .dashboard-eyebrow { margin-bottom: 0.35rem; }
+.student-data-summary__header h3 { margin: 0; color: #18324b; font-size: 1.08rem; }
+.student-data-summary__header p:last-child { margin: 0.35rem 0 0; color: #64788e; font-size: 0.78rem; }
+.student-data-edit, .student-data-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  min-height: 36px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.student-data-edit { flex: 0 0 auto; padding: 0 0.7rem; border: 1px solid #bdd1e4; background: #fff; color: #0c5bb4; }
+.student-data-edit:hover { border-color: #0c5bb4; background: #f3f8fd; }
+.student-data-summary__grid { display: grid; grid-template-columns: repeat(2, 1fr); }
+.student-data-summary__grid > div { min-height: 78px; padding: 1rem 1.3rem; border-right: 1px solid #edf2f6; border-bottom: 1px solid #edf2f6; }
+.student-data-summary__grid > div:nth-child(2n) { border-right: 0; }
+.student-data-summary__grid span, .student-data-summary__details span { display: block; color: #718399; font-size: 0.72rem; }
+.student-data-summary__grid strong { display: block; margin-top: 0.25rem; color: #29465f; font-size: 0.87rem; }
+.student-data-summary__details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; padding: 1rem 1.3rem; }
+.student-data-summary__details p { margin: 0; }
+.student-data-summary__details strong { display: block; margin-top: 0.2rem; color: #29465f; font-size: 0.78rem; }
+.student-data-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1.05rem;
+  border: 1px solid #e0eaf2;
+  border-radius: 10px;
+  background: #fafcfe;
+}
+.student-data-submit-row p {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.42rem;
+  max-width: 410px;
+  margin: 0;
+  color: #64788e;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+.student-data-submit-row p svg {
+  flex: 0 0 auto;
+  margin-top: 0.05rem;
+  color: #3972a8;
+}
+.student-data-submit-row .dashboard-action {
+  flex: 0 0 auto;
+  min-height: 42px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(12, 86, 171, 0.18);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.student-data-submit-row .dashboard-action:hover:not(:disabled) {
+  background: #09488f;
+  box-shadow: 0 4px 10px rgba(12, 86, 171, 0.24);
+  transform: translateY(-1px);
+}
+.student-data-submit-actions { display: flex; align-items: center; gap: 0.55rem; }
+.student-data-cancel { padding: 0 0.7rem; border: 1px solid #c8d7e5; background: #fff; color: #405d77; }
+.student-data-cancel:hover { border-color: #8daac3; background: #f7fafc; }
 @media (max-width: 460px) {
   .student-data-grade-row {
     grid-template-columns: 1fr;
   }
+  .student-data-form__intro,
+  .student-data-submit-row {
+    padding: 0.9rem;
+  }
+  .student-data-submit-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .student-data-submit-row .dashboard-action {
+    width: 100%;
+    justify-content: center;
+  }
+  .student-data-summary__header { flex-direction: column; }
+  .student-data-summary__grid, .student-data-summary__details { grid-template-columns: 1fr; }
+  .student-data-summary__grid > div, .student-data-summary__grid > div:nth-child(2n) { border-right: 0; }
+  .student-data-summary__details { gap: 0.8rem; }
+  .student-data-submit-actions { width: 100%; }
+  .student-data-cancel { flex: 1; justify-content: center; }
 }

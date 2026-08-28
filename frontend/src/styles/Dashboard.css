@@ -304,6 +304,91 @@
 .dashboard-guidance strong {
   color: #214361;
 }
+.connection-manager {
+  max-width: 700px;
+  margin-top: 1.4rem;
+  padding: 1.2rem;
+  border: 1px solid #dce8f2;
+  border-radius: 10px;
+  background: #fbfdff;
+}
+.connection-manager__heading { display: flex; align-items: center; gap: 0.7rem; }
+.connection-manager__heading .dashboard-eyebrow { margin-bottom: 0.25rem; }
+.connection-manager__heading h3 { margin: 0; color: #18324b; font-size: 1rem; }
+.connection-manager__icon { display: grid; width: 37px; height: 37px; place-items: center; border-radius: 9px; color: #0c5bb4; background: #e5f0ff; }
+.connection-count { margin-left: auto; padding: 0.28rem 0.55rem; border-radius: 99px; background: #fff1d5; color: #926018; font-size: 0.72rem; font-weight: 800; }
+.connection-manager__description { margin: 0.85rem 0 1rem; color: #64788e; font-size: 0.81rem; line-height: 1.55; }
+.connection-directory label { display: block; margin-bottom: 0.4rem; color: #29465f; font-size: 0.78rem; font-weight: 700; }
+.connection-directory > div { display: flex; align-items: center; gap: 0.55rem; padding: 0.38rem 0.7rem; border: 1px solid #c6d6e5; border-radius: 7px; background: #fff; color: #70869b; }
+.connection-directory input { width: 100%; min-width: 0; border: 0; outline: 0; color: #18324b; font: inherit; font-size: 0.83rem; }
+.connection-directory > div:focus-within { border-color: #0c5bb4; box-shadow: 0 0 0 3px rgba(12, 91, 180, 0.12); }
+.connection-search-note { margin: 0.55rem 0 0; color: #718399; font-size: 0.75rem; }
+.professor-search-results { display: grid; gap: 0.45rem; padding: 0; margin: 0.7rem 0 0; list-style: none; }
+.professor-search-results li { display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem; border: 1px solid #e1eaf1; border-radius: 8px; background: #fff; }
+.professor-search-results li > div { margin-right: auto; }
+.professor-search-results strong, .professor-search-results small { display: block; }
+.professor-search-results strong { color: #29465f; font-size: 0.8rem; }
+.professor-search-results small { margin-top: 0.12rem; color: #718399; font-size: 0.7rem; }
+.connection-message { margin: 0.8rem 0 0; padding: 0.55rem 0.65rem; border-radius: 6px; font-size: 0.78rem; }
+.connection-message--error { color: #a63834; background: #fff5f4; }
+.connection-message--success { color: #176b38; background: #edfff3; }
+.connection-empty { margin: 1rem 0 0; color: #718399; font-size: 0.8rem; }
+.connection-list { display: grid; gap: 0.55rem; padding: 0; margin: 1rem 0 0; list-style: none; }
+.connection-list li { display: flex; align-items: center; gap: 0.65rem; padding: 0.7rem; border: 1px solid #e1eaf1; border-radius: 8px; background: #fff; }
+.connection-avatar { display: grid; flex: 0 0 auto; width: 32px; height: 32px; place-items: center; border-radius: 50%; color: #0d4d9c; background: #ddebfc; font-size: 0.67rem; font-weight: 800; }
+.connection-person { min-width: 0; margin-right: auto; }
+.connection-person strong, .connection-person small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.connection-person strong { color: #29465f; font-size: 0.8rem; }
+.connection-person small { margin-top: 0.12rem; color: #718399; font-size: 0.7rem; }
+.connection-status { display: inline-flex; align-items: center; gap: 0.25rem; flex: 0 0 auto; padding: 0.28rem 0.45rem; border-radius: 99px; font-size: 0.68rem; font-weight: 700; }
+.connection-status--pending { color: #926018; background: #fff4da; }
+.connection-status--accepted { color: #176b38; background: #eaf9f0; }
+.connection-status--declined { color: #8a5050; background: #faeeee; }
+.connection-actions { display: flex; align-items: center; gap: 0.35rem; }
+.connection-button, .connection-remove { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; border: 0; border-radius: 5px; cursor: pointer; font-size: 0.72rem; font-weight: 700; }
+.connection-button { min-height: 30px; padding: 0 0.5rem; }
+.connection-button--accept { background: #eaf9f0; color: #176b38; }
+.connection-button--decline, .connection-remove { background: #fff1f0; color: #a34440; }
+.connection-remove { width: 30px; height: 30px; }
+.connection-button:disabled, .connection-remove:disabled { cursor: wait; opacity: 0.55; }
+.connected-students { margin-top: 1.4rem; }
+.connected-students-loading, .connected-students-error { margin: 1.4rem 0 0; color: #64788e; font-size: 0.84rem; }
+.connected-students-error { padding: 0.7rem; border-radius: 7px; background: #fff5f4; color: #a63834; }
+.connected-students__heading { display: flex; align-items: center; gap: 0.7rem; }
+.connected-students__icon { display: grid; width: 37px; height: 37px; place-items: center; border-radius: 9px; background: #e5f0ff; color: #0c5bb4; }
+.connected-students__heading .dashboard-eyebrow { margin-bottom: 0.24rem; }
+.connected-students__heading h3 { margin: 0; color: #18324b; font-size: 1rem; }
+.connected-students__heading > span { margin-left: auto; padding: 0.28rem 0.55rem; border-radius: 99px; background: #eaf9f0; color: #176b38; font-size: 0.7rem; font-weight: 800; }
+.connected-students__description { max-width: 680px; margin: 0.85rem 0 1rem; color: #64788e; font-size: 0.81rem; line-height: 1.55; }
+.connected-students-empty { display: flex; align-items: flex-start; gap: 0.55rem; padding: 1rem; border: 1px dashed #cbd9e6; border-radius: 8px; color: #64788e; background: #fbfdff; }
+.connected-students-empty svg { color: #3972a8; flex: 0 0 auto; }
+.connected-students-empty p { margin: 0; font-size: 0.8rem; line-height: 1.5; }
+.connected-students-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.8rem; }
+.connected-student-card { overflow: hidden; border: 1px solid #e0eaf2; border-radius: 9px; background: #fff; }
+.connected-student-card header { display: flex; align-items: center; gap: 0.6rem; padding: 0.85rem; border-bottom: 1px solid #edf2f6; }
+.connected-student-card h4 { margin: 0; color: #29465f; font-size: 0.85rem; }
+.connected-student-card header p { margin: 0.15rem 0 0; color: #718399; font-size: 0.7rem; }
+.connected-student-card__summary { display: grid; grid-template-columns: 1fr 1fr; }
+.connected-student-card__summary > div { padding: 0.72rem 0.85rem; border-right: 1px solid #edf2f6; border-bottom: 1px solid #edf2f6; }
+.connected-student-card__summary > div:nth-child(2n) { border-right: 0; }
+.connected-student-card__summary span, .connected-student-card__details span { display: block; color: #718399; font-size: 0.67rem; }
+.connected-student-card__summary strong { display: block; margin-top: 0.2rem; color: #29465f; font-size: 0.76rem; }
+.connected-student-card__details summary { display: flex; align-items: center; gap: 0.35rem; padding: 0.78rem 0.85rem; color: #0c5bb4; cursor: pointer; font-size: 0.74rem; font-weight: 700; }
+.connected-student-card__details > div { display: grid; gap: 0.55rem; padding: 0 0.85rem 0.85rem; }
+.connected-student-card__details p { margin: 0; }
+.connected-student-card__details strong { display: block; margin-top: 0.16rem; color: #29465f; font-size: 0.74rem; }
+.connected-student-card__empty { display: flex; gap: 0.5rem; padding: 1rem; color: #718399; }
+.connected-student-card__empty svg { flex: 0 0 auto; color: #3972a8; }
+.connected-student-card__empty p { margin: 0; font-size: 0.77rem; line-height: 1.5; }
+.professor-overview-connections { max-width: 720px; padding: 1.25rem; border: 1px solid #dbe8f2; border-radius: 10px; background: #fff; }
+.professor-overview-connections .dashboard-eyebrow { margin-bottom: 0.28rem; }
+.professor-overview-connections h2 { margin: 0; color: #18324b; font-size: 1.02rem; }
+.professor-overview-connections ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.55rem; padding: 0; margin: 1rem 0 0; list-style: none; }
+.professor-overview-connections li { display: flex; align-items: center; gap: 0.55rem; padding: 0.65rem; border: 1px solid #e4edf4; border-radius: 8px; background: #fbfdff; }
+.professor-overview-connections li strong, .professor-overview-connections li small { display: block; }
+.professor-overview-connections li strong { color: #29465f; font-size: 0.78rem; }
+.professor-overview-connections li small, .professor-overview-connections__more { margin-top: 0.14rem; color: #718399; font-size: 0.7rem; }
+.professor-overview-connections__more { margin-bottom: 0; }
 @media (max-width: 780px) {
   .app-shell {
     display: block;
@@ -359,6 +444,10 @@
   .dashboard-guidance {
     align-items: flex-start;
   }
+  .connection-list li { align-items: flex-start; flex-wrap: wrap; }
+  .connection-status { margin-left: auto; }
+  .connection-actions { width: 100%; justify-content: flex-end; }
+  .professor-overview-connections ul { grid-template-columns: 1fr; }
 }
 @media (max-width: 460px) {
   .empty-state {

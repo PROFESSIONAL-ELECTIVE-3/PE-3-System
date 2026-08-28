@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Save } from "lucide-react";
+import { CheckCircle2, CircleHelp, GraduationCap, Landmark, Pencil, Save } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import "../styles/StudentDataForm.css";
 
@@ -16,6 +16,18 @@ const EMPTY_FORM = {
 const boolToString = (value) =>
   value === true ? "yes" : value === false ? "no" : "";
 
+const recordToForm = (record) => ({
+  educationalSpecialNeeds: boolToString(record.educationalSpecialNeeds),
+  tuitionFeesUpToDate: boolToString(record.tuitionFeesUpToDate),
+  scholarshipHolder: boolToString(record.scholarshipHolder),
+  course: record.course || "",
+  attendance: record.attendance || "",
+  firstSemesterGrade: record.firstSemesterGrade ?? "",
+  secondSemesterGrade: record.secondSemesterGrade ?? "",
+});
+
+const yesNoLabel = (value) => value ? "Yes" : "No";
+
 export default function StudentDataForm() {
   const { apiFetch } = useAuth();
   const [formData, setFormData] = useState(EMPTY_FORM);
@@ -24,28 +36,32 @@ export default function StudentDataForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
   const [savedAt, setSavedAt] = useState(null);
+  const [savedRecord, setSavedRecord] = useState(null);
+  const [isEditing, setIsEditing] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
     (async () => {
       try {
         const response = await apiFetch("/api/students/me");
-        if (!response.ok) throw new Error("Could not load your data.");
+        if (!response.ok) {
+          throw new Error(
+            response.status === 401
+              ? "Your student data could not be loaded. Please refresh the page and try again."
+              : "Could not load your data.",
+          );
+        }
         const data = await response.json();
         if (isMounted && data.record) {
-          setFormData({
-            educationalSpecialNeeds: boolToString(data.record.educationalSpecialNeeds),
-            tuitionFeesUpToDate: boolToString(data.record.tuitionFeesUpToDate),
-            scholarshipHolder: boolToString(data.record.scholarshipHolder),
-            course: data.record.course || "",
-            attendance: data.record.attendance || "",
-            firstSemesterGrade: data.record.firstSemesterGrade ?? "",
-            secondSemesterGrade: data.record.secondSemesterGrade ?? "",
-          });
+          setFormData(recordToForm(data.record));
+          setSavedRecord(data.record);
+          setIsEditing(false);
           setSavedAt(data.record.updatedAt || data.record.submittedAt || null);
         }
-      } catch {
-        // No record yet, or a transient error — leave the form blank/editable.
+      } catch (error) {
+        // No record yet leaves the form blank. Other failures are shown without
+        // logging the user out of the dashboard.
+        if (isMounted) setServerError(error.message || "Could not load your data.");
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -116,7 +132,11 @@ export default function StudentDataForm() {
         throw new Error(data.message || "Could not save your information.");
       }
 
-      setSavedAt(data.record?.updatedAt || new Date().toISOString());
+      const record = data.record || { ...formData };
+      setSavedRecord(record);
+      setFormData(recordToForm(record));
+      setSavedAt(record.updatedAt || new Date().toISOString());
+      setIsEditing(false);
     } catch (err) {
       setServerError(err.message || "Something went wrong. Please try again.");
     } finally {
@@ -151,8 +171,54 @@ export default function StudentDataForm() {
     return <p className="student-data-loading">Loading your information…</p>;
   }
 
+  if (savedRecord && !isEditing) {
+    const lastUpdatedAt = savedAt || savedRecord.updatedAt || savedRecord.submittedAt;
+    const lastUpdated = lastUpdatedAt && new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(lastUpdatedAt));
+
+    return (
+      <section className="student-data-summary" aria-labelledby="student-data-summary-title">
+        <div className="student-data-summary__header">
+          <div>
+            <p className="dashboard-eyebrow">Your saved record</p>
+            <h3 id="student-data-summary-title">Academic information saved</h3>
+            <p>{lastUpdated ? `Last updated ${lastUpdated}` : "Your information is up to date."}</p>
+          </div>
+          <button type="button" className="student-data-edit" onClick={() => { setIsEditing(true); setSavedAt(null); setServerError(""); }}>
+            <Pencil size={15} /> Edit information
+          </button>
+        </div>
+        <div className="student-data-summary__grid">
+          <div><span>Course</span><strong>{savedRecord.course}</strong></div>
+          <div><span>Attendance</span><strong>{savedRecord.attendance === "daytime" ? "Daytime" : "Evening"}</strong></div>
+          <div><span>1st semester grade</span><strong>{savedRecord.firstSemesterGrade} / 20</strong></div>
+          <div><span>2nd semester grade</span><strong>{savedRecord.secondSemesterGrade} / 20</strong></div>
+        </div>
+        <div className="student-data-summary__details">
+          <p><span>Educational special needs</span><strong>{yesNoLabel(savedRecord.educationalSpecialNeeds)}</strong></p>
+          <p><span>Tuition fees up to date</span><strong>{yesNoLabel(savedRecord.tuitionFeesUpToDate)}</strong></p>
+          <p><span>Scholarship holder</span><strong>{yesNoLabel(savedRecord.scholarshipHolder)}</strong></p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <form className="student-data-form" onSubmit={handleSubmit} noValidate>
+      <div className="student-data-form__intro">
+        <div className="student-data-form__intro-icon" aria-hidden="true">
+          <GraduationCap size={20} />
+        </div>
+        <div>
+          <h3>Build your academic snapshot</h3>
+          <p>
+            Answer a few questions about your current term. You can update this
+            information whenever your circumstances change.
+          </p>
+        </div>
+      </div>
       {serverError && (
         <div className="login-alert" role="alert">
           {serverError}
@@ -165,7 +231,13 @@ export default function StudentDataForm() {
       )}
 
       <fieldset className="student-data-fieldset">
-        <legend>Socio-economic characteristics</legend>
+        <legend>
+          <Landmark size={16} aria-hidden="true" />
+          Personal circumstances
+        </legend>
+        <p className="student-data-section-description">
+          These details help put your academic experience in context.
+        </p>
         <YesNoField
           name="educationalSpecialNeeds"
           label="Do you have educational special needs?"
@@ -181,7 +253,13 @@ export default function StudentDataForm() {
       </fieldset>
 
       <fieldset className="student-data-fieldset">
-        <legend>Academic characteristics</legend>
+        <legend>
+          <GraduationCap size={16} aria-hidden="true" />
+          Academic details
+        </legend>
+        <p className="student-data-section-description">
+          Share the course and results from your current term.
+        </p>
 
         <div className="form-group">
           <label htmlFor="course">Course</label>
@@ -251,9 +329,18 @@ export default function StudentDataForm() {
         </div>
       </fieldset>
 
-      <button type="submit" className="dashboard-action" disabled={isSubmitting}>
-        <Save size={16} /> {isSubmitting ? "Saving…" : "Save my information"}
-      </button>
+      <div className="student-data-submit-row">
+        <p>
+          <CircleHelp size={15} aria-hidden="true" /> Your information is only
+          visible to you and authorized staff.
+        </p>
+        <div className="student-data-submit-actions">
+          {savedRecord && <button type="button" className="student-data-cancel" onClick={() => { setFormData(recordToForm(savedRecord)); setErrors({}); setServerError(""); setIsEditing(false); }}>Cancel</button>}
+          <button type="submit" className="dashboard-action" disabled={isSubmitting}>
+            <Save size={16} /> {isSubmitting ? "Saving…" : savedRecord ? "Save changes" : "Save my information"}
+          </button>
+        </div>
+      </div>
     </form>
   );
 }

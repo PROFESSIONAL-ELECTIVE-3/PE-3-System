@@ -71,6 +71,8 @@ export function AuthProvider({ children }) {
       if (session?.token)
         headers.set("Authorization", `Bearer ${session.token}`);
       return fetch(url, { ...options, headers }).then((response) => {
+        // An invalid/expired token cannot access protected data. Clear it so
+        // the protected-route flow returns the user to sign in cleanly.
         if (response.status === 401) logout();
         return response;
       });

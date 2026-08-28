@@ -18,6 +18,7 @@ import ProfessorDashboardView from "./ProfessorDashboardView.jsx";
 import AdminDashboardView from "./AdminDashboardView.jsx";
 import HistoryView from "./HistoryView.jsx";
 import StudentDataForm from "./StudentDataForm.jsx";
+import ConnectionManager from "../components/ConnectionManager.jsx";
 
 const nextStepByRole = {
   administrator: {
@@ -49,6 +50,7 @@ export default function Dashboard() {
     "/dashboard/data": "data",
     "/dashboard/insights": "insights",
     "/dashboard/history": "history",
+    "/dashboard/connections": "connections",
   };
   const activeTab = tabByPath[location.pathname] || "overview";
   const nextStep = nextStepByRole[user.role] ?? nextStepByRole.student;
@@ -80,6 +82,9 @@ export default function Dashboard() {
           <DashboardNavLink tab="insights">
             <BarChart3 size={18} /> Insights
           </DashboardNavLink>
+          {(user.role === "student" || user.role === "professor") && <DashboardNavLink tab="connections">
+            <UsersRound size={18} /> {user.role === "student" ? "My Professor" : "Students"}
+          </DashboardNavLink>}
           {(
             <DashboardNavLink tab="history">
               <TimelineIcon size={18} /> History
@@ -119,6 +124,7 @@ export default function Dashboard() {
           <DashboardNavLink tab="overview">Overview</DashboardNavLink>
           <DashboardNavLink tab="data">Data</DashboardNavLink>
           <DashboardNavLink tab="insights">Insights</DashboardNavLink>
+          {(user.role === "student" || user.role === "professor") && <DashboardNavLink tab="connections">{user.role === "student" ? "Professor" : "Students"}</DashboardNavLink>}
           <DashboardNavLink tab="history">History</DashboardNavLink>
         </nav>
 
@@ -179,6 +185,15 @@ export default function Dashboard() {
            Only you and authorized staff at your institution can see it.
           </p>
            <StudentDataForm />
+        </section>}
+        {(user.role === "student" || user.role === "professor") && activeTab === "connections" && <section className="workspace-section" id="connections">
+          <div className="section-heading">
+            <div>
+              <p className="dashboard-eyebrow">Academic support</p>
+              <h2>{user.role === "student" ? "My professor connections" : "Manage student connections"}</h2>
+            </div>
+          </div>
+          <ConnectionManager />
         </section>}
         {user.role === "student" && activeTab === "insights" && <section className="dashboard-guidance" id="insights">
           <ShieldCheck size={21} />

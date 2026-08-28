@@ -7,6 +7,25 @@ const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_TIME_MS = 15 * 60 * 1000; // 15 minutes
 const VERIFICATION_TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
+const getClientUrl = () => {
+  // CLIENT_ORIGIN may contain several comma-separated origins for CORS. A
+  // verification email, however, must contain one public URL only.
+  const configuredUrl = process.env.PUBLIC_APP_URL || process.env.CLIENT_ORIGIN || 'http://localhost:3000';
+  return configuredUrl.split(',')[0].trim().replace(/\/$/, '');
+};
+
+const getBrevoErrorMessage = (error) => {
+  const status = error.response?.status;
+  const detail = error.response?.data?.message || error.message;
+
+  console.error('Unable to send verification email:', { status, detail });
+
+  if (status === 401 || status === 403) {
+    return 'Email delivery is unavailable because the email service configuration needs attention. Please try again later.';
+  }
+  return 'We could not send a verification email. Please try again later.';
+};
+
 const publicUser = (user) => ({
   id: user._id,
   fullName: user.fullName,
@@ -41,8 +60,7 @@ const sendVerificationEmail = async (user, token) => {
     throw new Error('Email verification is not configured. Please contact support.');
   }
 
-  const clientOrigin = (process.env.CLIENT_ORIGIN || 'http://localhost:3000').replace(/\/$/, '');
-  const verifyUrl = `${clientOrigin}/verify-email/${token}`;
+  const verifyUrl = `${getClientUrl()}/verify-email/${token}`;
   await axios.post(
     'https://api.brevo.com/v3/smtp/email',
     {
@@ -68,7 +86,11 @@ const sendVerificationEmail = async (user, token) => {
 // @route   POST /api/auth/register
 exports.register = async (req, res, next) => {
   try {
-    const { fullName, email, institution, role, password } = req.body;
+    const fullName = String(req.body.fullName || '').trim();
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const institution = String(req.body.institution || '').trim();
+    const role = String(req.body.role || '').trim();
+    const password = String(req.body.password || '');
 
     if (!fullName || !email || !institution || !password || !role) {
       return res.status(400).json({ message: 'Missing required fields.' });
@@ -78,8 +100,14 @@ exports.register = async (req, res, next) => {
         .status(400)
         .json({ message: 'Password must be at least 8 characters.' });
     }
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ message: 'Enter a valid email address.' });
+    }
+    if (!['student', 'professor', 'administrator'].includes(role)) {
+      return res.status(400).json({ message: 'Select a valid account role.' });
+    }
 
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    const existing = await User.findOne({ email });
     if (existing) {
       return res
         .status(409)
@@ -104,7 +132,7 @@ exports.register = async (req, res, next) => {
       await sendVerificationEmail(user, verificationToken);
     } catch (error) {
       await user.deleteOne();
-      throw error;
+      return res.status(503).json({ message: getBrevoErrorMessage(error) });
     }
 
     res.status(201).json({ message: 'Account created. Check your email to verify your address before signing in.' });
@@ -210,7 +238,14 @@ exports.resendVerification = async (req, res, next) => {
       if (user && !user.emailVerified) {
         const verificationToken = createEmailVerificationToken(user);
         await user.save({ validateBeforeSave: false });
-        await sendVerificationEmail(user, verificationToken);
+        try {
+          await sendVerificationEmail(user, verificationToken);
+        } catch (error) {
+          getBrevoErrorMessage(error);
+          return res.status(503).json({
+            message: 'Email delivery is temporarily unavailable. Please try again later.',
+          });
+        }
       }
     }
     res.status(200).json({ message: 'If an unverified account exists, a new verification link has been sent.' });

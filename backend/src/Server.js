@@ -26,7 +26,10 @@ app.use(helmet());
 app.use(express.json({ limit: '10kb' })); 
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173').split(',');
+const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 app.use(
   cors({
     origin: allowedOrigins,
@@ -63,7 +66,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/institutions', institutionRoutes);
-app.use('/api/students', studentRecordRoutes);   // add
+app.use('/api/students', studentRecordRoutes);   
 app.use('/api/connections', connectionRoutes);
 app.use('/api/ml', mlRoutes);
 

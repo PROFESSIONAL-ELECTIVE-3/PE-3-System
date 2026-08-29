@@ -37,8 +37,8 @@ const nextStepByRole = {
   student: {
     label: "Review your academic record",
     detail:
-      "Your personal outlook will appear after your institution connects approved data. You can view your own record, but only authorized staff can manage institutional data.",
-    action: "No action required",
+      "Save your academic record, then run a personal forecast whenever you want to check your outlook.",
+    action: "Save your record",
   },
 };
 
@@ -139,9 +139,9 @@ export default function Dashboard() {
           </p>
           <h1>Good to see you, {user.fullName.split(" ")[0]}.</h1>
           <p>
-            Your personal academic outlook will appear here once your
-            institution connects approved data. Your dashboard only shows your
-            own record and support information.
+            Save your academic record, run a forecast when you are ready, and
+            revisit your History to track changes over time. Your dashboard
+            only shows your own record and support information.
           </p>
         </section>
         <section className="dashboard-summary" aria-label="Workspace status">
@@ -168,8 +168,8 @@ export default function Dashboard() {
               <Database size={19} />
             </span>
             <div>
-              <strong>Not connected</strong>
-              <small>Academic record</small>
+              <strong>Ready</strong>
+              <small>Academic record workspace</small>
             </div>
           </article>
         </section>

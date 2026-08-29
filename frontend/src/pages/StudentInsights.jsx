@@ -1,65 +1,60 @@
 import { useEffect, useState } from "react";
-import { BarChart3, ShieldCheck } from "lucide-react";
+import { BarChart3, Play, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const scheduleToApi = (attendance) => attendance === "day" ? "day" : "night";
 
 export default function StudentInsights() {
   const { apiFetch } = useAuth();
-  const [state, setState] = useState({ loading: true, error: "", prediction: null, hasRecord: false });
+  const [record, setRecord] = useState(null);
+  const [loadingRecord, setLoadingRecord] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState("");
+  const [prediction, setPrediction] = useState(null);
+  const [insight, setInsight] = useState(null);
+  const [gettingInsight, setGettingInsight] = useState(false);
 
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        const recordResponse = await apiFetch("/api/students/me");
-        const { record } = await recordResponse.json();
-        if (!recordResponse.ok) throw new Error("Your academic record could not be loaded.");
-        if (!record || !record.previousSemesterUnitsEnrolled) {
-          if (active) setState({ loading: false, error: "", prediction: null, hasRecord: false });
-          return;
-        }
-
-        const response = await apiFetch("/api/ml/predict", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            educationalSpecialNeeds: record.educationalSpecialNeeds,
-            tuitionFeeStatus: record.tuitionFeeStatus,
-            scholarshipStatus: record.scholarshipStatus,
-            studySchedule: scheduleToApi(record.attendance),
-            previousSemesterUnitsEnrolled: record.previousSemesterUnitsEnrolled,
-            previousSemesterUnitsApproved: record.previousSemesterUnitsApproved,
-            previousSemesterGrade: record.previousSemesterGrade,
-            gradeMaximum: record.gradeMaximum || 20,
-          }),
-        });
-        const prediction = await response.json();
-        if (!response.ok) throw new Error(prediction.detail || prediction.message || "Your forecast could not be generated.");
-        if (active) setState({ loading: false, error: "", prediction, hasRecord: true });
-      } catch (error) {
-        if (active) setState({ loading: false, error: error.message || "Your forecast could not be generated.", prediction: null, hasRecord: true });
-      }
+        const response = await apiFetch("/api/students/me");
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Your academic record could not be loaded.");
+        if (active) setRecord(data.record);
+      } catch (requestError) {
+        if (active) setError(requestError.message || "Your academic record could not be loaded.");
+      } finally { if (active) setLoadingRecord(false); }
     })();
     return () => { active = false; };
   }, [apiFetch]);
 
-  if (state.loading) return <p className="student-data-loading">Generating your forecast…</p>;
+  const runForecast = async () => {
+    if (!record) return;
+    setRunning(true); setError("");
+    try {
+      const response = await apiFetch("/api/ml/predict", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ educationalSpecialNeeds: record.educationalSpecialNeeds, tuitionFeeStatus: record.tuitionFeeStatus, scholarshipStatus: record.scholarshipStatus, studySchedule: scheduleToApi(record.attendance), previousSemesterUnitsEnrolled: record.previousSemesterUnitsEnrolled, previousSemesterUnitsApproved: record.previousSemesterUnitsApproved, previousSemesterGrade: record.previousSemesterGrade, gradeMaximum: record.gradeMaximum || 20 }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || data.message || "Your forecast could not be generated.");
+      setPrediction(data); setInsight(null);
+    } catch (requestError) { setError(requestError.message || "Your forecast could not be generated."); }
+    finally { setRunning(false); }
+  };
 
-  if (!state.hasRecord) return <section className="workspace-section"><div className="section-heading"><div><p className="dashboard-eyebrow">Your forecast</p><h2>Add your semester record first</h2></div></div><p className="dashboard-subtext">Save your study schedule, units, and previous-semester grade in Data Workspace to generate a forecast.</p></section>;
+  const getSupportInsight = async () => {
+    setGettingInsight(true); setError("");
+    try {
+      const response = await apiFetch("/api/insights/student-support", { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Support suggestions could not be generated.");
+      setInsight(data.insight);
+    } catch (requestError) { setError(requestError.message || "Support suggestions could not be generated."); }
+    finally { setGettingInsight(false); }
+  };
 
-  if (state.error) return <section className="workspace-section"><div className="section-heading"><div><p className="dashboard-eyebrow">Your forecast</p><h2>Forecast unavailable</h2></div></div><div className="login-alert" role="alert">{state.error}</div><p className="dashboard-subtext">Make sure the ML service is running, then try again.</p></section>;
-
-  const { prediction } = state;
-  const completionPercent = Math.round(prediction.completionRate * 100);
-  const dropoutPercent = Math.round(prediction.dropoutProbability * 100);
-  return <section className="workspace-section" id="insights">
-    <div className="section-heading"><div><p className="dashboard-eyebrow">Your forecast</p><h2>Next-semester outlook</h2></div></div>
-    <div className="dashboard-summary" aria-label="Forecast results">
-      <article><span className="summary-icon blue"><BarChart3 size={19} /></span><div><strong>{prediction.predictedNextSemesterGrade} / {prediction.gradeMaximum}</strong><small>Predicted next-semester grade</small></div></article>
-      <article><span className="summary-icon amber"><ShieldCheck size={19} /></span><div><strong>{dropoutPercent}%</strong><small>Estimated dropout probability</small></div></article>
-      <article><span className="summary-icon green"><BarChart3 size={19} /></span><div><strong>{completionPercent}%</strong><small>Previous-semester completion rate</small></div></article>
-    </div>
-    <section className="dashboard-guidance"><ShieldCheck size={21} /><p><strong>{prediction.riskLevel[0].toUpperCase() + prediction.riskLevel.slice(1)} support risk.</strong> This is a forecast, not a decision or diagnosis. Discuss it with an adviser or professor to identify useful support early.</p></section>
-  </section>;
+  if (loadingRecord) return <p className="student-data-loading">Loading your academic record…</p>;
+  if (!record) return <section className="workspace-section"><div className="section-heading"><div><p className="dashboard-eyebrow">Your forecast</p><h2>Add your semester record first</h2></div></div><p className="dashboard-subtext">Save your study schedule, units, and previous-semester grade in Data Workspace to generate a forecast.</p></section>;
+  const completionPercent = prediction && Math.round(prediction.completionRate * 100);
+  const dropoutPercent = prediction && Math.round(prediction.dropoutProbability * 100);
+  return <section className="workspace-section" id="insights"><div className="section-heading"><div><p className="dashboard-eyebrow">Your forecast</p><h2>{prediction ? "Next-semester outlook" : "Ready when you are"}</h2></div></div><p className="dashboard-subtext">Run a forecast from your saved academic record. Each completed forecast is added to your History so you can compare it later.</p>{error && <div className="login-alert" role="alert">{error}</div>}<button type="button" className="dashboard-action" onClick={runForecast} disabled={running}>{running ? <RefreshCw size={16} className="forecast-spin" /> : <Play size={16} />}{running ? "Running forecast…" : prediction ? "Run a new forecast" : "Run my forecast"}</button>{prediction && <><div className="dashboard-summary forecast-results" aria-label="Forecast results"><article><span className="summary-icon blue"><BarChart3 size={19} /></span><div><strong>{prediction.predictedNextSemesterGrade} / {prediction.gradeMaximum}</strong><small>Predicted next-semester grade</small></div></article><article><span className="summary-icon amber"><ShieldCheck size={19} /></span><div><strong>{dropoutPercent}%</strong><small>Estimated dropout probability</small></div></article><article><span className="summary-icon green"><BarChart3 size={19} /></span><div><strong>{completionPercent}%</strong><small>Previous-semester completion rate</small></div></article></div><section className="dashboard-guidance"><ShieldCheck size={21} /><p><strong>{prediction.riskLevel[0].toUpperCase() + prediction.riskLevel.slice(1)} support risk.</strong> This is a forecast, not a decision or diagnosis. Discuss it with an adviser or professor to identify useful support early.</p></section><button type="button" className="dashboard-action support-insight-button" onClick={getSupportInsight} disabled={gettingInsight}>{gettingInsight ? <RefreshCw size={16} className="forecast-spin" /> : <Sparkles size={16} />}{gettingInsight ? "Creating suggestions…" : "Get support suggestions"}</button>{insight && <section className="support-insight" aria-labelledby="support-insight-title"><h3 id="support-insight-title"><Sparkles size={18} /> Suggested next steps</h3><p>{insight.summary}</p>{insight.strengths?.length > 0 && <><h4>Strengths to build on</h4><ul>{insight.strengths.map((item) => <li key={item}>{item}</li>)}</ul></>}{insight.suggestedActions?.length > 0 && <><h4>Actions you can take</h4><ul>{insight.suggestedActions.map((item) => <li key={item}>{item}</li>)}</ul></>}<p className="support-insight__disclaimer">{insight.disclaimer}</p></section>}</>}</section>;
 }

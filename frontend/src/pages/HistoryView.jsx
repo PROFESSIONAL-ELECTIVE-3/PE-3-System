@@ -1,100 +1,15 @@
-import { History as HistoryIcon, Info, TrendingDown, TrendingUp } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BarChart3, FilePenLine, FilePlus2, History as HistoryIcon } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
-const copyByRole = {
-  professor: {
-    title: "Forecast history",
-    body:
-      "You'll see how your class's risk signals and forecasts have changed over time once your institution connects data. This helps you spot trends, not just single-point-in-time scores.",
-  },
-  administrator: {
-    title: "Forecast history",
-    body:
-      "You'll see how risk signals and forecasts have shifted across your institution over time once data is connected.",
-  },
-  student: {
-    title: "Your forecast history",
-    body:
-      "You'll see how your own risk score and GPA forecast have changed over time once your institution connects your academic data.",
-  },
-};
+const eventCopy = { record_created: { label: "Academic record created", icon: FilePlus2 }, record_updated: { label: "Academic record updated", icon: FilePenLine }, forecast_run: { label: "Forecast run", icon: BarChart3 }, insight_generated: { label: "Support suggestions generated", icon: BarChart3 } };
+const formatDate = (value) => new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 
-// Static example rows just to illustrate the shape of the timeline.
-// These are NOT real data — they're greyed out and clearly marked as an example.
-const EXAMPLE_ENTRIES = [
-  {
-    id: "ex-1",
-    period: "This term",
-    label: "Latest forecast",
-    trend: "steady",
-  },
-  {
-    id: "ex-2",
-    period: "Previous term",
-    label: "Forecast snapshot",
-    trend: "up",
-  },
-  {
-    id: "ex-3",
-    period: "Two terms ago",
-    label: "Forecast snapshot",
-    trend: "down",
-  },
-];
-
-const trendIcon = {
-  up: <TrendingUp size={16} />,
-  down: <TrendingDown size={16} />,
-  steady: <HistoryIcon size={16} />,
-};
-
-export default function HistoryView({ user, nextStep }) {
-  const copy = copyByRole[user?.role] ?? copyByRole.student;
-
-  return (
-    <section className="workspace-section" id="history">
-        <div className="section-heading">
-          <div>
-            <p className="dashboard-eyebrow">{copy.title}</p>
-            <h2>No history yet</h2>
-          </div>
-          <span className="setup-badge">Setup required</span>
-        </div>
-        <p className="dashboard-subtext">{copy.body}</p>
-
-        <div className="empty-state">
-          <div className="empty-illustration">
-            <HistoryIcon size={29} />
-          </div>
-          <div>
-            <h3>Nothing to show yet.</h3>
-            <p>
-              {nextStep?.detail ||
-                "History will appear here once academic data is connected."}{" "}
-              Below is an example of how entries will look, for reference
-              only.
-            </p>
-          </div>
-        </div>
-
-        <div className="history-example" aria-label="Example timeline layout">
-          <p className="history-example-label">
-            <Info size={14} /> Example layout — not real data
-          </p>
-          <ul className="history-timeline">
-            {EXAMPLE_ENTRIES.map((entry) => (
-              <li key={entry.id} className="history-timeline-item history-timeline-item--placeholder">
-                <span className="history-timeline-icon">
-                  {trendIcon[entry.trend]}
-                </span>
-                <div>
-                  <strong>{entry.label}</strong>
-                  <small>{entry.period}</small>
-                </div>
-                <span className="history-timeline-value">—</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-    </section>
-  );
+export default function HistoryView({ user }) {
+  const { apiFetch } = useAuth();
+  const [state, setState] = useState({ loading: user?.role === "student", error: "", activities: [] });
+  useEffect(() => { if (user?.role !== "student") return; let active = true; (async () => { try { const response = await apiFetch("/api/students/me/history"); const data = await response.json(); if (!response.ok) throw new Error(data.message || "Could not load your history."); if (active) setState({ loading: false, error: "", activities: data.activities || [] }); } catch (error) { if (active) setState({ loading: false, error: error.message || "Could not load your history.", activities: [] }); } })(); return () => { active = false; }; }, [apiFetch, user?.role]);
+  if (user?.role !== "student") return <section className="workspace-section" id="history"><div className="section-heading"><div><p className="dashboard-eyebrow">Forecast history</p><h2>Coming soon</h2></div></div><p className="dashboard-subtext">Student activity history is currently available to each student for their own records and forecasts.</p></section>;
+  if (state.loading) return <p className="student-data-loading">Loading your history…</p>;
+  return <section className="workspace-section" id="history"><div className="section-heading"><div><p className="dashboard-eyebrow">Your activity</p><h2>Record and forecast history</h2></div></div><p className="dashboard-subtext">A permanent timeline of changes to your academic record and every forecast you choose to run.</p>{state.error && <div className="login-alert" role="alert">{state.error}</div>}{!state.error && state.activities.length === 0 ? <div className="empty-state"><div className="empty-illustration"><HistoryIcon size={29} /></div><div><h3>No activity yet</h3><p>Save your academic record or run a forecast to start your timeline.</p></div></div> : <ul className="history-timeline history-timeline--live">{state.activities.map((entry) => { const details = eventCopy[entry.type]; const Icon = details.icon; const forecast = entry.forecast; return <li key={entry.id} className="history-timeline-item"><span className="history-timeline-icon"><Icon size={16} /></span><div><strong>{details.label}</strong><small>{formatDate(entry.createdAt)}</small>{entry.type !== "forecast_run" && entry.record && <small>Grade: {entry.record.previousSemesterGrade} / {entry.record.gradeMaximum} · Units approved: {entry.record.previousSemesterUnitsApproved}</small>}</div>{forecast && <span className="history-timeline-value">{forecast.predictedNextSemesterGrade} / {forecast.gradeMaximum}<small>{Math.round(forecast.dropoutProbability * 100)}% dropout probability</small></span>}</li>; })}</ul>}</section>;
 }

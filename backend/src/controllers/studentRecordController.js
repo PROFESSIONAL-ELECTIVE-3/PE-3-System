@@ -1,4 +1,5 @@
 const StudentRecord = require('../models/StudentRecord');
+const StudentActivity = require('../models/StudentActivity');
 
 const ATTENDANCE_VALUES = ['day', 'night'];
 
@@ -14,6 +15,8 @@ const toPublicRecord = (record) => ({
   submittedAt: record.submittedAt,
   updatedAt: record.updatedAt,
 });
+
+const recordSnapshot = (record) => toPublicRecord(record);
 
 const validatePayload = (body) => {
   const errors = {};
@@ -100,13 +103,38 @@ exports.upsertMyRecord = async (req, res, next) => {
       submittedAt: new Date(),
     };
 
+    const existingRecord = await StudentRecord.findOne({ user: req.user._id });
     const record = await StudentRecord.findOneAndUpdate(
       { user: req.user._id },
       update,
       { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
     );
 
-    res.status(200).json({ message: 'Your information has been saved.', record: toPublicRecord(record) });
+    await StudentActivity.create({
+      student: req.user._id,
+      type: existingRecord ? 'record_updated' : 'record_created',
+      record: recordSnapshot(record),
+    });
+
+    res.status(200).json({
+      message: existingRecord ? 'Your information has been updated.' : 'Your information has been saved.',
+      record: toPublicRecord(record),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Get the current student's activity timeline
+// @route   GET /api/students/me/history
+// @access  Private (student)
+exports.getMyHistory = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ message: 'Only students can access this resource.' });
+    }
+    const activities = await StudentActivity.find({ student: req.user._id }).sort({ createdAt: -1 }).limit(100).lean();
+    res.status(200).json({ activities: activities.map(({ _id, type, record, forecast, insight, createdAt }) => ({ id: _id, type, record, forecast, insight, createdAt })) });
   } catch (err) {
     next(err);
   }

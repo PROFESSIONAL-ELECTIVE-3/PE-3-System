@@ -15,6 +15,7 @@ const institutionRoutes = require('./routes/institutionRoutes');
 const studentRecordRoutes = require('./routes/studentRecordRoutes');  
 const connectionRoutes = require('./routes/connectionRoutes');
 const mlRoutes = require('./routes/mlRoutes');
+const insightRoutes = require('./routes/insightRoutes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 connectDB();
@@ -69,6 +70,7 @@ app.use('/api/institutions', institutionRoutes);
 app.use('/api/students', studentRecordRoutes);   
 app.use('/api/connections', connectionRoutes);
 app.use('/api/ml', mlRoutes);
+app.use('/api/insights', insightRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

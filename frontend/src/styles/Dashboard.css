@@ -304,6 +304,20 @@
 .dashboard-guidance strong {
   color: #214361;
 }
+
+.forecast-results { margin-top: 1.2rem; }
+.forecast-spin { animation: forecast-spin 0.9s linear infinite; }
+@keyframes forecast-spin { to { transform: rotate(360deg); } }
+.history-timeline--live { margin-top: 1.4rem; }
+.history-timeline-item small { display: block; margin-top: 0.18rem; }
+.history-timeline-value { text-align: right; }
+.support-insight-button { margin-top: 1rem; }
+.support-insight { margin-top: 1rem; padding: 1.15rem; border: 1px solid #d7e7f5; border-radius: 8px; background: #f7fbff; color: #29465f; }
+.support-insight h3 { display: flex; align-items: center; gap: 0.45rem; margin: 0; color: #18324b; }
+.support-insight h4 { margin: 1rem 0 0.35rem; font-size: 0.87rem; }
+.support-insight p, .support-insight ul { margin: 0.55rem 0; line-height: 1.55; font-size: 0.87rem; }
+.support-insight li { margin: 0.3rem 0; }
+.support-insight__disclaimer { color: #64788e; font-size: 0.78rem !important; }
 .connection-manager {
   max-width: 700px;
   margin-top: 1.4rem;

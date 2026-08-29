@@ -111,12 +111,11 @@ exports.listConnectedStudentData = async (req, res, next) => {
 
 const toPublicStudentRecord = (record) => ({
   educationalSpecialNeeds: record.educationalSpecialNeeds,
-  tuitionFeesUpToDate: record.tuitionFeesUpToDate,
-  scholarshipHolder: record.scholarshipHolder,
-  course: record.course,
+  tuitionFeeStatus: record.tuitionFeeStatus,
+  scholarshipStatus: record.scholarshipStatus,
   attendance: record.attendance,
-  firstSemesterGrade: record.firstSemesterGrade,
-  secondSemesterGrade: record.secondSemesterGrade,
+  previousSemesterGrade: record.previousSemesterGrade,
+  previousSemesterUnitsApproved: record.previousSemesterUnitsApproved,
   updatedAt: record.updatedAt,
 });
 

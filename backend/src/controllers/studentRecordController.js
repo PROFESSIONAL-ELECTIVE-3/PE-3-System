@@ -1,15 +1,16 @@
 const StudentRecord = require('../models/StudentRecord');
 
-const ATTENDANCE_VALUES = ['daytime', 'evening'];
+const ATTENDANCE_VALUES = ['day', 'night'];
 
 const toPublicRecord = (record) => ({
   educationalSpecialNeeds: record.educationalSpecialNeeds,
-  tuitionFeesUpToDate: record.tuitionFeesUpToDate,
-  scholarshipHolder: record.scholarshipHolder,
-  course: record.course,
+  tuitionFeeStatus: record.tuitionFeeStatus,
+  scholarshipStatus: record.scholarshipStatus,
   attendance: record.attendance,
-  firstSemesterGrade: record.firstSemesterGrade,
-  secondSemesterGrade: record.secondSemesterGrade,
+  gradeMaximum: record.gradeMaximum,
+  previousSemesterGrade: record.previousSemesterGrade,
+  previousSemesterUnitsEnrolled: record.previousSemesterUnitsEnrolled,
+  previousSemesterUnitsApproved: record.previousSemesterUnitsApproved,
   submittedAt: record.submittedAt,
   updatedAt: record.updatedAt,
 });
@@ -20,35 +21,40 @@ const validatePayload = (body) => {
   if (typeof body.educationalSpecialNeeds !== 'boolean') {
     errors.educationalSpecialNeeds = 'Select an option.';
   }
-  if (typeof body.tuitionFeesUpToDate !== 'boolean') {
-    errors.tuitionFeesUpToDate = 'Select an option.';
+  if (typeof body.tuitionFeeStatus !== 'boolean') {
+    errors.tuitionFeeStatus = 'Select an option.';
   }
-  if (typeof body.scholarshipHolder !== 'boolean') {
-    errors.scholarshipHolder = 'Select an option.';
-  }
-
-  const course = String(body.course || '').trim();
-  if (!course) {
-    errors.course = 'Course is required.';
-  } else if (course.length > 150) {
-    errors.course = 'Course name is too long.';
+  if (typeof body.scholarshipStatus !== 'boolean') {
+    errors.scholarshipStatus = 'Select an option.';
   }
 
   if (!ATTENDANCE_VALUES.includes(body.attendance)) {
-    errors.attendance = 'Select daytime or evening attendance.';
+    errors.attendance = 'Select day or night attendance.';
   }
 
-  const grade1 = Number(body.firstSemesterGrade);
-  if (Number.isNaN(grade1) || grade1 < 0 || grade1 > 20) {
-    errors.firstSemesterGrade = 'Enter a grade between 0 and 20.';
+  const gradeMaximum = Number(body.gradeMaximum);
+  if (!Number.isFinite(gradeMaximum) || gradeMaximum <= 0 || gradeMaximum > 100) {
+    errors.gradeMaximum = 'Select a grade maximum between 1 and 100.';
   }
 
-  const grade2 = Number(body.secondSemesterGrade);
-  if (Number.isNaN(grade2) || grade2 < 0 || grade2 > 20) {
-    errors.secondSemesterGrade = 'Enter a grade between 0 and 20.';
+  const previousSemesterGrade = Number(body.previousSemesterGrade);
+  if (Number.isNaN(previousSemesterGrade) || previousSemesterGrade < 0 || previousSemesterGrade > gradeMaximum) {
+    errors.previousSemesterGrade = 'Enter a grade within the selected grade scale.';
   }
 
-  return { errors, course, grade1, grade2 };
+  const previousSemesterUnitsEnrolled = Number(body.previousSemesterUnitsEnrolled);
+  if (!Number.isInteger(previousSemesterUnitsEnrolled) || previousSemesterUnitsEnrolled < 1 || previousSemesterUnitsEnrolled > 100) {
+    errors.previousSemesterUnitsEnrolled = 'Enter whole enrolled units between 1 and 100.';
+  }
+
+  const previousSemesterUnitsApproved = Number(body.previousSemesterUnitsApproved);
+  if (!Number.isInteger(previousSemesterUnitsApproved) || previousSemesterUnitsApproved < 0 || previousSemesterUnitsApproved > 100) {
+    errors.previousSemesterUnitsApproved = 'Enter whole approved units between 0 and 100.';
+  } else if (Number.isInteger(previousSemesterUnitsEnrolled) && previousSemesterUnitsApproved > previousSemesterUnitsEnrolled) {
+    errors.previousSemesterUnitsApproved = 'Approved units cannot exceed enrolled units.';
+  }
+
+  return { errors, gradeMaximum, previousSemesterGrade, previousSemesterUnitsEnrolled, previousSemesterUnitsApproved };
 };
 
 // @desc    Get the current student's own data-entry record
@@ -76,7 +82,7 @@ exports.upsertMyRecord = async (req, res, next) => {
       return res.status(403).json({ message: 'Only students can submit this data.' });
     }
 
-    const { errors, course, grade1, grade2 } = validatePayload(req.body || {});
+    const { errors, gradeMaximum, previousSemesterGrade, previousSemesterUnitsEnrolled, previousSemesterUnitsApproved } = validatePayload(req.body || {});
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({ message: 'Please correct the highlighted fields.', errors });
     }
@@ -84,12 +90,13 @@ exports.upsertMyRecord = async (req, res, next) => {
     const update = {
       user: req.user._id,
       educationalSpecialNeeds: req.body.educationalSpecialNeeds,
-      tuitionFeesUpToDate: req.body.tuitionFeesUpToDate,
-      scholarshipHolder: req.body.scholarshipHolder,
-      course,
+      tuitionFeeStatus: req.body.tuitionFeeStatus,
+      scholarshipStatus: req.body.scholarshipStatus,
       attendance: req.body.attendance,
-      firstSemesterGrade: grade1,
-      secondSemesterGrade: grade2,
+      gradeMaximum,
+      previousSemesterGrade,
+      previousSemesterUnitsEnrolled,
+      previousSemesterUnitsApproved,
       submittedAt: new Date(),
     };
 

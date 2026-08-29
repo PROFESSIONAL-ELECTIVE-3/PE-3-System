@@ -5,12 +5,13 @@ import "../styles/StudentDataForm.css";
 
 const EMPTY_FORM = {
   educationalSpecialNeeds: "",
-  tuitionFeesUpToDate: "",
-  scholarshipHolder: "",
-  course: "",
+  tuitionFeeStatus: "",
+  scholarshipStatus: "",
   attendance: "",
-  firstSemesterGrade: "",
-  secondSemesterGrade: "",
+  gradeMaximum: "20",
+  previousSemesterGrade: "",
+  previousSemesterUnitsEnrolled: "",
+  previousSemesterUnitsApproved: "",
 };
 
 const boolToString = (value) =>
@@ -18,15 +19,25 @@ const boolToString = (value) =>
 
 const recordToForm = (record) => ({
   educationalSpecialNeeds: boolToString(record.educationalSpecialNeeds),
-  tuitionFeesUpToDate: boolToString(record.tuitionFeesUpToDate),
-  scholarshipHolder: boolToString(record.scholarshipHolder),
-  course: record.course || "",
+  tuitionFeeStatus: boolToString(record.tuitionFeeStatus),
+  scholarshipStatus: boolToString(record.scholarshipStatus),
   attendance: record.attendance || "",
-  firstSemesterGrade: record.firstSemesterGrade ?? "",
-  secondSemesterGrade: record.secondSemesterGrade ?? "",
+  gradeMaximum: record.gradeMaximum ?? 20,
+  previousSemesterGrade: record.previousSemesterGrade ?? "",
+  previousSemesterUnitsEnrolled: record.previousSemesterUnitsEnrolled ?? "",
+  previousSemesterUnitsApproved: record.previousSemesterUnitsApproved ?? "",
 });
 
 const yesNoLabel = (value) => value ? "Yes" : "No";
+
+const isCurrentRecord = (record) =>
+  record &&
+  typeof record.previousSemesterGrade === "number" &&
+  typeof record.previousSemesterUnitsEnrolled === "number" &&
+  typeof record.previousSemesterUnitsApproved === "number" &&
+  ["day", "night"].includes(record.attendance) &&
+  typeof record.tuitionFeeStatus === "boolean" &&
+  typeof record.scholarshipStatus === "boolean";
 
 export default function StudentDataForm() {
   const { apiFetch } = useAuth();
@@ -52,7 +63,7 @@ export default function StudentDataForm() {
           );
         }
         const data = await response.json();
-        if (isMounted && data.record) {
+        if (isMounted && isCurrentRecord(data.record)) {
           setFormData(recordToForm(data.record));
           setSavedRecord(data.record);
           setIsEditing(false);
@@ -81,20 +92,27 @@ export default function StudentDataForm() {
     const next = {};
     if (formData.educationalSpecialNeeds === "")
       next.educationalSpecialNeeds = "Select an option.";
-    if (formData.tuitionFeesUpToDate === "")
-      next.tuitionFeesUpToDate = "Select an option.";
-    if (formData.scholarshipHolder === "")
-      next.scholarshipHolder = "Select an option.";
-    if (!formData.course.trim()) next.course = "Course is required.";
-    if (!formData.attendance) next.attendance = "Select daytime or evening.";
+    if (formData.tuitionFeeStatus === "") next.tuitionFeeStatus = "Select an option.";
+    if (formData.scholarshipStatus === "") next.scholarshipStatus = "Select an option.";
+    if (!formData.attendance) next.attendance = "Select day or night attendance.";
 
-    const grade1 = Number(formData.firstSemesterGrade);
-    if (formData.firstSemesterGrade === "" || Number.isNaN(grade1) || grade1 < 0 || grade1 > 20)
-      next.firstSemesterGrade = "Enter a grade between 0 and 20.";
+    const gradeMaximum = Number(formData.gradeMaximum);
+    if (Number.isNaN(gradeMaximum) || gradeMaximum <= 0 || gradeMaximum > 100)
+      next.gradeMaximum = "Select a valid grade scale.";
 
-    const grade2 = Number(formData.secondSemesterGrade);
-    if (formData.secondSemesterGrade === "" || Number.isNaN(grade2) || grade2 < 0 || grade2 > 20)
-      next.secondSemesterGrade = "Enter a grade between 0 and 20.";
+    const previousSemesterGrade = Number(formData.previousSemesterGrade);
+    if (formData.previousSemesterGrade === "" || Number.isNaN(previousSemesterGrade) || previousSemesterGrade < 0 || previousSemesterGrade > gradeMaximum)
+      next.previousSemesterGrade = "Enter a grade within the selected scale.";
+
+    const previousSemesterUnitsEnrolled = Number(formData.previousSemesterUnitsEnrolled);
+    if (formData.previousSemesterUnitsEnrolled === "" || !Number.isInteger(previousSemesterUnitsEnrolled) || previousSemesterUnitsEnrolled < 1 || previousSemesterUnitsEnrolled > 100)
+      next.previousSemesterUnitsEnrolled = "Enter whole enrolled units between 1 and 100.";
+
+    const previousSemesterUnitsApproved = Number(formData.previousSemesterUnitsApproved);
+    if (formData.previousSemesterUnitsApproved === "" || !Number.isInteger(previousSemesterUnitsApproved) || previousSemesterUnitsApproved < 0 || previousSemesterUnitsApproved > 100)
+      next.previousSemesterUnitsApproved = "Enter whole approved units between 0 and 100.";
+    else if (Number.isInteger(previousSemesterUnitsEnrolled) && previousSemesterUnitsApproved > previousSemesterUnitsEnrolled)
+      next.previousSemesterUnitsApproved = "Approved units cannot exceed enrolled units.";
 
     return next;
   };
@@ -117,12 +135,13 @@ export default function StudentDataForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           educationalSpecialNeeds: formData.educationalSpecialNeeds === "yes",
-          tuitionFeesUpToDate: formData.tuitionFeesUpToDate === "yes",
-          scholarshipHolder: formData.scholarshipHolder === "yes",
-          course: formData.course.trim(),
+          tuitionFeeStatus: formData.tuitionFeeStatus === "yes",
+          scholarshipStatus: formData.scholarshipStatus === "yes",
           attendance: formData.attendance,
-          firstSemesterGrade: Number(formData.firstSemesterGrade),
-          secondSemesterGrade: Number(formData.secondSemesterGrade),
+          gradeMaximum: Number(formData.gradeMaximum),
+          previousSemesterGrade: Number(formData.previousSemesterGrade),
+          previousSemesterUnitsEnrolled: Number(formData.previousSemesterUnitsEnrolled),
+          previousSemesterUnitsApproved: Number(formData.previousSemesterUnitsApproved),
         }),
       });
 
@@ -191,15 +210,15 @@ export default function StudentDataForm() {
           </button>
         </div>
         <div className="student-data-summary__grid">
-          <div><span>Course</span><strong>{savedRecord.course}</strong></div>
-          <div><span>Attendance</span><strong>{savedRecord.attendance === "daytime" ? "Daytime" : "Evening"}</strong></div>
-          <div><span>1st semester grade</span><strong>{savedRecord.firstSemesterGrade} / 20</strong></div>
-          <div><span>2nd semester grade</span><strong>{savedRecord.secondSemesterGrade} / 20</strong></div>
+          <div><span>Study schedule</span><strong>{savedRecord.attendance === "day" ? "Daytime" : "Evening/night"}</strong></div>
+          <div><span>Previous-semester grade</span><strong>{savedRecord.previousSemesterGrade} / {savedRecord.gradeMaximum || 20}</strong></div>
+          <div><span>Previous-semester units enrolled</span><strong>{savedRecord.previousSemesterUnitsEnrolled}</strong></div>
+          <div><span>Previous-semester units approved</span><strong>{savedRecord.previousSemesterUnitsApproved}</strong></div>
         </div>
         <div className="student-data-summary__details">
           <p><span>Educational special needs</span><strong>{yesNoLabel(savedRecord.educationalSpecialNeeds)}</strong></p>
-          <p><span>Tuition fees up to date</span><strong>{yesNoLabel(savedRecord.tuitionFeesUpToDate)}</strong></p>
-          <p><span>Scholarship holder</span><strong>{yesNoLabel(savedRecord.scholarshipHolder)}</strong></p>
+          <p><span>Tuition-fee status</span><strong>{yesNoLabel(savedRecord.tuitionFeeStatus)}</strong></p>
+          <p><span>Scholarship status</span><strong>{yesNoLabel(savedRecord.scholarshipStatus)}</strong></p>
         </div>
       </section>
     );
@@ -243,12 +262,12 @@ export default function StudentDataForm() {
           label="Do you have educational special needs?"
         />
         <YesNoField
-          name="tuitionFeesUpToDate"
+          name="tuitionFeeStatus"
           label="Are your tuition fees up to date?"
         />
         <YesNoField
-          name="scholarshipHolder"
-          label="Are you a scholarship holder?"
+          name="scholarshipStatus"
+          label="Do you have a scholarship?"
         />
       </fieldset>
 
@@ -258,25 +277,11 @@ export default function StudentDataForm() {
           Academic details
         </legend>
         <p className="student-data-section-description">
-          Share the course and results from your current term.
+          Share your attendance schedule and previous-semester results.
         </p>
 
         <div className="form-group">
-          <label htmlFor="course">Course</label>
-          <input
-            type="text"
-            id="course"
-            name="course"
-            placeholder="e.g. BS Computer Science"
-            value={formData.course}
-            onChange={handleChange}
-            className={errors.course ? "input-error" : ""}
-          />
-          {errors.course && <span className="field-error">{errors.course}</span>}
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="attendance">Attendance</label>
+          <label htmlFor="attendance">Study schedule</label>
           <select
             id="attendance"
             name="attendance"
@@ -284,46 +289,62 @@ export default function StudentDataForm() {
             onChange={handleChange}
             className={errors.attendance ? "input-error" : ""}
           >
-            <option value="">Select attendance type</option>
-            <option value="daytime">Daytime</option>
-            <option value="evening">Evening</option>
+            <option value="">Select study schedule</option>
+            <option value="day">Daytime</option>
+            <option value="night">Evening/night</option>
           </select>
           {errors.attendance && <span className="field-error">{errors.attendance}</span>}
         </div>
 
+        <div className="form-group">
+          <label htmlFor="gradeMaximum">Grade scale maximum</label>
+          <select id="gradeMaximum" name="gradeMaximum" value={formData.gradeMaximum} onChange={handleChange} className={errors.gradeMaximum ? "input-error" : ""}>
+            <option value="4">4.0</option>
+            <option value="5">5.0</option>
+            <option value="20">20</option>
+            <option value="100">100</option>
+          </select>
+          {errors.gradeMaximum && <span className="field-error">{errors.gradeMaximum}</span>}
+        </div>
+
         <div className="student-data-grade-row">
           <div className="form-group">
-            <label htmlFor="firstSemesterGrade">1st semester grade (0–20)</label>
+            <label htmlFor="previousSemesterGrade">Previous-semester grade (0–{formData.gradeMaximum || "?"})</label>
             <input
               type="number"
-              id="firstSemesterGrade"
-              name="firstSemesterGrade"
+              id="previousSemesterGrade"
+              name="previousSemesterGrade"
               min="0"
-              max="20"
+              max={formData.gradeMaximum || 100}
               step="0.1"
-              value={formData.firstSemesterGrade}
+              value={formData.previousSemesterGrade}
               onChange={handleChange}
-              className={errors.firstSemesterGrade ? "input-error" : ""}
+              className={errors.previousSemesterGrade ? "input-error" : ""}
             />
-            {errors.firstSemesterGrade && (
-              <span className="field-error">{errors.firstSemesterGrade}</span>
+            {errors.previousSemesterGrade && (
+              <span className="field-error">{errors.previousSemesterGrade}</span>
             )}
           </div>
           <div className="form-group">
-            <label htmlFor="secondSemesterGrade">2nd semester grade (0–20)</label>
+            <label htmlFor="previousSemesterUnitsEnrolled">Previous-semester units enrolled</label>
+            <input type="number" id="previousSemesterUnitsEnrolled" name="previousSemesterUnitsEnrolled" min="1" max="100" step="1" value={formData.previousSemesterUnitsEnrolled} onChange={handleChange} className={errors.previousSemesterUnitsEnrolled ? "input-error" : ""} />
+            {errors.previousSemesterUnitsEnrolled && <span className="field-error">{errors.previousSemesterUnitsEnrolled}</span>}
+          </div>
+          <div className="form-group">
+            <label htmlFor="previousSemesterUnitsApproved">Previous-semester units approved</label>
             <input
               type="number"
-              id="secondSemesterGrade"
-              name="secondSemesterGrade"
+              id="previousSemesterUnitsApproved"
+              name="previousSemesterUnitsApproved"
               min="0"
-              max="20"
-              step="0.1"
-              value={formData.secondSemesterGrade}
+              max="100"
+              step="1"
+              value={formData.previousSemesterUnitsApproved}
               onChange={handleChange}
-              className={errors.secondSemesterGrade ? "input-error" : ""}
+              className={errors.previousSemesterUnitsApproved ? "input-error" : ""}
             />
-            {errors.secondSemesterGrade && (
-              <span className="field-error">{errors.secondSemesterGrade}</span>
+            {errors.previousSemesterUnitsApproved && (
+              <span className="field-error">{errors.previousSemesterUnitsApproved}</span>
             )}
           </div>
         </div>

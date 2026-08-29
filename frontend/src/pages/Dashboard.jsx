@@ -19,6 +19,7 @@ import AdminDashboardView from "./AdminDashboardView.jsx";
 import HistoryView from "./HistoryView.jsx";
 import StudentDataForm from "./StudentDataForm.jsx";
 import ConnectionManager from "../components/ConnectionManager.jsx";
+import StudentInsights from "./StudentInsights.jsx";
 
 const nextStepByRole = {
   administrator: {
@@ -195,14 +196,7 @@ export default function Dashboard() {
           </div>
           <ConnectionManager />
         </section>}
-        {user.role === "student" && activeTab === "insights" && <section className="dashboard-guidance" id="insights">
-          <ShieldCheck size={21} />
-          <p>
-            <strong>Your forecast is a guide, not a judgment.</strong> Use it
-            to start a conversation with your professor or adviser and to find
-            support early when you need it.
-          </p>
-        </section>}
+        {user.role === "student" && activeTab === "insights" && <StudentInsights />}
         {user.role === "student" && activeTab === "history" && <HistoryView user={user} nextStep={nextStep} />}
         {user.role === "professor" && activeTab === "history" && <HistoryView user={user} nextStep={nextStep} />}
         {user.role === "administrator" && activeTab === "history" && <HistoryView user={user} nextStep={nextStep} />}

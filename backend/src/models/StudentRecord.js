@@ -14,18 +14,19 @@ const studentRecordSchema = new mongoose.Schema(
 
     // --- Socio-economic characteristics ---
     educationalSpecialNeeds: { type: Boolean, required: true },
-    tuitionFeesUpToDate: { type: Boolean, required: true },
-    scholarshipHolder: { type: Boolean, required: true },
+    tuitionFeeStatus: { type: Boolean, required: true },
+    scholarshipStatus: { type: Boolean, required: true },
 
     // --- Academic characteristics ---
-    course: { type: String, required: true, trim: true, maxlength: 150 },
     attendance: {
       type: String,
       required: true,
-      enum: ['daytime', 'evening'],
+      enum: ['day', 'night'],
     },
-    firstSemesterGrade: { type: Number, required: true, min: 0, max: 20 },
-    secondSemesterGrade: { type: Number, required: true, min: 0, max: 20 },
+    gradeMaximum: { type: Number, required: true, min: 1, max: 100, default: 20 },
+    previousSemesterGrade: { type: Number, required: true, min: 0, max: 100 },
+    previousSemesterUnitsEnrolled: { type: Number, required: true, min: 1, max: 100 },
+    previousSemesterUnitsApproved: { type: Number, required: true, min: 0, max: 100 },
 
     submittedAt: { type: Date, default: Date.now },
   },

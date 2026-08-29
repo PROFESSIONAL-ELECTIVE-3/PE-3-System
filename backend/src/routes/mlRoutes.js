@@ -5,9 +5,6 @@ const { protect } = require('../middleware/authMiddleware');
 const router = express.Router();
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
-// @desc    Proxy a prediction request to the Python/FastAPI ML microservice
-// @route   POST /api/ml/predict
-// @access  Private (requires a valid JWT)
 router.post('/predict', protect, async (req, res, next) => {
   try {
     const { data } = await axios.post(`${ML_SERVICE_URL}/predict`, req.body, {

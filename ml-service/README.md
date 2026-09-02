@@ -38,21 +38,9 @@ attendance-rate field.
    ```
 
 The command creates `artifacts/grade_model.joblib` and
-`artifacts/risk_model.joblib`. These artifacts will be loaded by the prediction
-API in the next integration step.
-
-For the broader multi-metric optimization used for the deployable model, run:
-
-```powershell
-.\.venv312\Scripts\python.exe optimize_risk_model_max.py
-```
-
-To optimize the grade forecaster while keeping it a regularized linear model,
-run:
-
-```powershell
-.\.venv312\Scripts\python.exe optimize_grade_model.py
-```
+`artifacts/risk_model.joblib`, which are the artifacts loaded by the prediction
+API. They use **Linear Regression** for grade forecasting and a **Random Forest
+Classifier** for attrition-risk classification, respectively.
 
 ## Flexible grading scales
 
@@ -71,8 +59,8 @@ prediction to `0–gradeMaximum`.
 
 ## Run the prediction API
 
-After installing the requirements and generating the optimized artifacts,
-start FastAPI from this folder:
+After installing the requirements and generating the model artifacts, start
+FastAPI from this folder:
 
 ```powershell
 .\.venv312\Scripts\python.exe -m uvicorn app:app --host 127.0.0.1 --port 8000

@@ -13,8 +13,11 @@ from grading_scale import from_model_scale, to_model_scale
 
 BASE_DIR = Path(__file__).resolve().parent
 ARTIFACTS_DIR = BASE_DIR / "artifacts"
-GRADE_MODEL_PATH = ARTIFACTS_DIR / "grade_model_optimized.joblib"
-RISK_MODEL_PATH = ARTIFACTS_DIR / "risk_model_optimized.joblib"
+# These are created by train_models.py.  Keep the API aligned with the
+# required model pair: Linear Regression for grade forecasting and Random
+# Forest for attrition-risk classification.
+GRADE_MODEL_PATH = ARTIFACTS_DIR / "grade_model.joblib"
+RISK_MODEL_PATH = ARTIFACTS_DIR / "risk_model.joblib"
 
 
 class PredictionInput(BaseModel):
@@ -116,5 +119,9 @@ def predict(payload: PredictionInput):
         "riskLevel": risk_level(dropout_probability),
         "outcomeProbabilities": {key: round(value, 4) for key, value in probabilities.items()},
         "completionRate": round(payload.previousSemesterUnitsApproved / payload.previousSemesterUnitsEnrolled, 4),
-        "modelVersion": "optimized-2026-08-29",
+        "models": {
+            "gradeForecast": "Linear Regression",
+            "attritionRisk": "Random Forest Classifier",
+        },
+        "modelVersion": "linear-regression-random-forest-v1",
     }

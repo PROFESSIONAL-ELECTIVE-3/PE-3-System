@@ -482,3 +482,9 @@
     display: none;
   }
 }
+
+.professor-forecast { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid #e3eaf1; }
+.professor-forecast > div { display: flex; align-items: center; gap: 0.45rem; color: #28577d; }
+.professor-forecast h5 { margin: 0; font-size: 0.88rem; }
+.professor-forecast p { margin: 0.5rem 0 0.2rem; font-size: 0.86rem; color: #48627c; }
+.professor-forecast small { color: #718399; font-size: 0.75rem; }

@@ -4,7 +4,16 @@ This training setup intentionally uses only fields compatible with the planned
 student form. It excludes `Course`, because the Kaggle course codes do not
 have a validated mapping to this university's courses.
 
-## Current model inputs
+## Model inputs
+
+### Grade forecaster: academic factors only
+
+- Semester-1 units enrolled
+- Semester-1 units approved
+- Semester-1 completion rate (`units approved / units enrolled`)
+- Semester-1 average grade
+
+### Attrition-risk model
 
 - Educational special needs
 - Tuition-fee status

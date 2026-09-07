@@ -17,11 +17,11 @@ from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardScaler
 
-from train_models import ARTIFACTS_DIR, FEATURE_COLUMNS, GRADE_TARGET, SCHEDULE_COLUMN, load_data
+from train_models import ARTIFACTS_DIR, GRADE_FEATURE_COLUMNS, GRADE_TARGET, SCHEDULE_COLUMN, load_data
 
 
 def build_pipeline() -> Pipeline:
-    numeric_columns = [column for column in FEATURE_COLUMNS if column != SCHEDULE_COLUMN]
+    numeric_columns = [column for column in GRADE_FEATURE_COLUMNS if column != SCHEDULE_COLUMN]
     preprocessor = ColumnTransformer(
         transformers=[
             (
@@ -43,7 +43,7 @@ def build_pipeline() -> Pipeline:
 
 def main() -> None:
     data = load_data()
-    features = data[FEATURE_COLUMNS].copy()
+    features = data[GRADE_FEATURE_COLUMNS].copy()
     target = data[GRADE_TARGET]
     x_train, x_test, y_train, y_test = train_test_split(
         features, target, test_size=0.20, random_state=42
@@ -67,7 +67,7 @@ def main() -> None:
     predictions = model.predict(x_test)
     errors = abs(y_test.to_numpy() - predictions)
     metrics = {
-        "fixed_features": FEATURE_COLUMNS,
+        "fixed_features": GRADE_FEATURE_COLUMNS,
         "model": "Ridge regression with polynomial feature interactions",
         "selection_metric": "cross-validation MAE",
         "best_cross_validation_mae": -search.best_score_,

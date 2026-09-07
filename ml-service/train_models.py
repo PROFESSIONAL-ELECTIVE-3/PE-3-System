@@ -25,7 +25,8 @@ ARTIFACTS_DIR = BASE_DIR / "artifacts"
 # These fields intentionally exclude Course. Kaggle's course codes do not map
 # reliably to this university's programs, so using them in a deployed model
 # would create an invalid input mapping.
-FEATURE_COLUMNS = [
+# The attrition model keeps the broader set of form-compatible inputs.
+RISK_FEATURE_COLUMNS = [
     "Educational special needs",
     "Tuition fees up to date",
     "Scholarship holder",
@@ -36,34 +37,43 @@ FEATURE_COLUMNS = [
     "Curricular units 1st sem (grade)",
 ]
 
+# The grade forecaster deliberately uses academic-performance information only.
+# It excludes financial-support/status indicators, special-needs status, and
+# study schedule because they are not academic factors.
+GRADE_FEATURE_COLUMNS = [
+    "Curricular units 1st sem (enrolled)",
+    "Curricular units 1st sem (approved)",
+    "Semester 1 completion rate",
+    "Curricular units 1st sem (grade)",
+]
+
+# Backward-compatible alias for the risk-model optimisation script.
+FEATURE_COLUMNS = RISK_FEATURE_COLUMNS
 SCHEDULE_COLUMN = "Daytime/evening attendance"
 GRADE_TARGET = "Curricular units 2nd sem (grade)"
 RISK_TARGET = "Target"
 
 
-def build_preprocessor() -> ColumnTransformer:
+def build_preprocessor(feature_columns: list[str] = FEATURE_COLUMNS) -> ColumnTransformer:
     """Create preprocessing that can also handle unseen schedule values."""
-    numeric_columns = [column for column in FEATURE_COLUMNS if column != SCHEDULE_COLUMN]
-
-    return ColumnTransformer(
-        transformers=[
-            (
-                "numeric",
-                Pipeline(
-                    steps=[
-                        ("imputer", SimpleImputer(strategy="median")),
-                        ("scaler", StandardScaler()),
-                    ]
-                ),
-                numeric_columns,
+    numeric_columns = [column for column in feature_columns if column != SCHEDULE_COLUMN]
+    transformers = [
+        (
+            "numeric",
+            Pipeline(
+                steps=[
+                    ("imputer", SimpleImputer(strategy="median")),
+                    ("scaler", StandardScaler()),
+                ]
             ),
-            (
-                "study_schedule",
-                OneHotEncoder(handle_unknown="ignore"),
-                [SCHEDULE_COLUMN],
-            ),
-        ]
-    )
+            numeric_columns,
+        )
+    ]
+    if SCHEDULE_COLUMN in feature_columns:
+        transformers.append(
+            ("study_schedule", OneHotEncoder(handle_unknown="ignore"), [SCHEDULE_COLUMN])
+        )
+    return ColumnTransformer(transformers=transformers)
 
 
 def load_data() -> pd.DataFrame:
@@ -93,7 +103,7 @@ def train_grade_model(features: pd.DataFrame, target: pd.Series) -> Pipeline:
     )
     model = Pipeline(
         steps=[
-            ("preprocessor", build_preprocessor()),
+            ("preprocessor", build_preprocessor(GRADE_FEATURE_COLUMNS)),
             ("regressor", LinearRegression()),
         ]
     )
@@ -134,11 +144,12 @@ def train_risk_model(features: pd.DataFrame, target: pd.Series) -> Pipeline:
 
 def main() -> None:
     data = load_data()
-    features = data[FEATURE_COLUMNS].copy()
+    grade_features = data[GRADE_FEATURE_COLUMNS].copy()
+    risk_features = data[RISK_FEATURE_COLUMNS].copy()
     ARTIFACTS_DIR.mkdir(exist_ok=True)
 
-    grade_model = train_grade_model(features, data[GRADE_TARGET])
-    risk_model = train_risk_model(features, data[RISK_TARGET])
+    grade_model = train_grade_model(grade_features, data[GRADE_TARGET])
+    risk_model = train_risk_model(risk_features, data[RISK_TARGET])
 
     joblib.dump(grade_model, ARTIFACTS_DIR / "grade_model.joblib")
     joblib.dump(risk_model, ARTIFACTS_DIR / "risk_model.joblib")

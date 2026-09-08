@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { BarChart3, Database, ShieldCheck, UsersRound } from "lucide-react";
 import ConnectedStudentData from "../components/ConnectedStudentData.jsx";
+import ProfessorSupportWorkflow from "../components/ProfessorSupportWorkflow.jsx";
 import { useAuth } from "../context/AuthContext";
 
 export default function ProfessorDashboardView({ user, activeTab }) {
@@ -25,7 +26,7 @@ export default function ProfessorDashboardView({ user, activeTab }) {
   if (activeTab === "history" || activeTab === "connections") return null;
 
   if (activeTab === "data") {
-    return <section className="workspace-section" id="data"><div className="section-heading"><div><p className="dashboard-eyebrow">Class access</p><h2>Connected student records</h2></div></div><ConnectedStudentData /></section>;
+    return <section className="workspace-section" id="data"><div className="section-heading"><div><p className="dashboard-eyebrow">Class workspace</p><h2>Student context and support</h2></div></div><ProfessorSupportWorkflow /><ConnectedStudentData /></section>;
   }
 
   if (activeTab === "insights") {

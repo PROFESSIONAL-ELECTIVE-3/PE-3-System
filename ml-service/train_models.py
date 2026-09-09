@@ -12,7 +12,13 @@ from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import classification_report, mean_absolute_error, root_mean_squared_error
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    mean_absolute_error,
+    r2_score,
+    root_mean_squared_error,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -113,6 +119,7 @@ def train_grade_model(features: pd.DataFrame, target: pd.Series) -> Pipeline:
     print("Grade forecast evaluation")
     print(f"  MAE:  {mean_absolute_error(y_test, predictions):.3f}")
     print(f"  RMSE: {root_mean_squared_error(y_test, predictions):.3f}")
+    print(f"  R^2:  {r2_score(y_test, predictions):.3f}")
     return model
 
 
@@ -139,6 +146,12 @@ def train_risk_model(features: pd.DataFrame, target: pd.Series) -> Pipeline:
 
     print("\nAttrition-risk evaluation")
     print(classification_report(y_test, predictions, digits=3))
+    # R^2 isn't a meaningful metric for a classifier (it's a regression metric
+    # comparing predicted vs. actual continuous values). What's reported here
+    # instead is accuracy, which is what scikit-learn's own `.score()` method
+    # returns for classifiers -- the closest analogue to "R^2 of the model."
+    accuracy = accuracy_score(y_test, predictions)
+    print(f"  Accuracy (classifier's analogue to R^2): {accuracy:.3f}")
     return model
 
 

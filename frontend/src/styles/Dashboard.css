@@ -401,8 +401,8 @@
 
 .advisor-summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
   width: 100%;
 }
 
@@ -460,7 +460,7 @@
 .summary-card small {
   display: block;
   color: #718399;
-  font-size: 0.72rem;
+  font-size: 0.60rem;
   margin-top: 0.1rem;
 }
 
@@ -569,6 +569,88 @@
   cursor: pointer;
 }
 
+/* ==========================================================================
+   Professors Tabular Connected Students & Expansion
+   ========================================================================== */
+
+.tabular-student-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e1e9f0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.student-metrics-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.83rem;
+}
+
+.student-metrics-table th {
+  background: #f6f9fc;
+  color: #29465f;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e1e9f0;
+  text-align: center;
+}
+
+.student-metrics-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #edf2f6;
+  color: #18324b;
+  vertical-align: middle;
+  text-align: center
+}
+
+.student-metrics-table tr.row-expanded td {
+  background: #f7fbff;
+}
+
+.student-id-sub {
+  font-size: 0.72rem;
+  color: #718399;
+  margin-top: 0.15rem;
+}
+
+.action-button.secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid #cbd8e5;
+  border-radius: 6px;
+  background: #fff;
+  color: #0c5bb4;
+  font-weight: 700;
+  font-size: 0.74rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.action-button.secondary:hover {
+  background: #ebf4ff;
+  border-color: #0c5bb4;
+}
+
+.trajectory-expansion-row td {
+  padding: 1rem;
+  background: #f8fbfe;
+  border-bottom: 2px solid #ddebfc;
+}
+
+.expanded-trajectory-wrapper {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.summary-card .card-icon.blue {
+  color: #1762b9;
+  background: #e5f0ff;
+}
+
 .alert-list {
   display: flex;
   flex-direction: column;
@@ -628,7 +710,7 @@
 }
 
 .risk-pill {
-  font-size: 0.68rem;
+  font-size: 1.1rem;
   font-weight: 800;
   padding: 0.2rem 0.5rem;
   border-radius: 99px;
@@ -649,6 +731,8 @@
   color: #176b38;
   background: #eaf9f0;
 }
+
+.trajectory-content 
 
 .alert-trigger-text {
   margin: 0.4rem 0;

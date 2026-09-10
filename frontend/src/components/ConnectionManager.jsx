@@ -126,7 +126,7 @@ export default function ConnectionManager() {
         <div className="connection-manager__icon" aria-hidden="true"><Link2 size={19} /></div>
         <div>
           <p className="dashboard-eyebrow">Professor connection</p>
-          <h3 id="connection-title">{isStudent ? "Connect with your professor" : "Student connection requests"}</h3>
+          <h3 id="connection-title">{isStudent ? "Connect with your professor" : "Student Connection Requests"}</h3>
         </div>
         {!isStudent && pendingCount > 0 && <span className="connection-count">{pendingCount} pending</span>}
       </div>

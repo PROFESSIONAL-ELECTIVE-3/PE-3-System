@@ -1,9 +1,13 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   AlertTriangle,
   BarChart3,
+  BookOpen,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
+  Clock,
   Database,
   Filter,
   History as HistoryIcon,
@@ -12,6 +16,7 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
+  Table,
   TrendingDown,
   TrendingUp,
   UserCheck,
@@ -156,216 +161,312 @@ function DashboardNavLink({ tab, currentTab, children }) {
   );
 }
 
-function AdvisorDashboardModule({ user, students }) {
-  const [selectedStudent, setSelectedStudent] = useState(students[0] || null);
+function AdvisorDashboardModule({ user }) {
+  const { apiFetch } = useAuth();
+  const [connectedStudentsData, setConnectedStudentsData] = useState([]);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const [expandedStudentId, setExpandedStudentId] = useState(null);
   const [filterRisk, setFilterRisk] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (students.length > 0 && (!selectedStudent || !students.some((s) => s.id === selectedStudent.id))) {
-      setSelectedStudent(students[0]);
-    }
-  }, [students, selectedStudent]);
+    let isMounted = true;
+    const fetchProfessorData = async () => {
+      setLoading(true);
+      try {
+        if (!apiFetch) return;
 
-  const filteredStudents = students.filter((stu) => {
-    const matchesRisk = filterRisk === "all" || stu.riskLevel === filterRisk;
-    const matchesSearch =
-      stu.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      stu.id.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesRisk && matchesSearch;
-  });
+        const [connRes, studentsRes] = await Promise.all([
+          apiFetch("/api/connections"),
+          apiFetch("/api/professor/students"),
+        ]);
 
-  const highRiskCount = students.filter((s) => s.riskLevel === "high").length;
-  const medRiskCount = students.filter((s) => s.riskLevel === "medium").length;
-  const lowRiskCount = students.filter((s) => s.riskLevel === "low").length;
+        if (connRes.ok && isMounted) {
+          const connData = await connRes.json();
+          const pendings = (connData.connections || []).filter(
+            (c) => c.status === "pending"
+          );
+          setPendingRequestsCount(pendings.length);
+        }
+
+        if (studentsRes.ok && isMounted) {
+          const stData = await studentsRes.json();
+          // Restrict exclusively to students within the same institution
+          const sameInstitutionStudents = (stData.students || []).filter(
+            ({ student }) => !user.institution || student.institution === user.institution
+          );
+          setConnectedStudentsData(sameInstitutionStudents);
+        } else if (!studentsRes.ok && isMounted) {
+          const errData = await studentsRes.json().catch(() => ({}));
+          throw new Error(errData.message || "Failed to load connected students.");
+        }
+      } catch (err) {
+        if (isMounted) setError(err.message || "Error fetching dashboard data.");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchProfessorData();
+    return () => {
+      isMounted = false;
+    };
+  }, [apiFetch, user?.institution]);
+
+  const formattedStudents = useMemo(() => {
+    return connectedStudentsData.map(({ student, record, forecast }) => {
+      const dropoutProb = forecast ? Math.round(forecast.dropoutProbability * 100) : 0;
+      let riskLevel = "low";
+      if (dropoutProb >= 50) riskLevel = "high";
+      else if (dropoutProb >= 25) riskLevel = "medium";
+
+      return {
+        id: String(student.id),
+        name: student.fullName || "Unknown Student",
+        gpa: record ? `${record.previousSemesterGrade} / ${record.gradeMaximum}` : "N/A",
+        attendance: record ? (record.attendance === "day" ? "Day" : "Night") : "N/A",
+        riskScore: dropoutProb,
+        riskLevel,
+        predictedGrade: forecast ? `${forecast.predictedNextSemesterGrade} / ${forecast.gradeMaximum}` : "N/A",
+      };
+    });
+  }, [connectedStudentsData]);
+
+  const filteredStudents = useMemo(() => {
+    return formattedStudents.filter((stu) => {
+      const matchesRisk = filterRisk === "all" || stu.riskLevel === filterRisk;
+      const matchesSearch =
+        stu.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        stu.id.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesRisk && matchesSearch;
+    });
+  }, [formattedStudents, filterRisk, searchTerm]);
+
+  const toggleExpand = (studentId) => {
+    setExpandedStudentId((prev) => (prev === studentId ? null : studentId));
+  };
+
+  if (loading) return <p className="connected-students-loading">Loading professor dashboard...</p>;
+  if (error) return <p className="connected-students-error" role="alert">{error}</p>;
 
   return (
     <div className="advisor-dashboard">
       <section className="dashboard-intro">
         <p className="dashboard-eyebrow">{user.institution || "Advisory Caseload Workspace"}</p>
         <h1>Advisor Command Center</h1>
-        <p>
-          Monitor cohort risk levels, review automated attrition warnings, and inspect individual academic trajectory forecasts.
-        </p>
+        <p>Monitor cohort risk levels, review pending requests, and inspect academic trajectories for connected students.</p>
       </section>
 
-      <section className="advisor-summary-grid">
+      {/* 5 Visual Report Cards */}
+        <section className="advisor-summary-grid">
         <div className="summary-card">
-          <div className="card-icon red">
-            <AlertTriangle size={20} />
-          </div>
+          <div className="card-icon red"><AlertTriangle size={20} /></div>
           <div className="card-details">
-            <span className="card-value">{highRiskCount}</span>
-            <span className="card-label">High-Risk Critical Alerts</span>
-            <small>Immediate intervention needed</small>
+            <span className="card-value">
+              {formattedStudents.filter((s) => s.riskLevel === "high").length}
+            </span>
+            <span className="card-label">Critical Risk</span>
+            <small>High attrition signal (≥50%)</small>
           </div>
         </div>
 
         <div className="summary-card">
-          <div className="card-icon amber">
-            <TrendingDown size={20} />
-          </div>
+          <div className="card-icon amber"><TrendingDown size={20} /></div>
           <div className="card-details">
-            <span className="card-value">{medRiskCount}</span>
-            <span className="card-label">Moderate Warnings</span>
-            <small>Requires academic check-in</small>
+            <span className="card-value">
+              {formattedStudents.filter((s) => s.riskLevel === "medium").length}
+            </span>
+            <span className="card-label">Moderate Watch</span>
+            <small>Needs monitoring (25–49%)</small>
           </div>
         </div>
 
         <div className="summary-card">
-          <div className="card-icon green">
-            <UserCheck size={20} />
-          </div>
+          <div className="card-icon green"><UserCheck size={20} /></div>
           <div className="card-details">
-            <span className="card-value">{lowRiskCount}</span>
+            <span className="card-value">
+              {formattedStudents.filter((s) => s.riskLevel === "low").length}
+            </span>
             <span className="card-label">On Track</span>
-            <small>Satisfactory progress</small>
+            <small>Low attrition risk (&lt;25%)</small>
+          </div>
+        </div>
+
+        <div className="summary-card">
+          <div className="card-icon blue"><UsersRound size={20} /></div>
+          <div className="card-details">
+            <span className="card-value">{connectedStudentsData.length}</span>
+            <span className="card-label">Total Students</span>
+            <small>Connected active students</small>
+          </div>
+        </div>
+
+        <div className="summary-card">
+          <div className="card-icon silver"><Clock size={20} /></div>
+          <div className="card-details">
+            <span className="card-value">{pendingRequestsCount}</span>
+            <span className="card-label">Pending Requests</span>
+            <small>Awaiting your approval</small>
           </div>
         </div>
       </section>
 
-      <div className="advisor-workspace-grid">
-        <section className="caseload-panel">
-          <div className="panel-header">
-            <div>
-              <h3>At-Risk Caseload Alerts</h3>
-              <p>Automated signals derived from institutional criteria</p>
-            </div>
+      {/* Tabular View of Connected Students */}
+      <section className="workspace-section">
+        <div className="section-heading">
+          <div>
+            <p className="dashboard-eyebrow">Connected Student Performance</p>
+            <h2>Attrition Risk and Academic Performance Overview</h2>
           </div>
+        </div>
 
-          <div className="caseload-controls">
-            <div className="search-box">
-              <Search size={15} />
-              <input
-                type="text"
-                placeholder="Search student or ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="filter-select">
-              <Filter size={15} />
-              <select value={filterRisk} onChange={(e) => setFilterRisk(e.target.value)}>
-                <option value="all">All Tiers</option>
-                <option value="high">Critical</option>
-                <option value="medium">Moderate</option>
-                <option value="low">On Track</option>
-              </select>
-            </div>
+        <div className="caseload-controls" style={{ marginBottom: "1rem" }}>
+          <div className="search-box">
+            <Search size={15} />
+            <input
+              type="text"
+              placeholder="Search student name or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-
-          <div className="alert-list">
-            {filteredStudents.map((student) => {
-              const isSelected = selectedStudent?.id === student.id;
-              return (
-                <article
-                  key={student.id}
-                  className={`alert-item ${student.riskLevel} ${isSelected ? "selected" : ""}`}
-                  onClick={() => setSelectedStudent(student)}
-                >
-                  <div className="alert-item-header">
-                    <div>
-                      <strong>{student.name}</strong>
-                      <span className="student-id-tag">{student.id}</span>
-                    </div>
-                    <span className={`risk-pill ${student.riskLevel}`}>
-                      {student.riskScore}% Risk
-                    </span>
-                  </div>
-                  <p className={`alert-trigger-text ${student.riskLevel === "low" ? "text-success" : ""}`}>
-                    {student.riskLevel === "low" ? (
-                      <CheckCircle2 size={13} />
-                    ) : (
-                      <AlertTriangle size={13} />
-                    )}{" "}
-                    {student.primaryTrigger}
-                  </p>
-                  <div className="alert-meta">
-                    <span>Grade: <strong>{student.displayGrade || student.currentGpa}</strong></span>
-                    <span>Attendance: <strong>{student.attendanceRate}%</strong></span>
-                    <ChevronRight size={15} className="chevron" />
-                  </div>
-                </article>
-              );
-            })}
+          <div className="filter-select">
+            <Filter size={15} />
+            <select value={filterRisk} onChange={(e) => setFilterRisk(e.target.value)}>
+              <option value="all">Attrition Tiers</option>
+              <option value="high">Critical Risk</option>
+              <option value="medium">Moderate Risk</option>
+              <option value="low">On Track</option>
+            </select>
           </div>
-        </section>
+        </div>
 
-        {selectedStudent && (
-          <section className="trajectory-panel">
-            <div className="panel-header">
-              <div>
-                <span className="eyebrow">Trajectory Graph</span>
-                <h3>{selectedStudent.name} ({selectedStudent.id})</h3>
-                <p>{selectedStudent.program} • {selectedStudent.yearLevel}</p>
-              </div>
-              <button type="button" className="action-button primary">
-                Log Intervention
-              </button>
-            </div>
+        {formattedStudents.length === 0 ? (
+          <div className="connected-students-empty">
+            <BookOpen size={20} />
+            <p>No connected students from {user.institution || "your institution"} yet. Approve connection requests to view student records here.</p>
+          </div>
+        ) : (
+          <div className="tabular-student-container">
+            <table className="student-metrics-table">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Student Name</th>
+                  <th>Current Grade</th>
+                  <th>Attrition Risk</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredStudents.map((student) => {
+                  const isExpanded = expandedStudentId === student.id;
+                  return (
+                    <React.Fragment key={student.id}>
+                      <tr className={isExpanded ? "row-expanded" : ""}>
+                        <td>{filteredStudents.indexOf(student) + 1}</td>
+                        <td>
+                          <strong>{student.name}</strong>
+                        </td>
+                        <td><strong>{student.gpa}</strong></td>
+                        <td>
+                          <span className={`risk-pill ${student.riskLevel}`}>
+                            {student.riskScore}%
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="action-button secondary"
+                            onClick={() => toggleExpand(student.id)}
+                          >
+                            {isExpanded ? (
+                              <>Hide Trajectory <ChevronUp size={14} /></>
+                            ) : (
+                              <>View Trajectory <ChevronDown size={14} /></>)}
+                          </button>
+                        </td>
+                      </tr>
 
-            <div className={`alert-banner ${selectedStudent.riskLevel === "low" ? "banner-safe" : ""}`}>
-              <Sparkles size={16} />
-              <div>
-                {selectedStudent.riskLevel === "low" ? (
-                  <><strong>Academic Stability:</strong> Performance is on track with an estimated <strong>{selectedStudent.riskScore}% attrition risk</strong>.</>
-                ) : (
-                  <><strong>Predictive Signal:</strong> At current trajectory, this student faces an <strong>{selectedStudent.riskScore}% likelihood of academic probation</strong> by next term.</>
-                )}
-              </div>
-            </div>
+                      {/* Expandable Trajectory Graph / Details Row */}
+                      {isExpanded && (() => {
+                        // Extract scale from student object or string format (e.g., "1.5 / 5.0")
+                        const gradeScale = student.scale || student.gpa?.split("/")[1]?.trim() || "4.0";
+                        const currentGradeNum = parseFloat(student.gpa) || 0;
+                        const predictedGradeNum = parseFloat(student.predictedGrade) || 0;
+                        const { chartDomain, isReversed, passingCutoff } = evaluateGrade(currentGradeNum, gradeScale);
 
-            <div className="chart-container">
-              <h4>Academic Trajectory & Risk Cutoff</h4>
-              <p className="chart-subtext">
-                Term performance progression against minimum passing threshold.
-              </p>
+                        return (
+                          <tr className="trajectory-expansion-row">
+                            <td colSpan={5}>
+                              <div className="expanded-trajectory-wrapper" style={{ padding: "1.2rem", backgroundColor: "#f8fafc", borderRadius: "8px" }}>
+                                <div className="trajectory-header" style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+                                  <TrendingUp size={18} color="#0c5bb4" />
+                                  <h4 style={{ margin: 0, fontSize: "1rem", color: "#1e293b" }}>
+                                    Academic Performance Trajectory Forecast ({gradeScale} Scale)
+                                  </h4>
+                                </div>
 
-              <div style={{ width: "100%", height: 260 }}>
-                <ResponsiveContainer>
-                  <LineChart
-                    data={selectedStudent.trajectory}
-                    margin={{ top: 15, right: 25, left: -10, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5eaf1" />
-                    <XAxis dataKey="term" stroke="#718399" fontSize={12} />
-                    <YAxis stroke="#718399" fontSize={12} />
-                    <Tooltip
-                      formatter={(value) => [value, "Grade"]}
-                      contentStyle={{ borderRadius: "8px", border: "1px solid #c6d6e5" }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="gpa"
-                      stroke={selectedStudent.riskLevel === "high" ? "#d55752" : "#0c5bb4"}
-                      strokeWidth={2.5}
-                      dot={{ r: 4, fill: selectedStudent.riskLevel === "high" ? "#d55752" : "#0c5bb4" }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="trajectory-metrics">
-              <div className="metric-box">
-                <small>Reported Grade</small>
-                <strong>{selectedStudent.displayGrade || selectedStudent.currentGpa}</strong>
-              </div>
-              <div className="metric-box">
-                <small>Class Attendance</small>
-                <strong>{selectedStudent.attendanceRate}%</strong>
-              </div>
-              <div className="metric-box">
-                <small>Attrition Risk Index</small>
-                <strong className={selectedStudent.riskLevel === "high" ? "text-danger" : ""}>
-                  {selectedStudent.riskScore} / 100
-                </strong>
-              </div>
-            </div>
-          </section>
+                                <div className="trajectory-content" style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1.5rem", width: "100%" }}>
+                                  <div className="trajectory-chart-box" style={{ backgroundColor: "#ffffff", padding: "1rem", borderRadius: "8px", border: "1px solid #e2e8f0", width: "100%", boxSizing: "border-box" }}>
+                                    <div style={{ width: "100%", height: 220 }}>
+                                      <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart
+                                          data={[
+                                            { term: "Current Term", grade: currentGradeNum },
+                                            { term: "Next Term (ML)", grade: predictedGradeNum }
+                                          ]}
+                                          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                                        >
+                                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                          <XAxis dataKey="term" stroke="#64748b" fontSize={11} />
+                                          
+                                          {/* Dynamic Y-Axis based on evaluateGrade */}
+                                          <YAxis
+                                            domain={chartDomain}
+                                            reversed={isReversed}
+                                            stroke="#64748b"
+                                            fontSize={11}
+                                          />
+                                          
+                                          <Tooltip formatter={(val) => [val, "Grade"]} />
+                                          
+                                          {/* Dynamic Passing Cutoff Line */}
+                                          <ReferenceLine
+                                            y={passingCutoff}
+                                            label={{ value: `Cutoff (${passingCutoff})`, fill: "#d55752", fontSize: 10 }}
+                                            stroke="#d55752"
+                                            strokeDasharray="3 3"
+                                          />
+                                          
+                                          <Line
+                                            type="monotone"
+                                            dataKey="grade"
+                                            stroke={student.riskLevel === "high" ? "#d55752" : "#0c5bb4"}
+                                            strokeWidth={2.5}
+                                            dot={{ r: 4, fill: student.riskLevel === "high" ? "#d55752" : "#0c5bb4" }}
+                                            activeDot={{ r: 6 }}
+                                          />
+                                        </LineChart>
+                                      </ResponsiveContainer>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })()}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
@@ -374,6 +475,13 @@ export default function Dashboard() {
   const { user, logout, apiFetch } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  if (!user) {
+    return (
+      <div className="app-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
 
   const [cohort, setCohort] = useState(INITIAL_COHORT);
   const [studentRecord, setStudentRecord] = useState(() => {
@@ -550,20 +658,26 @@ export default function Dashboard() {
           <DashboardNavLink tab="overview" currentTab={activeTab}>
             <LayoutDashboard size={18} /> Overview
           </DashboardNavLink>
-          <DashboardNavLink tab="data" currentTab={activeTab}>
-            <Database size={18} /> Data Workspace
-          </DashboardNavLink>
-          <DashboardNavLink tab="insights" currentTab={activeTab}>
-            <BarChart3 size={18} /> Insights
-          </DashboardNavLink>
+          {user?.role !== "professor" && user?.role !== "administrator" && (
+            <>
+              <DashboardNavLink tab="data" currentTab={activeTab}>
+                <Database size={18} /> Data Workspace
+              </DashboardNavLink>
+              <DashboardNavLink tab="insights" currentTab={activeTab}>
+                <BarChart3 size={18} /> Insights
+              </DashboardNavLink>
+            </>
+          )}
           {hasConnectionAccess && (
             <DashboardNavLink tab="connections" currentTab={activeTab}>
               <UsersRound size={18} /> {user.role === "student" ? "My Professor" : "Students"}
             </DashboardNavLink>
           )}
-          <DashboardNavLink tab="history" currentTab={activeTab}>
-            <HistoryIcon size={18} /> History
-          </DashboardNavLink>
+          {user?.role !== "professor" && user?.role !== "administrator" && (
+            <DashboardNavLink tab="history" currentTab={activeTab}>
+              <HistoryIcon size={18} /> History
+            </DashboardNavLink>
+          )}
         </nav>
         <div className="sidebar-support">
           <ShieldCheck size={18} />
@@ -592,14 +706,23 @@ export default function Dashboard() {
 
         <nav className="mobile-dashboard-nav" aria-label="Mobile navigation">
           <DashboardNavLink tab="overview" currentTab={activeTab}>Overview</DashboardNavLink>
-          <DashboardNavLink tab="data" currentTab={activeTab}>Data</DashboardNavLink>
-          <DashboardNavLink tab="insights" currentTab={activeTab}>Insights</DashboardNavLink>
+          
+          {user?.role !== "professor" && user?.role !== "administrator" && (
+            <>
+              <DashboardNavLink tab="data" currentTab={activeTab}>Data</DashboardNavLink>
+              <DashboardNavLink tab="insights" currentTab={activeTab}>Insights</DashboardNavLink>
+            </>
+          )}
+
           {hasConnectionAccess && (
             <DashboardNavLink tab="connections" currentTab={activeTab}>
-              {user.role === "student" ? "Professor" : "Students"}
+              {user?.role === "student" ? "Professor" : "Students"}
             </DashboardNavLink>
           )}
-          <DashboardNavLink tab="history" currentTab={activeTab}>History</DashboardNavLink>
+
+          {user?.role !== "professor" && user?.role !== "administrator" && (
+            <DashboardNavLink tab="history" currentTab={activeTab}>History</DashboardNavLink>
+          )}
         </nav>
 
         {(user?.role === "professor" || user?.role === "advisor") && activeTab === "overview" && (
@@ -801,7 +924,7 @@ export default function Dashboard() {
               <div>
                 <p className="dashboard-eyebrow">Academic support</p>
                 <h2>
-                  {user.role === "student" ? "My professor connections" : "Manage student connections"}
+                  {user.role === "student" ? "My Professor Connections" : "Manage Student Connections"}
                 </h2>
               </div>
             </div>

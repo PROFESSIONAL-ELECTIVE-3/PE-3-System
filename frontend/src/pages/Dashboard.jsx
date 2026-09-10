@@ -117,6 +117,7 @@ function DashboardNavLink({ tab, currentTab, children }) {
   );
 }
 
+// Advisor Command Center Module
 function AdvisorDashboardModule({ user, students }) {
   const [selectedStudent, setSelectedStudent] = useState(students[0] || null);
   const [filterRisk, setFilterRisk] = useState("all");
@@ -356,7 +357,6 @@ export default function Dashboard() {
   const nextStep = NEXT_STEPS_BY_ROLE[user?.role] ?? NEXT_STEPS_BY_ROLE.student;
   const roleLabel = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User";
 
-  // Calculation helper that syncs both the student view and the cohort trajectory
   const processAndStoreRecord = useCallback((record) => {
     if (!record || record.previousSemesterGrade === undefined || record.previousSemesterGrade === "") return;
 
@@ -403,7 +403,7 @@ export default function Dashboard() {
       currentGpa: normalizedGpa,
       attendanceRate: record.attendance === "day" ? 94 : 85,
       trajectory: [
-        { term: "Prev-1", gpa: Math.min(4.0, Number((normalizedGpa + 0.3).toFixed(2))), isProjected: false },
+        { term: "Prev-1", gpa: Math.min(4.0, Number((normalizedGpa + 0.25).toFixed(2))), isProjected: false },
         { term: "Current Term", gpa: normalizedGpa, isProjected: false },
         { term: "Next (Proj)", gpa: Math.max(1.0, Number((normalizedGpa + (riskLevel === "high" ? -0.3 : 0.15)).toFixed(2))), isProjected: true },
       ],
@@ -420,7 +420,6 @@ export default function Dashboard() {
     });
   }, [user]);
 
-  // Fetch record on mount directly in the Dashboard shell so Overview has data immediately
   useEffect(() => {
     let isMounted = true;
     (async () => {
@@ -459,7 +458,6 @@ export default function Dashboard() {
   const firstName = user?.fullName ? user.fullName.split(" ")[0] : "Student";
   const hasConnectionAccess = user?.role === "student" || user?.role === "professor";
 
-  // Calculate normalized GPA (0.00 to 4.00)
   const currentStudentGpa =
     studentRecord && studentRecord.previousSemesterGrade !== "" && studentRecord.previousSemesterGrade !== undefined
       ? (
@@ -469,6 +467,17 @@ export default function Dashboard() {
       : null;
 
   const isAtRisk = currentStudentGpa !== null && Number(currentStudentGpa) < 2.0;
+
+  // Trajectory series generated for the student
+  const studentTrajectoryData = currentStudentGpa !== null ? [
+    { term: "Term Y1", gpa: Math.min(4.0, Number((Number(currentStudentGpa) + 0.35).toFixed(2))) },
+    { term: "Term Y2", gpa: Math.min(4.0, Number((Number(currentStudentGpa) + 0.15).toFixed(2))) },
+    { term: "Current Term", gpa: Number(currentStudentGpa) },
+    {
+      term: "Next Term (Proj)",
+      gpa: Math.max(1.0, Number((Number(currentStudentGpa) + (isAtRisk ? -0.35 : 0.2)).toFixed(2))),
+    },
+  ] : [];
 
   return (
     <div className="app-shell">
@@ -551,9 +560,8 @@ export default function Dashboard() {
               </p>
             </section>
 
-            {/* Dynamic Dashboard Cards */}
+            {/* Visual KPI Summaries */}
             <section className="dashboard-summary" aria-label="Advisor module objectives">
-              {/* Card 1: Automated Alerts */}
               <article>
                 <span className={`summary-icon ${isAtRisk ? "amber" : "green"}`}>
                   <AlertTriangle size={19} />
@@ -576,7 +584,6 @@ export default function Dashboard() {
                 </div>
               </article>
 
-              {/* Card 2: Visual Reports */}
               <article>
                 <span className="summary-icon blue">
                   <BarChart3 size={19} />
@@ -593,7 +600,6 @@ export default function Dashboard() {
                 </div>
               </article>
 
-              {/* Card 3: Student Trajectories */}
               <article>
                 <span className="summary-icon green">
                   <TrendingUp size={19} />
@@ -607,10 +613,97 @@ export default function Dashboard() {
                   <small>
                     {studentRecord && studentRecord.previousSemesterUnitsApproved !== undefined
                       ? "Approved course completion"
-                      : "Trajectory will calculate upon entry"}
+                      : "Trajectory calculated upon entry"}
                   </small>
                 </div>
               </article>
+            </section>
+
+            {/* Individual Student Trajectory Graph Workspace */}
+            <section className="workspace-section" style={{ marginTop: "1.4rem" }}>
+              <div className="section-heading">
+                <div>
+                  <p className="dashboard-eyebrow">Predictive Outlook</p>
+                  <h2>Your Academic Trajectory Graph</h2>
+                </div>
+              </div>
+
+              {currentStudentGpa !== null ? (
+                <div style={{ marginTop: "1.2rem" }}>
+                  <div className={`alert-banner ${!isAtRisk ? "banner-safe" : ""}`}>
+                    <Sparkles size={16} />
+                    <div>
+                      {isAtRisk ? (
+                        <>
+                          <strong>Warning:</strong> Your normalized GPA ({currentStudentGpa}) has fallen below the 2.0 institutional threshold. Review your support plan or contact your advisor.
+                        </>
+                      ) : (
+                        <>
+                          <strong>On Track:</strong> Your current academic trajectory indicates stable progress toward graduation requirements with minimal risk.
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="chart-container" style={{ marginTop: "1rem" }}>
+                    <h4>Cumulative GPA Trajectory vs. 2.0 Probation Cutoff</h4>
+                    <p className="chart-subtext">
+                      Track historical performance, current term GPA, and projected completion trajectory.
+                    </p>
+
+                    <div style={{ width: "100%", height: 260 }}>
+                      <ResponsiveContainer>
+                        <LineChart
+                          data={studentTrajectoryData}
+                          margin={{ top: 15, right: 25, left: -20, bottom: 0 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5eaf1" />
+                          <XAxis dataKey="term" stroke="#718399" fontSize={12} />
+                          <YAxis domain={[1.0, 4.0]} stroke="#718399" fontSize={12} />
+                          <Tooltip
+                            formatter={(value) => [value, "Term GPA"]}
+                            contentStyle={{ borderRadius: "8px", border: "1px solid #c6d6e5" }}
+                          />
+                          <ReferenceLine
+                            y={2.0}
+                            label={{
+                              value: "Probation Line (2.0)",
+                              fill: "#a63834",
+                              position: "insideTopRight",
+                              fontSize: 11,
+                            }}
+                            stroke="#d55752"
+                            strokeDasharray="4 4"
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="gpa"
+                            stroke={isAtRisk ? "#d55752" : "#0c5bb4"}
+                            strokeWidth={2.5}
+                            dot={{ r: 4, fill: isAtRisk ? "#d55752" : "#0c5bb4" }}
+                            activeDot={{ r: 6 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="empty-state" style={{ minHeight: "180px" }}>
+                  <div className="empty-illustration">
+                    <TrendingUp size={24} />
+                  </div>
+                  <div>
+                    <h3>No Trajectory Available Yet</h3>
+                    <p>
+                      Enter your latest term grades and completed credit units in the Data Workspace to plot your historical trajectory and predictive forecast.
+                    </p>
+                    <NavLink to="/dashboard/data" className="dashboard-action">
+                      Enter Academic Record
+                    </NavLink>
+                  </div>
+                </div>
+              )}
             </section>
           </>
         )}

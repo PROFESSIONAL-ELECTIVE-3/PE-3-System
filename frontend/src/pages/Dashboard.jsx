@@ -73,15 +73,16 @@ const INITIAL_COHORT = [
     riskLevel: "high",
     riskScore: 84,
     primaryTrigger: "GPA dropped > 0.6 this term; 3 consecutive absences in Networking 2",
+    displayGrade: "2.15 / 4.0",
     currentGpa: 2.15,
     attendanceRate: 74,
     trajectory: [
-      { term: "Y1-T1", gpa: 3.4, isProjected: false },
-      { term: "Y1-T2", gpa: 3.2, isProjected: false },
-      { term: "Y2-T1", gpa: 2.85, isProjected: false },
-      { term: "Y2-T2", gpa: 2.6, isProjected: false },
-      { term: "Y3-T1", gpa: 2.15, isProjected: false },
-      { term: "Y3-T2 (Proj)", gpa: 1.85, isProjected: true },
+      { term: "Y1-T1", gpa: 3.4 },
+      { term: "Y1-T2", gpa: 3.2 },
+      { term: "Y2-T1", gpa: 2.85 },
+      { term: "Y2-T2", gpa: 2.6 },
+      { term: "Y3-T1", gpa: 2.15 },
+      { term: "Y3-T2 (Proj)", gpa: 1.85 },
     ],
   },
   {
@@ -92,16 +93,54 @@ const INITIAL_COHORT = [
     riskLevel: "medium",
     riskScore: 58,
     primaryTrigger: "Midterm exam failure in Data Structures; missing lab submissions",
+    displayGrade: "2.75 / 4.0",
     currentGpa: 2.75,
     attendanceRate: 88,
     trajectory: [
-      { term: "Y1-T1", gpa: 3.5, isProjected: false },
-      { term: "Y1-T2", gpa: 3.3, isProjected: false },
-      { term: "Y2-T1", gpa: 2.75, isProjected: false },
-      { term: "Y2-T2 (Proj)", gpa: 2.65, isProjected: true },
+      { term: "Y1-T1", gpa: 3.5 },
+      { term: "Y1-T2", gpa: 3.3 },
+      { term: "Y2-T1", gpa: 2.75 },
+      { term: "Y2-T2 (Proj)", gpa: 2.65 },
     ],
   },
 ];
+
+// Helper to calculate risk, thresholds, and labels across all 4 grading systems
+function evaluateGrade(rawGradeNum, scaleType) {
+  const scale = String(scaleType);
+  let isAtRisk = false;
+  let label = "";
+  let passingCutoff = 2.0;
+  let chartDomain = [1.0, 4.0];
+  let isReversed = false;
+
+  if (scale === "100") {
+    passingCutoff = 75.0;
+    chartDomain = [50, 100];
+    isAtRisk = rawGradeNum < 75.0;
+    label = `${rawGradeNum} / 100`;
+  } else if (scale === "20") {
+    passingCutoff = 10.0;
+    chartDomain = [0, 20];
+    isAtRisk = rawGradeNum < 10.0;
+    label = `${rawGradeNum} / 20`;
+  } else if (scale === "5-inv" || scale === "5") {
+    // 1.0 is Highest, 3.0 is Passing, 5.0 is Failing
+    passingCutoff = 3.0;
+    chartDomain = [1.0, 5.0];
+    isReversed = true; // lower is better
+    isAtRisk = rawGradeNum > 3.0;
+    label = `${rawGradeNum.toFixed(2)} / 5.00 (1.0 Highest)`;
+  } else {
+    // Standard 4.0
+    passingCutoff = 2.0;
+    chartDomain = [1.0, 4.0];
+    isAtRisk = rawGradeNum < 2.0;
+    label = `${rawGradeNum.toFixed(2)} / 4.00`;
+  }
+
+  return { isAtRisk, label, passingCutoff, chartDomain, isReversed };
+}
 
 function DashboardNavLink({ tab, currentTab, children }) {
   const path = tab === "overview" ? "/dashboard" : `/dashboard/${tab}`;
@@ -117,7 +156,6 @@ function DashboardNavLink({ tab, currentTab, children }) {
   );
 }
 
-// Advisor Command Center Module
 function AdvisorDashboardModule({ user, students }) {
   const [selectedStudent, setSelectedStudent] = useState(students[0] || null);
   const [filterRisk, setFilterRisk] = useState("all");
@@ -191,7 +229,7 @@ function AdvisorDashboardModule({ user, students }) {
           <div className="panel-header">
             <div>
               <h3>At-Risk Caseload Alerts</h3>
-              <p>Automated signals derived from model predictions</p>
+              <p>Automated signals derived from institutional criteria</p>
             </div>
           </div>
 
@@ -243,7 +281,7 @@ function AdvisorDashboardModule({ user, students }) {
                     {student.primaryTrigger}
                   </p>
                   <div className="alert-meta">
-                    <span>GPA: <strong>{student.currentGpa.toFixed(2)}</strong></span>
+                    <span>Grade: <strong>{student.displayGrade || student.currentGpa}</strong></span>
                     <span>Attendance: <strong>{student.attendanceRate}%</strong></span>
                     <ChevronRight size={15} className="chevron" />
                   </div>
@@ -270,7 +308,7 @@ function AdvisorDashboardModule({ user, students }) {
               <Sparkles size={16} />
               <div>
                 {selectedStudent.riskLevel === "low" ? (
-                  <><strong>Academic Stability:</strong> The student is performing consistently with an estimated <strong>{selectedStudent.riskScore}% attrition risk</strong>. Academic progress is satisfactory.</>
+                  <><strong>Academic Stability:</strong> Performance is on track with an estimated <strong>{selectedStudent.riskScore}% attrition risk</strong>.</>
                 ) : (
                   <><strong>Predictive Signal:</strong> At current trajectory, this student faces an <strong>{selectedStudent.riskScore}% likelihood of academic probation</strong> by next term.</>
                 )}
@@ -278,29 +316,23 @@ function AdvisorDashboardModule({ user, students }) {
             </div>
 
             <div className="chart-container">
-              <h4>Term GPA Trajectory vs. Retention Cutoff</h4>
+              <h4>Academic Trajectory & Risk Cutoff</h4>
               <p className="chart-subtext">
-                Longitudinal grade point performance and projected trend.
+                Term performance progression against minimum passing threshold.
               </p>
 
               <div style={{ width: "100%", height: 260 }}>
                 <ResponsiveContainer>
                   <LineChart
                     data={selectedStudent.trajectory}
-                    margin={{ top: 15, right: 25, left: -20, bottom: 0 }}
+                    margin={{ top: 15, right: 25, left: -10, bottom: 0 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5eaf1" />
                     <XAxis dataKey="term" stroke="#718399" fontSize={12} />
-                    <YAxis domain={[1.0, 4.0]} stroke="#718399" fontSize={12} />
+                    <YAxis stroke="#718399" fontSize={12} />
                     <Tooltip
-                      formatter={(value, name) => [value, name === "gpa" ? "Term GPA" : name]}
+                      formatter={(value) => [value, "Grade"]}
                       contentStyle={{ borderRadius: "8px", border: "1px solid #c6d6e5" }}
-                    />
-                    <ReferenceLine
-                      y={2.0}
-                      label={{ value: "Probation Limit (2.0)", fill: "#a63834", position: "insideTopRight", fontSize: 11 }}
-                      stroke="#d55752"
-                      strokeDasharray="4 4"
                     />
                     <Line
                       type="monotone"
@@ -317,15 +349,15 @@ function AdvisorDashboardModule({ user, students }) {
 
             <div className="trajectory-metrics">
               <div className="metric-box">
-                <small>Current Term GPA</small>
-                <strong>{selectedStudent.currentGpa.toFixed(2)}</strong>
+                <small>Reported Grade</small>
+                <strong>{selectedStudent.displayGrade || selectedStudent.currentGpa}</strong>
               </div>
               <div className="metric-box">
                 <small>Class Attendance</small>
                 <strong>{selectedStudent.attendanceRate}%</strong>
               </div>
               <div className="metric-box">
-                <small>Calculated Attrition Risk</small>
+                <small>Attrition Risk Index</small>
                 <strong className={selectedStudent.riskLevel === "high" ? "text-danger" : ""}>
                   {selectedStudent.riskScore} / 100
                 </strong>
@@ -367,29 +399,25 @@ export default function Dashboard() {
       console.warn("Could not write to localStorage", e);
     }
 
-    const scaleMax = Number(record.gradeMaximum) || 20;
-    const rawGrade = Number(record.previousSemesterGrade) || 0;
-    const normalizedGpa = Number(((rawGrade / scaleMax) * 4.0).toFixed(2));
+    const rawGradeNum = Number(record.previousSemesterGrade) || 0;
+    const { isAtRisk, label } = evaluateGrade(rawGradeNum, record.gradeMaximum);
 
     const unitsEnrolled = Number(record.previousSemesterUnitsEnrolled) || 1;
     const unitsApproved = Number(record.previousSemesterUnitsApproved) || 0;
     const passRate = unitsApproved / unitsEnrolled;
 
-    const isLowGpa = normalizedGpa < 2.0;
-    const isMediumRisk = normalizedGpa >= 2.0 && normalizedGpa < 2.8;
-
     let riskLevel = "low";
     let riskScore = 15;
-    let trigger = "Academic record satisfactory; student is not at risk";
+    let trigger = `Academic record satisfactory (${label}); student is not at risk`;
 
-    if (isLowGpa || passRate < 0.6) {
+    if (isAtRisk || passRate < 0.6) {
       riskLevel = "high";
       riskScore = 88;
-      trigger = `Critical: GPA ${normalizedGpa.toFixed(2)} is below 2.0 probation threshold`;
-    } else if (isMediumRisk || passRate < 0.85) {
+      trigger = `Critical: Term grade ${label} is below minimum academic retention threshold`;
+    } else if (passRate < 0.85) {
       riskLevel = "medium";
       riskScore = 55;
-      trigger = `Moderate: Passing, but unit completion rate is ${(passRate * 100).toFixed(0)}%`;
+      trigger = `Moderate: Passing grade, but course completion rate is ${(passRate * 100).toFixed(0)}%`;
     }
 
     const updatedStudentEntry = {
@@ -400,12 +428,13 @@ export default function Dashboard() {
       riskLevel,
       riskScore,
       primaryTrigger: trigger,
-      currentGpa: normalizedGpa,
+      displayGrade: label,
+      currentGpa: rawGradeNum,
       attendanceRate: record.attendance === "day" ? 94 : 85,
       trajectory: [
-        { term: "Prev-1", gpa: Math.min(4.0, Number((normalizedGpa + 0.25).toFixed(2))), isProjected: false },
-        { term: "Current Term", gpa: normalizedGpa, isProjected: false },
-        { term: "Next (Proj)", gpa: Math.max(1.0, Number((normalizedGpa + (riskLevel === "high" ? -0.3 : 0.15)).toFixed(2))), isProjected: true },
+        { term: "Prior Term", gpa: rawGradeNum },
+        { term: "Current Term", gpa: rawGradeNum },
+        { term: "Next (Proj)", gpa: isAtRisk ? rawGradeNum : rawGradeNum },
       ],
     };
 
@@ -458,26 +487,36 @@ export default function Dashboard() {
   const firstName = user?.fullName ? user.fullName.split(" ")[0] : "Student";
   const hasConnectionAccess = user?.role === "student" || user?.role === "professor";
 
-  const currentStudentGpa =
-    studentRecord && studentRecord.previousSemesterGrade !== "" && studentRecord.previousSemesterGrade !== undefined
-      ? (
-          (Number(studentRecord.previousSemesterGrade) / (Number(studentRecord.gradeMaximum) || 20)) *
-          4.0
-        ).toFixed(2)
+  // Compute exact grade values based on what the student submitted
+  const rawGradeNum = studentRecord ? Number(studentRecord.previousSemesterGrade) : null;
+  const gradeDetails =
+    rawGradeNum !== null && !Number.isNaN(rawGradeNum)
+      ? evaluateGrade(rawGradeNum, studentRecord?.gradeMaximum)
       : null;
 
-  const isAtRisk = currentStudentGpa !== null && Number(currentStudentGpa) < 2.0;
-
-  // Trajectory series generated for the student
-  const studentTrajectoryData = currentStudentGpa !== null ? [
-    { term: "Term Y1", gpa: Math.min(4.0, Number((Number(currentStudentGpa) + 0.35).toFixed(2))) },
-    { term: "Term Y2", gpa: Math.min(4.0, Number((Number(currentStudentGpa) + 0.15).toFixed(2))) },
-    { term: "Current Term", gpa: Number(currentStudentGpa) },
-    {
-      term: "Next Term (Proj)",
-      gpa: Math.max(1.0, Number((Number(currentStudentGpa) + (isAtRisk ? -0.35 : 0.2)).toFixed(2))),
-    },
-  ] : [];
+  // Build the student's dynamic trajectory according to their exact scale
+  const studentTrajectoryData = gradeDetails
+    ? [
+        {
+          term: "Prior Term",
+          gpa: gradeDetails.isReversed
+            ? Math.max(1.0, Number((rawGradeNum - 0.2).toFixed(2)))
+            : Math.max(0, Number((rawGradeNum - (gradeDetails.passingCutoff === 75 ? 4 : 0.3)).toFixed(2))),
+        },
+        {
+          term: "Current Term",
+          gpa: rawGradeNum,
+        },
+        {
+          term: "Next Term (Proj)",
+          gpa: gradeDetails.isAtRisk
+            ? rawGradeNum
+            : gradeDetails.isReversed
+            ? Math.max(1.0, Number((rawGradeNum - 0.15).toFixed(2)))
+            : Number((rawGradeNum + (gradeDetails.passingCutoff === 75 ? 2 : 0.2)).toFixed(2)),
+        },
+      ]
+    : [];
 
   return (
     <div className="app-shell">
@@ -560,46 +599,49 @@ export default function Dashboard() {
               </p>
             </section>
 
-            {/* Visual KPI Summaries */}
+            {/* Dynamic Dashboard Cards */}
             <section className="dashboard-summary" aria-label="Advisor module objectives">
+              {/* Card 1: Dynamic Alert Status */}
               <article>
-                <span className={`summary-icon ${isAtRisk ? "amber" : "green"}`}>
+                <span className={`summary-icon ${gradeDetails?.isAtRisk ? "amber" : "green"}`}>
                   <AlertTriangle size={19} />
                 </span>
                 <div>
                   <strong>
-                    {currentStudentGpa !== null
-                      ? isAtRisk
+                    {gradeDetails !== null
+                      ? gradeDetails.isAtRisk
                         ? "At-Risk Alert"
                         : "Not At Risk"
                       : "No Record Yet"}
                   </strong>
                   <small>
-                    {currentStudentGpa !== null
-                      ? isAtRisk
-                        ? "Low GPA detected (< 2.0 probation line)"
+                    {gradeDetails !== null
+                      ? gradeDetails.isAtRisk
+                        ? `Grade below passing cutoff (${gradeDetails.passingCutoff})`
                         : "Academic standing is satisfactory"
                       : "Go to Data Workspace to submit your grades"}
                   </small>
                 </div>
               </article>
 
+              {/* Card 2: Formatted Grade with Exact Scale */}
               <article>
                 <span className="summary-icon blue">
                   <BarChart3 size={19} />
                 </span>
                 <div>
                   <strong>
-                    {currentStudentGpa !== null ? `${currentStudentGpa} / 4.00` : "GPA Not Set"}
+                    {gradeDetails !== null ? gradeDetails.label : "Grade Not Set"}
                   </strong>
                   <small>
-                    {currentStudentGpa !== null
-                      ? "Normalized cumulative GPA"
+                    {gradeDetails !== null
+                      ? "Reported Semester Grade"
                       : "Awaiting your semester input"}
                   </small>
                 </div>
               </article>
 
+              {/* Card 3: Unit Completion Ratio */}
               <article>
                 <span className="summary-icon green">
                   <TrendingUp size={19} />
@@ -619,7 +661,7 @@ export default function Dashboard() {
               </article>
             </section>
 
-            {/* Individual Student Trajectory Graph Workspace */}
+            {/* Individual Trajectory Graph */}
             <section className="workspace-section" style={{ marginTop: "1.4rem" }}>
               <div className="section-heading">
                 <div>
@@ -628,46 +670,51 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {currentStudentGpa !== null ? (
+              {gradeDetails !== null ? (
                 <div style={{ marginTop: "1.2rem" }}>
-                  <div className={`alert-banner ${!isAtRisk ? "banner-safe" : ""}`}>
+                  <div className={`alert-banner ${!gradeDetails.isAtRisk ? "banner-safe" : ""}`}>
                     <Sparkles size={16} />
                     <div>
-                      {isAtRisk ? (
+                      {gradeDetails.isAtRisk ? (
                         <>
-                          <strong>Warning:</strong> Your normalized GPA ({currentStudentGpa}) has fallen below the 2.0 institutional threshold. Review your support plan or contact your advisor.
+                          <strong>Warning:</strong> Your recorded grade (<strong>{gradeDetails.label}</strong>) is currently below the institutional retention cutoff of {gradeDetails.passingCutoff}.
                         </>
                       ) : (
                         <>
-                          <strong>On Track:</strong> Your current academic trajectory indicates stable progress toward graduation requirements with minimal risk.
+                          <strong>On Track:</strong> Your recorded grade (<strong>{gradeDetails.label}</strong>) indicates satisfactory academic progress.
                         </>
                       )}
                     </div>
                   </div>
 
                   <div className="chart-container" style={{ marginTop: "1rem" }}>
-                    <h4>Cumulative GPA Trajectory vs. 2.0 Probation Cutoff</h4>
+                    <h4>Academic Trajectory vs. Passing Cutoff ({gradeDetails.passingCutoff})</h4>
                     <p className="chart-subtext">
-                      Track historical performance, current term GPA, and projected completion trajectory.
+                      Progression mapped on your chosen institutional scale.
                     </p>
 
                     <div style={{ width: "100%", height: 260 }}>
                       <ResponsiveContainer>
                         <LineChart
                           data={studentTrajectoryData}
-                          margin={{ top: 15, right: 25, left: -20, bottom: 0 }}
+                          margin={{ top: 15, right: 25, left: -10, bottom: 0 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5eaf1" />
                           <XAxis dataKey="term" stroke="#718399" fontSize={12} />
-                          <YAxis domain={[1.0, 4.0]} stroke="#718399" fontSize={12} />
+                          <YAxis
+                            domain={gradeDetails.chartDomain}
+                            reversed={gradeDetails.isReversed}
+                            stroke="#718399"
+                            fontSize={12}
+                          />
                           <Tooltip
-                            formatter={(value) => [value, "Term GPA"]}
+                            formatter={(value) => [value, "Grade"]}
                             contentStyle={{ borderRadius: "8px", border: "1px solid #c6d6e5" }}
                           />
                           <ReferenceLine
-                            y={2.0}
+                            y={gradeDetails.passingCutoff}
                             label={{
-                              value: "Probation Line (2.0)",
+                              value: `Cutoff (${gradeDetails.passingCutoff})`,
                               fill: "#a63834",
                               position: "insideTopRight",
                               fontSize: 11,
@@ -678,9 +725,9 @@ export default function Dashboard() {
                           <Line
                             type="monotone"
                             dataKey="gpa"
-                            stroke={isAtRisk ? "#d55752" : "#0c5bb4"}
+                            stroke={gradeDetails.isAtRisk ? "#d55752" : "#0c5bb4"}
                             strokeWidth={2.5}
-                            dot={{ r: 4, fill: isAtRisk ? "#d55752" : "#0c5bb4" }}
+                            dot={{ r: 4, fill: gradeDetails.isAtRisk ? "#d55752" : "#0c5bb4" }}
                             activeDot={{ r: 6 }}
                           />
                         </LineChart>

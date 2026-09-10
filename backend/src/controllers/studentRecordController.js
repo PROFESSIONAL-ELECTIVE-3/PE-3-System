@@ -139,3 +139,26 @@ exports.getMyHistory = async (req, res, next) => {
     next(err);
   }
 };
+
+// @desc    Delete one activity from the current student's timeline
+// @route   DELETE /api/students/me/history/:activityId
+// @access  Private (student)
+exports.deleteMyHistoryEntry = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ message: 'Only students can delete their history.' });
+    }
+
+    const activity = await StudentActivity.findOneAndDelete({
+      _id: req.params.activityId,
+      student: req.user._id,
+    });
+    if (!activity) {
+      return res.status(404).json({ message: 'History entry not found.' });
+    }
+
+    res.status(200).json({ message: 'History entry deleted.' });
+  } catch (err) {
+    next(err);
+  }
+};

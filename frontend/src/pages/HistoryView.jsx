@@ -7,6 +7,7 @@ import {
   FilePenLine,
   FilePlus2,
   History as HistoryIcon,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -32,6 +33,31 @@ export default function HistoryView({ user }) {
     error: "",
     activities: [],
   });
+  const [deletingId, setDeletingId] = useState(null);
+  const [entryPendingDeletion, setEntryPendingDeletion] = useState(null);
+
+  const deleteEntry = async () => {
+    const entry = entryPendingDeletion;
+    const id = entry.id || entry._id;
+    if (!id) return;
+
+    setDeletingId(id);
+    setState((current) => ({ ...current, error: "" }));
+    try {
+      const response = await apiFetch(`/api/students/me/history/${id}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Could not delete this history entry.");
+      setState((current) => ({
+        ...current,
+        activities: current.activities.filter((activity) => (activity.id || activity._id) !== id),
+      }));
+      setEntryPendingDeletion(null);
+    } catch (error) {
+      setState((current) => ({ ...current, error: error.message || "Could not delete this history entry." }));
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     if (user?.role !== "student") return;
@@ -176,10 +202,43 @@ export default function HistoryView({ user }) {
                     </span>
                   </div>
                 )}
+                <button
+                  type="button"
+                  className="history-delete-button"
+                  onClick={() => setEntryPendingDeletion(entry)}
+                  disabled={deletingId === (entry.id || entry._id)}
+                  aria-label={`Delete ${details.label.toLowerCase()} from history`}
+                >
+                  <Trash2 size={15} />
+                  {deletingId === (entry.id || entry._id) ? "Deleting…" : "Delete"}
+                </button>
               </li>
             );
           })}
         </ul>
+      )}
+
+      {entryPendingDeletion && (
+        <div className="history-delete-warning" role="dialog" aria-modal="true" aria-labelledby="history-delete-warning-title">
+          <div className="history-delete-warning__card">
+            <AlertTriangle size={23} aria-hidden="true" />
+            <div>
+              <h3 id="history-delete-warning-title">Delete this history entry?</h3>
+              <p>
+                This permanently removes the selected activity from your history. It cannot be restored.
+              </p>
+            </div>
+            <div className="history-delete-warning__actions">
+              <button type="button" className="history-delete-cancel" onClick={() => setEntryPendingDeletion(null)} disabled={Boolean(deletingId)}>
+                Keep entry
+              </button>
+              <button type="button" className="history-delete-confirm" onClick={deleteEntry} disabled={Boolean(deletingId)}>
+                <Trash2 size={15} />
+                {deletingId ? "Deleting…" : "Delete permanently"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

@@ -384,6 +384,7 @@ export default function Dashboard() {
       return null;
     }
   });
+  const [latestForecast, setLatestForecast] = useState(null);
 
   const activeTab = TAB_BY_PATH[location.pathname] || "overview";
   const nextStep = NEXT_STEPS_BY_ROLE[user?.role] ?? NEXT_STEPS_BY_ROLE.student;
@@ -470,6 +471,30 @@ export default function Dashboard() {
     };
   }, [apiFetch, processAndStoreRecord]);
 
+  // A forecast run is persisted by the API.  Load the most recent one rather
+  // than manufacturing a projected grade from the student's historical grade.
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        if (!apiFetch || user?.role !== "student") return;
+        const res = await apiFetch("/api/students/me/history");
+        if (!res.ok) return;
+        const data = await res.json();
+        const forecastRun = (data.activities || []).find(
+          (activity) => activity.type === "forecast_run" && activity.forecast,
+        );
+        if (isMounted) setLatestForecast(forecastRun || null);
+      } catch (err) {
+        // The overview remains useful with recorded grades if history is unavailable.
+        console.warn("Could not fetch the latest student forecast", err);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [apiFetch, user?.role]);
+
   const handleLogout = () => {
     logout();
     navigate("/login", { replace: true });
@@ -487,36 +512,35 @@ export default function Dashboard() {
   const firstName = user?.fullName ? user.fullName.split(" ")[0] : "Student";
   const hasConnectionAccess = user?.role === "student" || user?.role === "professor";
 
-  // Compute exact grade values based on what the student submitted
-  const rawGradeNum = studentRecord ? Number(studentRecord.previousSemesterGrade) : null;
+  // Historical points always reflect the student's current saved record. The
+  // ML result is used only for the next-term forecast point below.
+  const trajectoryRecord = studentRecord || latestForecast?.record || null;
+  const rawGradeNum = trajectoryRecord ? Number(trajectoryRecord.previousSemesterGrade) : null;
+  const forecastedGrade = Number(latestForecast?.forecast?.predictedNextSemesterGrade);
+  const hasForecast = Number.isFinite(forecastedGrade);
   const gradeDetails =
     rawGradeNum !== null && !Number.isNaN(rawGradeNum)
-      ? evaluateGrade(rawGradeNum, studentRecord?.gradeMaximum)
+      ? evaluateGrade(rawGradeNum, latestForecast?.forecast?.gradeMaximum || trajectoryRecord?.gradeMaximum)
       : null;
 
   // Build the student's dynamic trajectory according to their exact scale
   const studentTrajectoryData = gradeDetails
     ? [
         {
-          term: "Prior Term",
-          gpa: gradeDetails.isReversed
-            ? Math.max(1.0, Number((rawGradeNum - 0.2).toFixed(2)))
-            : Math.max(0, Number((rawGradeNum - (gradeDetails.passingCutoff === 75 ? 4 : 0.3)).toFixed(2))),
-        },
-        {
           term: "Current Term",
           gpa: rawGradeNum,
         },
-        {
-          term: "Next Term (Proj)",
-          gpa: gradeDetails.isAtRisk
-            ? rawGradeNum
-            : gradeDetails.isReversed
-            ? Math.max(1.0, Number((rawGradeNum - 0.15).toFixed(2)))
-            : Number((rawGradeNum + (gradeDetails.passingCutoff === 75 ? 2 : 0.2)).toFixed(2)),
-        },
+        ...(hasForecast
+          ? [{ term: "Next Term (ML Forecast)", gpa: forecastedGrade }]
+          : []),
       ]
     : [];
+  const forecastPeriod = latestForecast?.createdAt
+    ? new Date(latestForecast.createdAt).toLocaleDateString()
+    : null;
+  const trajectorySource = hasForecast
+    ? `ML-service forecast generated ${forecastPeriod || "previously"}`
+    : "Historical academic record (no ML forecast available)";
 
   return (
     <div className="app-shell">
@@ -690,7 +714,7 @@ export default function Dashboard() {
                   <div className="chart-container" style={{ marginTop: "1rem" }}>
                     <h4>Academic Trajectory vs. Passing Cutoff ({gradeDetails.passingCutoff})</h4>
                     <p className="chart-subtext">
-                      Progression mapped on your chosen institutional scale.
+                      {trajectorySource}. Forecast period: {hasForecast ? "next term" : "not available"}.
                     </p>
 
                     <div style={{ width: "100%", height: 260 }}>

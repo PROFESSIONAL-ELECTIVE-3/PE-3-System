@@ -28,7 +28,7 @@ const recordToForm = (record) => ({
   previousSemesterUnitsApproved: record.previousSemesterUnitsApproved ?? "",
 });
 
-const yesNoLabel = (value) => value ? "Yes" : "No";
+const yesNoLabel = (value) => (value ? "Yes" : "No");
 
 const isCurrentRecord = (record) =>
   record &&
@@ -39,7 +39,7 @@ const isCurrentRecord = (record) =>
   typeof record.tuitionFeeStatus === "boolean" &&
   typeof record.scholarshipStatus === "boolean";
 
-export default function StudentDataForm() {
+export default function StudentDataForm({ onSaveRecord }) {
   const { apiFetch } = useAuth();
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
@@ -68,10 +68,11 @@ export default function StudentDataForm() {
           setSavedRecord(data.record);
           setIsEditing(false);
           setSavedAt(data.record.updatedAt || data.record.submittedAt || null);
+          if (onSaveRecord) {
+            onSaveRecord(data.record);
+          }
         }
       } catch (error) {
-        // No record yet leaves the form blank. Other failures are shown without
-        // logging the user out of the dashboard.
         if (isMounted) setServerError(error.message || "Could not load your data.");
       } finally {
         if (isMounted) setIsLoading(false);
@@ -80,7 +81,7 @@ export default function StudentDataForm() {
     return () => {
       isMounted = false;
     };
-  }, [apiFetch]);
+  }, [apiFetch, onSaveRecord]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -101,17 +102,35 @@ export default function StudentDataForm() {
       next.gradeMaximum = "Select a valid grade scale.";
 
     const previousSemesterGrade = Number(formData.previousSemesterGrade);
-    if (formData.previousSemesterGrade === "" || Number.isNaN(previousSemesterGrade) || previousSemesterGrade < 0 || previousSemesterGrade > gradeMaximum)
+    if (
+      formData.previousSemesterGrade === "" ||
+      Number.isNaN(previousSemesterGrade) ||
+      previousSemesterGrade < 0 ||
+      previousSemesterGrade > gradeMaximum
+    )
       next.previousSemesterGrade = "Enter a grade within the selected scale.";
 
     const previousSemesterUnitsEnrolled = Number(formData.previousSemesterUnitsEnrolled);
-    if (formData.previousSemesterUnitsEnrolled === "" || !Number.isInteger(previousSemesterUnitsEnrolled) || previousSemesterUnitsEnrolled < 1 || previousSemesterUnitsEnrolled > 100)
+    if (
+      formData.previousSemesterUnitsEnrolled === "" ||
+      !Number.isInteger(previousSemesterUnitsEnrolled) ||
+      previousSemesterUnitsEnrolled < 1 ||
+      previousSemesterUnitsEnrolled > 100
+    )
       next.previousSemesterUnitsEnrolled = "Enter whole enrolled units between 1 and 100.";
 
     const previousSemesterUnitsApproved = Number(formData.previousSemesterUnitsApproved);
-    if (formData.previousSemesterUnitsApproved === "" || !Number.isInteger(previousSemesterUnitsApproved) || previousSemesterUnitsApproved < 0 || previousSemesterUnitsApproved > 100)
+    if (
+      formData.previousSemesterUnitsApproved === "" ||
+      !Number.isInteger(previousSemesterUnitsApproved) ||
+      previousSemesterUnitsApproved < 0 ||
+      previousSemesterUnitsApproved > 100
+    )
       next.previousSemesterUnitsApproved = "Enter whole approved units between 0 and 100.";
-    else if (Number.isInteger(previousSemesterUnitsEnrolled) && previousSemesterUnitsApproved > previousSemesterUnitsEnrolled)
+    else if (
+      Number.isInteger(previousSemesterUnitsEnrolled) &&
+      previousSemesterUnitsApproved > previousSemesterUnitsEnrolled
+    )
       next.previousSemesterUnitsApproved = "Approved units cannot exceed enrolled units.";
 
     return next;
@@ -151,11 +170,25 @@ export default function StudentDataForm() {
         throw new Error(data.message || "Could not save your information.");
       }
 
-      const record = data.record || { ...formData };
+      const record = data.record || {
+        educationalSpecialNeeds: formData.educationalSpecialNeeds === "yes",
+        tuitionFeeStatus: formData.tuitionFeeStatus === "yes",
+        scholarshipStatus: formData.scholarshipStatus === "yes",
+        attendance: formData.attendance,
+        gradeMaximum: Number(formData.gradeMaximum),
+        previousSemesterGrade: Number(formData.previousSemesterGrade),
+        previousSemesterUnitsEnrolled: Number(formData.previousSemesterUnitsEnrolled),
+        previousSemesterUnitsApproved: Number(formData.previousSemesterUnitsApproved),
+      };
+
       setSavedRecord(record);
       setFormData(recordToForm(record));
       setSavedAt(record.updatedAt || new Date().toISOString());
       setIsEditing(false);
+
+      if (onSaveRecord) {
+        onSaveRecord(record);
+      }
     } catch (err) {
       setServerError(err.message || "Something went wrong. Please try again.");
     } finally {
@@ -173,9 +206,7 @@ export default function StudentDataForm() {
             type="button"
             key={option}
             className={`yes-no-option ${formData[name] === option ? "selected" : ""}`}
-            onClick={() =>
-              handleChange({ target: { name, value: option } })
-            }
+            onClick={() => handleChange({ target: { name, value: option } })}
             aria-pressed={formData[name] === option}
           >
             {option === "yes" ? "Yes" : "No"}
@@ -192,10 +223,12 @@ export default function StudentDataForm() {
 
   if (savedRecord && !isEditing) {
     const lastUpdatedAt = savedAt || savedRecord.updatedAt || savedRecord.submittedAt;
-    const lastUpdated = lastUpdatedAt && new Intl.DateTimeFormat(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(lastUpdatedAt));
+    const lastUpdated =
+      lastUpdatedAt &&
+      new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(new Date(lastUpdatedAt));
 
     return (
       <section className="student-data-summary" aria-labelledby="student-data-summary-title">
@@ -205,20 +238,51 @@ export default function StudentDataForm() {
             <h3 id="student-data-summary-title">Academic information saved</h3>
             <p>{lastUpdated ? `Last updated ${lastUpdated}` : "Your information is up to date."}</p>
           </div>
-          <button type="button" className="student-data-edit" onClick={() => { setIsEditing(true); setSavedAt(null); setServerError(""); }}>
+          <button
+            type="button"
+            className="student-data-edit"
+            onClick={() => {
+              setIsEditing(true);
+              setSavedAt(null);
+              setServerError("");
+            }}
+          >
             <Pencil size={15} /> Edit information
           </button>
         </div>
         <div className="student-data-summary__grid">
-          <div><span>Study schedule</span><strong>{savedRecord.attendance === "day" ? "Daytime" : "Evening/night"}</strong></div>
-          <div><span>Previous-semester grade</span><strong>{savedRecord.previousSemesterGrade} / {savedRecord.gradeMaximum || 20}</strong></div>
-          <div><span>Previous-semester units enrolled</span><strong>{savedRecord.previousSemesterUnitsEnrolled}</strong></div>
-          <div><span>Previous-semester units approved</span><strong>{savedRecord.previousSemesterUnitsApproved}</strong></div>
+          <div>
+            <span>Study schedule</span>
+            <strong>{savedRecord.attendance === "day" ? "Daytime" : "Evening/night"}</strong>
+          </div>
+          <div>
+            <span>Previous-semester grade</span>
+            <strong>
+              {savedRecord.previousSemesterGrade} / {savedRecord.gradeMaximum || 20}
+            </strong>
+          </div>
+          <div>
+            <span>Previous-semester units enrolled</span>
+            <strong>{savedRecord.previousSemesterUnitsEnrolled}</strong>
+          </div>
+          <div>
+            <span>Previous-semester units approved</span>
+            <strong>{savedRecord.previousSemesterUnitsApproved}</strong>
+          </div>
         </div>
         <div className="student-data-summary__details">
-          <p><span>Educational special needs</span><strong>{yesNoLabel(savedRecord.educationalSpecialNeeds)}</strong></p>
-          <p><span>Tuition-fee status</span><strong>{yesNoLabel(savedRecord.tuitionFeeStatus)}</strong></p>
-          <p><span>Scholarship status</span><strong>{yesNoLabel(savedRecord.scholarshipStatus)}</strong></p>
+          <p>
+            <span>Educational special needs</span>
+            <strong>{yesNoLabel(savedRecord.educationalSpecialNeeds)}</strong>
+          </p>
+          <p>
+            <span>Tuition-fee status</span>
+            <strong>{yesNoLabel(savedRecord.tuitionFeeStatus)}</strong>
+          </p>
+          <p>
+            <span>Scholarship status</span>
+            <strong>{yesNoLabel(savedRecord.scholarshipStatus)}</strong>
+          </p>
         </div>
       </section>
     );
@@ -233,8 +297,8 @@ export default function StudentDataForm() {
         <div>
           <h3>Build your academic snapshot</h3>
           <p>
-            Answer a few questions about your current term. You can update this
-            information whenever your circumstances change.
+            Answer a few questions about your current term. You can update this information
+            whenever your circumstances change.
           </p>
         </div>
       </div>
@@ -261,14 +325,8 @@ export default function StudentDataForm() {
           name="educationalSpecialNeeds"
           label="Do you have educational special needs?"
         />
-        <YesNoField
-          name="tuitionFeeStatus"
-          label="Are your tuition fees up to date?"
-        />
-        <YesNoField
-          name="scholarshipStatus"
-          label="Do you have a scholarship?"
-        />
+        <YesNoField name="tuitionFeeStatus" label="Are your tuition fees up to date?" />
+        <YesNoField name="scholarshipStatus" label="Do you have a scholarship?" />
       </fieldset>
 
       <fieldset className="student-data-fieldset">
@@ -298,7 +356,13 @@ export default function StudentDataForm() {
 
         <div className="form-group">
           <label htmlFor="gradeMaximum">Grade scale maximum</label>
-          <select id="gradeMaximum" name="gradeMaximum" value={formData.gradeMaximum} onChange={handleChange} className={errors.gradeMaximum ? "input-error" : ""}>
+          <select
+            id="gradeMaximum"
+            name="gradeMaximum"
+            value={formData.gradeMaximum}
+            onChange={handleChange}
+            className={errors.gradeMaximum ? "input-error" : ""}
+          >
             <option value="4">4.0</option>
             <option value="5">5.0</option>
             <option value="20">20</option>
@@ -309,7 +373,9 @@ export default function StudentDataForm() {
 
         <div className="student-data-grade-row">
           <div className="form-group">
-            <label htmlFor="previousSemesterGrade">Previous-semester grade (0–{formData.gradeMaximum || "?"})</label>
+            <label htmlFor="previousSemesterGrade">
+              Previous-semester grade (0–{formData.gradeMaximum || "?"})
+            </label>
             <input
               type="number"
               id="previousSemesterGrade"
@@ -327,8 +393,20 @@ export default function StudentDataForm() {
           </div>
           <div className="form-group">
             <label htmlFor="previousSemesterUnitsEnrolled">Previous-semester units enrolled</label>
-            <input type="number" id="previousSemesterUnitsEnrolled" name="previousSemesterUnitsEnrolled" min="1" max="100" step="1" value={formData.previousSemesterUnitsEnrolled} onChange={handleChange} className={errors.previousSemesterUnitsEnrolled ? "input-error" : ""} />
-            {errors.previousSemesterUnitsEnrolled && <span className="field-error">{errors.previousSemesterUnitsEnrolled}</span>}
+            <input
+              type="number"
+              id="previousSemesterUnitsEnrolled"
+              name="previousSemesterUnitsEnrolled"
+              min="1"
+              max="100"
+              step="1"
+              value={formData.previousSemesterUnitsEnrolled}
+              onChange={handleChange}
+              className={errors.previousSemesterUnitsEnrolled ? "input-error" : ""}
+            />
+            {errors.previousSemesterUnitsEnrolled && (
+              <span className="field-error">{errors.previousSemesterUnitsEnrolled}</span>
+            )}
           </div>
           <div className="form-group">
             <label htmlFor="previousSemesterUnitsApproved">Previous-semester units approved</label>
@@ -352,13 +430,27 @@ export default function StudentDataForm() {
 
       <div className="student-data-submit-row">
         <p>
-          <CircleHelp size={15} aria-hidden="true" /> Your information is only
-          visible to you and authorized staff.
+          <CircleHelp size={15} aria-hidden="true" /> Your information is only visible to you and
+          authorized staff.
         </p>
         <div className="student-data-submit-actions">
-          {savedRecord && <button type="button" className="student-data-cancel" onClick={() => { setFormData(recordToForm(savedRecord)); setErrors({}); setServerError(""); setIsEditing(false); }}>Cancel</button>}
+          {savedRecord && (
+            <button
+              type="button"
+              className="student-data-cancel"
+              onClick={() => {
+                setFormData(recordToForm(savedRecord));
+                setErrors({});
+                setServerError("");
+                setIsEditing(false);
+              }}
+            >
+              Cancel
+            </button>
+          )}
           <button type="submit" className="dashboard-action" disabled={isSubmitting}>
-            <Save size={16} /> {isSubmitting ? "Saving…" : savedRecord ? "Save changes" : "Save my information"}
+            <Save size={16} />{" "}
+            {isSubmitting ? "Saving…" : savedRecord ? "Save changes" : "Save my information"}
           </button>
         </div>
       </div>

@@ -268,7 +268,7 @@ function AdvisorDashboardModule({ user }) {
               {formattedStudents.filter((s) => s.riskLevel === "high").length}
             </span>
             <span className="card-label">Critical Risk</span>
-            <small>High attrition signal (≥50%)</small>
+            <small>High Risk (≥50%)</small>
           </div>
         </div>
 
@@ -279,7 +279,7 @@ function AdvisorDashboardModule({ user }) {
               {formattedStudents.filter((s) => s.riskLevel === "medium").length}
             </span>
             <span className="card-label">Moderate Watch</span>
-            <small>Needs monitoring (25–49%)</small>
+            <small>Medium Risk (25–49%)</small>
           </div>
         </div>
 
@@ -290,7 +290,7 @@ function AdvisorDashboardModule({ user }) {
               {formattedStudents.filter((s) => s.riskLevel === "low").length}
             </span>
             <span className="card-label">On Track</span>
-            <small>Low attrition risk (&lt;25%)</small>
+            <small>Low Risk (&lt;25%)</small>
           </div>
         </div>
 
@@ -318,7 +318,7 @@ function AdvisorDashboardModule({ user }) {
         <div className="section-heading">
           <div>
             <p className="dashboard-eyebrow">Connected Student Performance</p>
-            <h2>Attrition Risk and Academic Performance Overview</h2>
+            <h2>Attrition Risk and Academic Trajectory Overview</h2>
           </div>
         </div>
 
@@ -337,8 +337,8 @@ function AdvisorDashboardModule({ user }) {
             <select value={filterRisk} onChange={(e) => setFilterRisk(e.target.value)}>
               <option value="all">Attrition Tiers</option>
               <option value="high">Critical Risk</option>
-              <option value="medium">Moderate Risk</option>
-              <option value="low">On Track</option>
+              <option value="medium">Medium Risk</option>
+              <option value="low">Low Risk</option>
             </select>
           </div>
         </div>

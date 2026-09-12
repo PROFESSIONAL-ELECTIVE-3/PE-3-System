@@ -99,24 +99,21 @@ def predict(payload: PredictionInput):
     predicted_model_grade = float(grade_model.predict(features)[0])
     predicted_grade = from_model_scale(predicted_model_grade, payload.gradeMaximum)
 
-    outcome = str(risk_model.predict(features)[0])
-    probabilities = {
-        str(label): float(probability)
-        for label, probability in zip(risk_model.classes_, risk_model.predict_proba(features)[0])
-    }
-    dropout_probability = probabilities.get("Dropout", 0.0)
+    class_names = [str(label) for label in risk_model.classes_]
+    if "Dropout" not in class_names:
+        raise HTTPException(status_code=500, detail="Risk model has no Dropout probability output.")
+    dropout_index = class_names.index("Dropout")
+    dropout_probability = float(risk_model.predict_proba(features)[0][dropout_index])
 
     return {
         "predictedNextSemesterGrade": round(predicted_grade, 2),
         "gradeMaximum": payload.gradeMaximum,
-        "predictedOutcome": outcome,
         "dropoutProbability": round(dropout_probability, 4),
         "riskLevel": risk_level(dropout_probability),
-        "outcomeProbabilities": {key: round(value, 4) for key, value in probabilities.items()},
         "completionRate": round(payload.previousSemesterUnitsApproved / payload.previousSemesterUnitsEnrolled, 4),
         "models": {
             "gradeForecast": "Linear Regression",
             "attritionRisk": "Random Forest Classifier",
         },
-        "modelVersion": "linear-regression-random-forest-v1",
+        "modelVersion": "linear-regression-random-forest-risk-v2",
     }

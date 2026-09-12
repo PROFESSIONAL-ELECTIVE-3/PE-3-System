@@ -42,7 +42,7 @@ def evaluate_risk_model(model, features: pd.DataFrame, target: pd.Series) -> dic
     )
     tiers = pd.Series(dropout_probability, index=target.index).map(risk_level)
     tier_summary = []
-    for tier in ("high", "moderate", "low"):
+    for tier in ("high", "medium", "low"):
         tier_mask = tiers.eq(tier)
         tier_count = int(tier_mask.sum())
         tier_dropouts = int(actual_dropout.loc[tier_mask].sum())

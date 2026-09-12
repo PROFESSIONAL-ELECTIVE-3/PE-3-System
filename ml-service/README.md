@@ -77,6 +77,10 @@ weighted F1, plus dropout-specific precision, recall, F1, ROC-AUC, PR-AUC,
 and Brier score. It also reports each operational risk tier's observed dropout
 rate on the held-out students.
 
+The prediction API exposes the dropout probability and only its operational
+risk tier: `low` (below 0.20), `medium` (0.20–0.39), or `high` (0.40 and
+above). The model's internal outcome classes are not returned to educators.
+
 ## Flexible grading scales
 
 The trained grade model uses the Kaggle dataset's `0–20` scale internally. The

@@ -69,6 +69,23 @@ const TAB_BY_PATH = {
   "/dashboard/connections": "connections",
 };
 
+// Keep the presentation tier in lockstep with ml-service/risk_thresholds.py.
+// The API normally supplies riskLevel; the probability fallback supports older
+// forecast records that do not yet contain that field.
+const riskLevelFromForecast = (riskLevel, dropoutProbability) => {
+  const normalized = String(riskLevel || "").toLowerCase();
+  if (["low", "medium", "high"].includes(normalized)) return normalized;
+
+  const probability = Number(dropoutProbability);
+  if (!Number.isFinite(probability)) return null;
+  if (probability >= 0.4) return "high";
+  if (probability >= 0.2) return "medium";
+  return "low";
+};
+
+const riskLabel = (riskLevel) => riskLevel ? `${riskLevel[0].toUpperCase()}${riskLevel.slice(1)} Risk` : "Forecast Pending";
+const percentage = (value) => Number.isFinite(Number(value)) ? `${Math.round(Number(value) * 100)}%` : "—";
+
 const INITIAL_COHORT = [
   {
     id: "STU-1029",
@@ -217,22 +234,26 @@ function AdvisorDashboardModule({ user }) {
 
   const formattedStudents = useMemo(() => {
     return connectedStudentsData.map(({ student, record, forecast }) => {
-      const dropoutProb = forecast ? Math.round(forecast.dropoutProbability * 100) : 0;
-      let riskLevel = "low";
-      if (dropoutProb >= 50) riskLevel = "high";
-      else if (dropoutProb >= 25) riskLevel = "medium";
+      const riskLevel = forecast
+        ? riskLevelFromForecast(forecast.riskLevel, forecast.dropoutProbability)
+        : null;
+      const dropoutProbability = Number(forecast?.dropoutProbability);
 
       return {
         id: String(student.id),
         name: student.fullName || "Unknown Student",
         gpa: record ? `${record.previousSemesterGrade} / ${record.gradeMaximum}` : "N/A",
         attendance: record ? (record.attendance === "day" ? "Day" : "Night") : "N/A",
-        riskScore: dropoutProb,
+        riskScore: Number.isFinite(dropoutProbability) ? percentage(dropoutProbability) : "—",
         riskLevel,
         predictedGrade: forecast ? `${forecast.predictedNextSemesterGrade} / ${forecast.gradeMaximum}` : "N/A",
       };
     });
   }, [connectedStudentsData]);
+
+  const forecastedStudents = formattedStudents.filter((student) => student.riskLevel);
+  const riskCount = (level) => forecastedStudents.filter((student) => student.riskLevel === level).length;
+  const riskShare = (level) => forecastedStudents.length ? percentage(riskCount(level) / forecastedStudents.length) : "—";
 
   const filteredStudents = useMemo(() => {
     return formattedStudents.filter((stu) => {
@@ -265,10 +286,10 @@ function AdvisorDashboardModule({ user }) {
           <div className="card-icon red"><AlertTriangle size={20} /></div>
           <div className="card-details">
             <span className="card-value">
-              {formattedStudents.filter((s) => s.riskLevel === "high").length}
+              {riskCount("high")} ({riskShare("high")})
             </span>
-            <span className="card-label">Critical Risk</span>
-            <small>High Risk (≥50%)</small>
+            <span className="card-label">High Risk</span>
+            <small>High risk: 40%+ dropout probability</small>
           </div>
         </div>
 
@@ -276,10 +297,10 @@ function AdvisorDashboardModule({ user }) {
           <div className="card-icon amber"><TrendingDown size={20} /></div>
           <div className="card-details">
             <span className="card-value">
-              {formattedStudents.filter((s) => s.riskLevel === "medium").length}
+              {riskCount("medium")} ({riskShare("medium")})
             </span>
-            <span className="card-label">Moderate Watch</span>
-            <small>Medium Risk (25–49%)</small>
+            <span className="card-label">Medium Risk</span>
+            <small>Medium risk: 20–39% dropout probability</small>
           </div>
         </div>
 
@@ -287,10 +308,10 @@ function AdvisorDashboardModule({ user }) {
           <div className="card-icon green"><UserCheck size={20} /></div>
           <div className="card-details">
             <span className="card-value">
-              {formattedStudents.filter((s) => s.riskLevel === "low").length}
+              {riskCount("low")} ({riskShare("low")})
             </span>
-            <span className="card-label">On Track</span>
-            <small>Low Risk (&lt;25%)</small>
+            <span className="card-label">Low Risk</span>
+            <small>Low risk: below 20% dropout probability</small>
           </div>
         </div>
 
@@ -336,7 +357,7 @@ function AdvisorDashboardModule({ user }) {
             <Filter size={15} />
             <select value={filterRisk} onChange={(e) => setFilterRisk(e.target.value)}>
               <option value="all">Attrition Tiers</option>
-              <option value="high">Critical Risk</option>
+              <option value="high">High Risk</option>
               <option value="medium">Medium Risk</option>
               <option value="low">Low Risk</option>
             </select>
@@ -373,7 +394,7 @@ function AdvisorDashboardModule({ user }) {
                         <td><strong>{student.gpa}</strong></td>
                         <td>
                           <span className={`risk-pill ${student.riskLevel}`}>
-                            {student.riskScore}%
+                            {student.riskScore} {student.riskLevel ? `· ${riskLabel(student.riskLevel)}` : "· Forecast pending"}
                           </span>
                         </td>
                         <td>
@@ -630,9 +651,12 @@ export default function Dashboard() {
   const rawGradeNum = trajectoryRecord ? Number(trajectoryRecord.previousSemesterGrade) : null;
   const forecastedGrade = Number(latestForecast?.forecast?.predictedNextSemesterGrade);
   const hasForecast = Number.isFinite(forecastedGrade);
-  const forecastRiskLevel = latestForecast?.forecast?.riskLevel;
-  const hasForecastRisk = ["low", "moderate", "medium", "high"].includes(forecastRiskLevel);
-  const forecastIsAtRisk = ["moderate", "medium", "high"].includes(forecastRiskLevel);
+  const forecastRiskLevel = riskLevelFromForecast(
+    latestForecast?.forecast?.riskLevel,
+    latestForecast?.forecast?.dropoutProbability,
+  );
+  const hasForecastRisk = Boolean(forecastRiskLevel);
+  const forecastIsAtRisk = ["medium", "high"].includes(forecastRiskLevel);
   const dropoutProbability = Number(latestForecast?.forecast?.dropoutProbability);
   const gradeDetails =
     rawGradeNum !== null && !Number.isNaN(rawGradeNum)
@@ -766,14 +790,14 @@ export default function Dashboard() {
                   <strong>
                     {gradeDetails !== null
                       ? hasForecastRisk
-                        ? forecastIsAtRisk ? "At-Risk Forecast" : "On-Track Forecast"
+                        ? riskLabel(forecastRiskLevel)
                         : gradeDetails.isAtRisk ? "At-Risk Alert" : "Not At Risk"
                       : "No Record Yet"}
                   </strong>
                   <small>
                     {gradeDetails !== null
                       ? hasForecastRisk
-                        ? `${Math.round(dropoutProbability * 100)}% estimated dropout probability (${forecastRiskLevel} risk)`
+                        ? `${percentage(dropoutProbability)} estimated dropout probability (${riskLabel(forecastRiskLevel)})`
                         : gradeDetails.isAtRisk ? `Grade below passing cutoff (${gradeDetails.passingCutoff})` : "Academic standing is satisfactory"
                       : "Go to Data Workspace to submit your grades"}
                   </small>

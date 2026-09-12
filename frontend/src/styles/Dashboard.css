@@ -395,14 +395,33 @@
 .advisor-dashboard {
   display: flex;
   flex-direction: column;
-  gap: 1.4rem;
+  gap: 1.25rem;
   width: 100%;
 }
+
+.professor-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.8rem 2rem;
+  border: 1px solid #d8e5f0;
+  border-radius: 14px;
+  background: linear-gradient(120deg, #f8fbff 0%, #eef6ff 58%, #e7f2ff 100%);
+  box-shadow: 0 8px 24px rgba(20, 67, 110, 0.06);
+}
+
+.professor-hero h1 { margin: 0.2rem 0 0.45rem; color: #173653; font-size: clamp(1.55rem, 3vw, 2.05rem); letter-spacing: -0.04em; }
+.professor-hero > div > p:last-child { max-width: 680px; margin: 0; color: #587188; line-height: 1.55; }
+.professor-hero__status { min-width: 190px; padding: 1rem 1.15rem; border: 1px solid rgba(84, 137, 187, 0.24); border-radius: 10px; background: rgba(255,255,255,0.72); }
+.professor-hero__status span, .professor-hero__status small { display: block; color: #60778c; font-size: 0.72rem; }
+.professor-hero__status span { font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
+.professor-hero__status strong { display: block; margin: 0.28rem 0; color: #0c4f99; font-size: 1.3rem; }
 
 .advisor-summary-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 0.75rem;
+  gap: 0.9rem;
   width: 100%;
 }
 
@@ -410,11 +429,12 @@
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  padding: 1.1rem 1.25rem;
+  min-height: 94px;
+  padding: 1rem 1.1rem;
   background: #fff;
   border: 1px solid #e3ebf2;
-  border-radius: 9px;
-  box-shadow: 0 1px 3px rgba(16, 43, 74, 0.02);
+  border-radius: 11px;
+  box-shadow: 0 3px 12px rgba(16, 43, 74, 0.035);
 }
 
 .summary-card .card-icon {
@@ -441,6 +461,8 @@
   background: #e4f8ef;
 }
 
+.summary-card .card-icon.silver { color: #526b82; background: #eff4f8; }
+
 .summary-card .card-value {
   display: block;
   font-size: 1.35rem;
@@ -460,8 +482,9 @@
 .summary-card small {
   display: block;
   color: #718399;
-  font-size: 0.60rem;
-  margin-top: 0.1rem;
+  font-size: 0.65rem;
+  line-height: 1.35;
+  margin-top: 0.18rem;
 }
 
 .advisor-workspace-grid {
@@ -518,7 +541,7 @@
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 0.55rem;
-  margin-bottom: 0.85rem;
+  margin: 1.2rem 0 1rem;
 }
 
 .caseload-controls .search-box {
@@ -577,7 +600,7 @@
   width: 100%;
   overflow-x: auto;
   border: 1px solid #e1e9f0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
 }
 
@@ -589,21 +612,28 @@
 }
 
 .student-metrics-table th {
-  background: #f6f9fc;
+  background: #f4f8fc;
   color: #29465f;
   font-weight: 700;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
   border-bottom: 1px solid #e1e9f0;
   text-align: center;
 }
 
 .student-metrics-table td {
-  padding: 0.85rem 1rem;
+  padding: 0.95rem 1rem;
   border-bottom: 1px solid #edf2f6;
   color: #18324b;
   vertical-align: middle;
-  text-align: center
+  text-align: center;
 }
+
+.student-metrics-table tbody tr:not(.trajectory-expansion-row):hover td { background: #fbfdff; }
+.student-metrics-table th:nth-child(2), .student-metrics-table td:nth-child(2) { text-align: left; }
+
+.professor-caseload { padding: 1.55rem; }
+.section-heading__description { max-width: 650px; margin: 0.4rem 0 0; color: #718399; font-size: 0.84rem; line-height: 1.5; }
+.caseload-count { flex: 0 0 auto; padding: 0.38rem 0.65rem; border-radius: 99px; background: #edf5fd; color: #285981; font-size: 0.74rem; font-weight: 800; }
 
 .student-metrics-table tr.row-expanded td {
   background: #f7fbff;
@@ -732,7 +762,14 @@
   background: #eaf9f0;
 }
 
-.trajectory-content 
+.risk-pill.pending { color: #526b82; background: #eff4f8; }
+
+.expanded-trajectory-wrapper { padding: 1.2rem; border-radius: 9px; background: #f8fafc; }
+.trajectory-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: #0c5bb4; }
+.trajectory-header h4 { margin: 0; color: #1e3a56; font-size: 0.95rem; }
+.trajectory-content { display: grid; width: 100%; }
+.trajectory-chart-box { box-sizing: border-box; width: 100%; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; }
+.trajectory-chart { width: 100%; height: 220px; }
 
 .alert-trigger-text {
   margin: 0.4rem 0;
@@ -1364,15 +1401,17 @@
    Responsive Breakpoints Across All Modules
    ========================================================================== */
 
+@media (max-width: 1100px) {
+  .advisor-summary-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
 @media (max-width: 980px) {
   .advisor-workspace-grid {
     grid-template-columns: 1fr;
   }
 
-  .advisor-summary-grid,
-  .dashboard-summary {
-    grid-template-columns: 1fr;
-  }
+  .advisor-summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .dashboard-summary { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 780px) {
@@ -1424,6 +1463,9 @@
   .dashboard-intro {
     padding-top: 3rem;
   }
+
+  .professor-hero { align-items: flex-start; flex-direction: column; gap: 1rem; padding: 1.4rem; }
+  .professor-hero__status { min-width: 0; width: 100%; box-sizing: border-box; }
 
   .empty-state {
     align-items: flex-start;
@@ -1493,6 +1535,11 @@
 }
 
 @media (max-width: 640px) {
+  .advisor-summary-grid { grid-template-columns: 1fr; }
+  .professor-caseload { padding: 1.15rem; }
+  .section-heading { align-items: flex-start; flex-direction: column; }
+  .caseload-controls { grid-template-columns: 1fr; }
+  .filter-select { justify-content: space-between; }
   .history-timeline-item {
     flex-direction: column;
     align-items: flex-start;

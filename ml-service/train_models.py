@@ -13,8 +13,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import (
-    accuracy_score,
-    classification_report,
     mean_absolute_error,
     r2_score,
     root_mean_squared_error,
@@ -22,6 +20,8 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+from risk_metrics import evaluate_risk_model
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -58,6 +58,12 @@ FEATURE_COLUMNS = RISK_FEATURE_COLUMNS
 SCHEDULE_COLUMN = "Daytime/evening attendance"
 GRADE_TARGET = "Curricular units 2nd sem (grade)"
 RISK_TARGET = "Target"
+RANDOM_SEED = 42
+VALID_TARGET_LABELS = {
+    "dropout": "Dropout",
+    "enrolled": "Enrolled",
+    "graduate": "Graduate",
+}
 
 
 def build_preprocessor(feature_columns: list[str] = FEATURE_COLUMNS) -> ColumnTransformer:
@@ -82,6 +88,69 @@ def build_preprocessor(feature_columns: list[str] = FEATURE_COLUMNS) -> ColumnTr
     return ColumnTransformer(transformers=transformers)
 
 
+def build_risk_pipeline(*, n_jobs: int = -1) -> Pipeline:
+    """Build the single risk-model contract used by training and tuning.
+
+    Keeping the preprocessing and baseline classifier in one factory prevents
+    a tuned artifact from accepting a different feature shape than the API.
+    """
+    return Pipeline(
+        steps=[
+            ("preprocessor", build_preprocessor(RISK_FEATURE_COLUMNS)),
+            (
+                "classifier",
+                RandomForestClassifier(
+                    n_estimators=600,
+                    class_weight="balanced_subsample",
+                    random_state=RANDOM_SEED,
+                    n_jobs=n_jobs,
+                ),
+            ),
+        ]
+    )
+
+
+def clean_data(data: pd.DataFrame) -> pd.DataFrame:
+    """Remove invalid rows and normalize outcome labels before model splitting.
+
+    Academic edge cases such as a grade of zero are retained. Only impossible
+    values and rows without a known training target are removed.
+    """
+    cleaned = data.drop_duplicates().copy()
+
+    # Treat capitalization and surrounding whitespace as formatting errors,
+    # not distinct model classes.
+    cleaned[RISK_TARGET] = (
+        cleaned[RISK_TARGET]
+        .astype("string")
+        .str.strip()
+        .str.casefold()
+        .map(VALID_TARGET_LABELS)
+    )
+
+    enrolled_column = "Curricular units 1st sem (enrolled)"
+    approved_column = "Curricular units 1st sem (approved)"
+    first_grade_column = "Curricular units 1st sem (grade)"
+    second_grade_column = GRADE_TARGET
+    numeric_columns = [
+        enrolled_column,
+        approved_column,
+        first_grade_column,
+        second_grade_column,
+    ]
+    for column in numeric_columns:
+        cleaned[column] = pd.to_numeric(cleaned[column], errors="coerce")
+
+    valid_academic_values = (
+        cleaned[enrolled_column].ge(1)
+        & cleaned[approved_column].ge(0)
+        & cleaned[approved_column].le(cleaned[enrolled_column])
+        & cleaned[first_grade_column].between(0, 20)
+        & cleaned[second_grade_column].between(0, 20)
+    )
+    return cleaned.loc[cleaned[RISK_TARGET].notna() & valid_academic_values].copy()
+
+
 def load_data() -> pd.DataFrame:
     if not DATA_PATH.exists():
         raise FileNotFoundError(
@@ -96,6 +165,11 @@ def load_data() -> pd.DataFrame:
     missing_columns = sorted(required_columns - set(data.columns))
     if missing_columns:
         raise ValueError(f"Dataset is missing required columns: {', '.join(missing_columns)}")
+    original_row_count = len(data)
+    data = clean_data(data)
+    if data.empty:
+        raise ValueError("No valid rows remain after data cleaning.")
+    print(f"Data cleaning retained {len(data):,} of {original_row_count:,} rows.")
     enrolled = data["Curricular units 1st sem (enrolled)"].replace(0, float("nan"))
     data["Semester 1 completion rate"] = (
         data["Curricular units 1st sem (approved)"].div(enrolled).fillna(0).clip(0, 1)
@@ -125,33 +199,26 @@ def train_grade_model(features: pd.DataFrame, target: pd.Series) -> Pipeline:
 
 def train_risk_model(features: pd.DataFrame, target: pd.Series) -> Pipeline:
     x_train, x_test, y_train, y_test = train_test_split(
-        features, target, test_size=0.20, random_state=42, stratify=target
+        features, target, test_size=0.20, random_state=RANDOM_SEED, stratify=target
     )
-    model = Pipeline(
-        steps=[
-            ("preprocessor", build_preprocessor()),
-            (
-                "classifier",
-                RandomForestClassifier(
-                    n_estimators=300,
-                    class_weight="balanced",
-                    random_state=42,
-                    n_jobs=-1,
-                ),
-            ),
-        ]
-    )
+    model = build_risk_pipeline()
     model.fit(x_train, y_train)
-    predictions = model.predict(x_test)
+    metrics = evaluate_risk_model(model, x_test, y_test)
 
-    print("\nAttrition-risk evaluation")
-    print(classification_report(y_test, predictions, digits=3))
-    # R^2 isn't a meaningful metric for a classifier (it's a regression metric
-    # comparing predicted vs. actual continuous values). What's reported here
-    # instead is accuracy, which is what scikit-learn's own `.score()` method
-    # returns for classifiers -- the closest analogue to "R^2 of the model."
-    accuracy = accuracy_score(y_test, predictions)
-    print(f"  Accuracy (classifier's analogue to R^2): {accuracy:.3f}")
+    print("\nAttrition-risk evaluation (Dropout vs. not Dropout)")
+    confusion = metrics["dropout_confusion_matrix"]
+    print("  Confusion matrix: rows = actual, columns = predicted")
+    print("                    Not Dropout  Dropout")
+    print(f"    Not Dropout       {confusion[0][0]:>5}    {confusion[0][1]:>5}")
+    print(f"    Dropout           {confusion[1][0]:>5}    {confusion[1][1]:>5}")
+    print(f"  Binary accuracy: {metrics['dropout_binary_accuracy']:.3f}")
+    print(f"  Dropout precision: {metrics['dropout_precision']:.3f}")
+    print(f"  Dropout recall (sensitivity): {metrics['dropout_recall']:.3f}")
+    print(f"  Not-dropout recall (specificity): {metrics['dropout_specificity']:.3f}")
+    print(f"  Dropout F1: {metrics['dropout_f1']:.3f}")
+    print(f"  Dropout ROC-AUC: {metrics['dropout_roc_auc']:.3f}")
+    print(f"  Dropout PR-AUC: {metrics['dropout_average_precision']:.3f}")
+    print(f"  Dropout Brier score: {metrics['dropout_brier_score']:.3f}")
     return model
 
 

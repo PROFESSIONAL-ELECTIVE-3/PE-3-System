@@ -18,6 +18,11 @@ class GradeScaleTests(unittest.TestCase):
         self.assertEqual(from_model_scale(22, 100), 100.0)
         self.assertEqual(from_model_scale(-1, 4), 0.0)
 
+    def test_inverse_five_point_gwa_scale(self):
+        self.assertEqual(to_model_scale(1, 5), 20.0)
+        self.assertEqual(to_model_scale(5, 5), 0.0)
+        self.assertEqual(from_model_scale(4.4, 5), 4.12)
+
 
 if __name__ == "__main__":
     unittest.main()

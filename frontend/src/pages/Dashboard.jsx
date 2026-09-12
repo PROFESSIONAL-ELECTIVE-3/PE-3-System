@@ -603,6 +603,10 @@ export default function Dashboard() {
     };
   }, [apiFetch, user?.role]);
 
+  const handleForecastCompleted = useCallback((forecastRun) => {
+    setLatestForecast(forecastRun);
+  }, []);
+
   const handleLogout = () => {
     logout();
     navigate("/login", { replace: true });
@@ -626,6 +630,10 @@ export default function Dashboard() {
   const rawGradeNum = trajectoryRecord ? Number(trajectoryRecord.previousSemesterGrade) : null;
   const forecastedGrade = Number(latestForecast?.forecast?.predictedNextSemesterGrade);
   const hasForecast = Number.isFinite(forecastedGrade);
+  const forecastRiskLevel = latestForecast?.forecast?.riskLevel;
+  const hasForecastRisk = ["low", "moderate", "medium", "high"].includes(forecastRiskLevel);
+  const forecastIsAtRisk = ["moderate", "medium", "high"].includes(forecastRiskLevel);
+  const dropoutProbability = Number(latestForecast?.forecast?.dropoutProbability);
   const gradeDetails =
     rawGradeNum !== null && !Number.isNaN(rawGradeNum)
       ? evaluateGrade(rawGradeNum, latestForecast?.forecast?.gradeMaximum || trajectoryRecord?.gradeMaximum)
@@ -649,6 +657,7 @@ export default function Dashboard() {
   const trajectorySource = hasForecast
     ? `ML-service forecast generated ${forecastPeriod || "previously"}`
     : "Historical academic record (no ML forecast available)";
+  const overviewIsAtRisk = hasForecastRisk ? forecastIsAtRisk : gradeDetails?.isAtRisk;
 
   return (
     <div className="app-shell">
@@ -750,22 +759,22 @@ export default function Dashboard() {
             <section className="dashboard-summary" aria-label="Advisor module objectives">
               {/* Card 1: Dynamic Alert Status */}
               <article>
-                <span className={`summary-icon ${gradeDetails?.isAtRisk ? "amber" : "green"}`}>
+                <span className={`summary-icon ${overviewIsAtRisk ? "amber" : "green"}`}>
                   <AlertTriangle size={19} />
                 </span>
                 <div>
                   <strong>
                     {gradeDetails !== null
-                      ? gradeDetails.isAtRisk
-                        ? "At-Risk Alert"
-                        : "Not At Risk"
+                      ? hasForecastRisk
+                        ? forecastIsAtRisk ? "At-Risk Forecast" : "On-Track Forecast"
+                        : gradeDetails.isAtRisk ? "At-Risk Alert" : "Not At Risk"
                       : "No Record Yet"}
                   </strong>
                   <small>
                     {gradeDetails !== null
-                      ? gradeDetails.isAtRisk
-                        ? `Grade below passing cutoff (${gradeDetails.passingCutoff})`
-                        : "Academic standing is satisfactory"
+                      ? hasForecastRisk
+                        ? `${Math.round(dropoutProbability * 100)}% estimated dropout probability (${forecastRiskLevel} risk)`
+                        : gradeDetails.isAtRisk ? `Grade below passing cutoff (${gradeDetails.passingCutoff})` : "Academic standing is satisfactory"
                       : "Go to Data Workspace to submit your grades"}
                   </small>
                 </div>
@@ -932,7 +941,9 @@ export default function Dashboard() {
           </section>
         )}
 
-        {user?.role === "student" && activeTab === "insights" && <StudentInsights />}
+        {user?.role === "student" && activeTab === "insights" && (
+          <StudentInsights onForecastComplete={handleForecastCompleted} />
+        )}
 
         {activeTab === "history" && (
           <HistoryView user={user} nextStep={nextStep} />

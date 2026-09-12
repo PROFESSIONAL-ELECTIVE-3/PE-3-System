@@ -51,6 +51,32 @@ The command creates `artifacts/grade_model.joblib` and
 API. They use **Linear Regression** for grade forecasting and a **Random Forest
 Classifier** for attrition-risk classification, respectively.
 
+Before splitting the data, training removes exact duplicate rows, normalizes
+outcome labels (`Dropout`, `Enrolled`, and `Graduate`), and filters only
+impossible academic records: fewer than one enrolled unit, negative approved
+units, approved units exceeding enrolled units, or grades outside the dataset's
+0–20 scale. Valid low grades and zero approved units are retained because they
+are meaningful attrition signals.
+
+## Improve the attrition-risk model
+
+After preparing the dataset, run the tuned training workflow:
+
+```powershell
+python optimize_risk_model.py
+```
+
+It uses stratified five-fold cross-validation to tune the Random Forest for
+**balanced accuracy** across dropout, enrolled, and graduate outcomes. The
+candidate replaces the baseline only if it does not reduce either held-out
+accuracy or held-out balanced accuracy. It writes the comparison to
+`artifacts/risk_model_metrics.json`. Restart the ML service after training.
+
+The metrics file includes three-class accuracy, balanced accuracy, macro and
+weighted F1, plus dropout-specific precision, recall, F1, ROC-AUC, PR-AUC,
+and Brier score. It also reports each operational risk tier's observed dropout
+rate on the held-out students.
+
 ## Flexible grading scales
 
 The trained grade model uses the Kaggle dataset's `0–20` scale internally. The
@@ -72,7 +98,7 @@ After installing the requirements and generating the model artifacts, start
 FastAPI from this folder:
 
 ```powershell
-.\.venv312\Scripts\python.exe -m uvicorn app:app --host 127.0.0.1 --port 8000
+.\.venv\Scripts\python.exe -m uvicorn app:app --host 127.0.0.1 --port 8000
 ```
 
 The Express backend forwards authenticated `POST /api/ml/predict` requests to

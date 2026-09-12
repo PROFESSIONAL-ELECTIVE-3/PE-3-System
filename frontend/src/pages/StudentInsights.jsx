@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 
 const scheduleToApi = (attendance) => attendance === "day" ? "day" : "night";
 
-export default function StudentInsights() {
+export default function StudentInsights({ onForecastComplete }) {
   const { apiFetch } = useAuth();
   const [record, setRecord] = useState(null);
   const [loadingRecord, setLoadingRecord] = useState(true);
@@ -43,6 +43,7 @@ export default function StudentInsights() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || data.message || "Your forecast could not be generated.");
       setPrediction(data); setInsight(null);
+      onForecastComplete?.({ forecast: data, record, createdAt: new Date().toISOString() });
     } catch (requestError) { setError(requestError.message || "Your forecast could not be generated."); }
     finally { setRunning(false); }
   };

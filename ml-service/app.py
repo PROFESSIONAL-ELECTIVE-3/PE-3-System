@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
 from grading_scale import from_model_scale, to_model_scale
+from risk_thresholds import risk_level
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -32,6 +33,8 @@ class PredictionInput(BaseModel):
 
     @model_validator(mode="after")
     def validate_academic_values(self):
+        if self.gradeMaximum == 5 and self.previousSemesterGrade < 1:
+            raise ValueError("On the 1.0–5.0 GWA scale, 1.0 is the highest valid grade.")
         if self.previousSemesterUnitsApproved > self.previousSemesterUnitsEnrolled:
             raise ValueError("Approved units cannot exceed enrolled units.")
         if self.previousSemesterGrade > self.gradeMaximum:
@@ -56,14 +59,6 @@ except Exception as error:  # Service stays observable even if artifacts are mis
 
 
 app = FastAPI(title="EduForecaster ML Service", version="1.0.0")
-
-
-def risk_level(dropout_probability: float) -> str:
-    if dropout_probability >= 0.40:
-        return "high"
-    if dropout_probability >= 0.20:
-        return "moderate"
-    return "low"
 
 
 def to_model_features(payload: PredictionInput) -> pd.DataFrame:

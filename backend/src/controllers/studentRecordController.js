@@ -41,7 +41,8 @@ const validatePayload = (body) => {
   }
 
   const previousSemesterGrade = Number(body.previousSemesterGrade);
-  if (Number.isNaN(previousSemesterGrade) || previousSemesterGrade < 0 || previousSemesterGrade > gradeMaximum) {
+  const minimumGrade = gradeMaximum === 5 ? 1 : 0;
+  if (Number.isNaN(previousSemesterGrade) || previousSemesterGrade < minimumGrade || previousSemesterGrade > gradeMaximum) {
     errors.previousSemesterGrade = 'Enter a grade within the selected grade scale.';
   }
 

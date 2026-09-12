@@ -102,10 +102,11 @@ export default function StudentDataForm({ onSaveRecord }) {
       next.gradeMaximum = "Select a valid grade scale.";
 
     const previousSemesterGrade = Number(formData.previousSemesterGrade);
+    const minimumGrade = gradeMaximum === 5 ? 1 : 0;
     if (
       formData.previousSemesterGrade === "" ||
       Number.isNaN(previousSemesterGrade) ||
-      previousSemesterGrade < 0 ||
+      previousSemesterGrade < minimumGrade ||
       previousSemesterGrade > gradeMaximum
     )
       next.previousSemesterGrade = "Enter a grade within the selected scale.";
@@ -364,7 +365,7 @@ export default function StudentDataForm({ onSaveRecord }) {
             className={errors.gradeMaximum ? "input-error" : ""}
           >
             <option value="4">4.0</option>
-            <option value="5">5.0</option>
+            <option value="5">5.0 GWA (1.0 highest)</option>
             <option value="20">20</option>
             <option value="100">100</option>
           </select>
@@ -374,13 +375,13 @@ export default function StudentDataForm({ onSaveRecord }) {
         <div className="student-data-grade-row">
           <div className="form-group">
             <label htmlFor="previousSemesterGrade">
-              Previous-semester grade (0–{formData.gradeMaximum || "?"})
+              Previous-semester grade ({formData.gradeMaximum === "5" ? "1.0–5.0; 1.0 is highest" : `0–${formData.gradeMaximum || "?"}`})
             </label>
             <input
               type="number"
               id="previousSemesterGrade"
               name="previousSemesterGrade"
-              min="0"
+              min={formData.gradeMaximum === "5" ? "1" : "0"}
               max={formData.gradeMaximum || 100}
               step="0.1"
               value={formData.previousSemesterGrade}

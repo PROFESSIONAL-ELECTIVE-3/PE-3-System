@@ -69,9 +69,6 @@ const TAB_BY_PATH = {
   "/dashboard/connections": "connections",
 };
 
-// Keep the presentation tier in lockstep with ml-service/risk_thresholds.py.
-// The API normally supplies riskLevel; the probability fallback supports older
-// forecast records that do not yet contain that field.
 const riskLevelFromForecast = (riskLevel, dropoutProbability) => {
   const normalized = String(riskLevel || "").toLowerCase();
   if (["low", "medium", "high"].includes(normalized)) return normalized;
@@ -83,8 +80,8 @@ const riskLevelFromForecast = (riskLevel, dropoutProbability) => {
   return "low";
 };
 
-const riskLabel = (riskLevel) => riskLevel ? `${riskLevel[0].toUpperCase()}${riskLevel.slice(1)} Risk` : "Forecast Pending";
-const percentage = (value) => Number.isFinite(Number(value)) ? `${Math.round(Number(value) * 100)}%` : "—";
+const riskLabel = (riskLevel) => (riskLevel ? `${riskLevel[0].toUpperCase()}${riskLevel.slice(1)} Risk` : "Forecast Pending");
+const percentage = (value) => (Number.isFinite(Number(value)) ? `${Math.round(Number(value) * 100)}%` : "—");
 
 const INITIAL_COHORT = [
   {
@@ -127,7 +124,6 @@ const INITIAL_COHORT = [
   },
 ];
 
-// Helper to calculate risk, thresholds, and labels across all 4 grading systems
 function evaluateGrade(rawGradeNum, scaleType) {
   const scale = String(scaleType);
   let isAtRisk = false;
@@ -147,14 +143,12 @@ function evaluateGrade(rawGradeNum, scaleType) {
     isAtRisk = rawGradeNum < 10.0;
     label = `${rawGradeNum} / 20`;
   } else if (scale === "5-inv" || scale === "5") {
-    // 1.0 is Highest, 3.0 is Passing, 5.0 is Failing
     passingCutoff = 3.0;
     chartDomain = [1.0, 5.0];
-    isReversed = true; // lower is better
+    isReversed = true;
     isAtRisk = rawGradeNum > 3.0;
     label = `${rawGradeNum.toFixed(2)} / 5.00 (1.0 Highest)`;
   } else {
-    // Standard 4.0
     passingCutoff = 2.0;
     chartDomain = [1.0, 4.0];
     isAtRisk = rawGradeNum < 2.0;
@@ -210,7 +204,6 @@ function AdvisorDashboardModule({ user }) {
 
         if (studentsRes.ok && isMounted) {
           const stData = await studentsRes.json();
-          // Restrict exclusively to students within the same institution
           const sameInstitutionStudents = (stData.students || []).filter(
             ({ student }) => !user.institution || student.institution === user.institution
           );
@@ -253,7 +246,7 @@ function AdvisorDashboardModule({ user }) {
 
   const forecastedStudents = formattedStudents.filter((student) => student.riskLevel);
   const riskCount = (level) => forecastedStudents.filter((student) => student.riskLevel === level).length;
-  const riskShare = (level) => forecastedStudents.length ? percentage(riskCount(level) / forecastedStudents.length) : "—";
+  const riskShare = (level) => (forecastedStudents.length ? percentage(riskCount(level) / forecastedStudents.length) : "—");
 
   const filteredStudents = useMemo(() => {
     return formattedStudents.filter((stu) => {
@@ -280,8 +273,7 @@ function AdvisorDashboardModule({ user }) {
         <p>Monitor cohort risk levels, review pending requests, and inspect academic trajectories for connected students.</p>
       </section>
 
-      {/* 5 Visual Report Cards */}
-        <section className="advisor-summary-grid">
+      <section className="advisor-summary-grid">
         <div className="summary-card">
           <div className="card-icon red"><AlertTriangle size={20} /></div>
           <div className="card-details">
@@ -334,7 +326,6 @@ function AdvisorDashboardModule({ user }) {
         </div>
       </section>
 
-      {/* Tabular View of Connected Students */}
       <section className="workspace-section">
         <div className="section-heading">
           <div>
@@ -406,14 +397,13 @@ function AdvisorDashboardModule({ user }) {
                             {isExpanded ? (
                               <>Hide Trajectory <ChevronUp size={14} /></>
                             ) : (
-                              <>View Trajectory <ChevronDown size={14} /></>)}
+                              <>View Trajectory <ChevronDown size={14} /></>
+                            )}
                           </button>
                         </td>
                       </tr>
 
-                      {/* Expandable Trajectory Graph / Details Row */}
                       {isExpanded && (() => {
-                        // Extract scale from student object or string format (e.g., "1.5 / 5.0")
                         const gradeScale = student.scale || student.gpa?.split("/")[1]?.trim() || "4.0";
                         const currentGradeNum = parseFloat(student.gpa) || 0;
                         const predictedGradeNum = parseFloat(student.predictedGrade) || 0;
@@ -437,31 +427,25 @@ function AdvisorDashboardModule({ user }) {
                                         <LineChart
                                           data={[
                                             { term: "Current Term", grade: currentGradeNum },
-                                            { term: "Next Term (ML)", grade: predictedGradeNum }
+                                            { term: "Next Term (ML)", grade: predictedGradeNum },
                                           ]}
                                           margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                                         >
                                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                           <XAxis dataKey="term" stroke="#64748b" fontSize={11} />
-                                          
-                                          {/* Dynamic Y-Axis based on evaluateGrade */}
                                           <YAxis
                                             domain={chartDomain}
                                             reversed={isReversed}
                                             stroke="#64748b"
                                             fontSize={11}
                                           />
-                                          
                                           <Tooltip formatter={(val) => [val, "Grade"]} />
-                                          
-                                          {/* Dynamic Passing Cutoff Line */}
                                           <ReferenceLine
                                             y={passingCutoff}
                                             label={{ value: `Cutoff (${passingCutoff})`, fill: "#d55752", fontSize: 10 }}
                                             stroke="#d55752"
                                             strokeDasharray="3 3"
                                           />
-                                          
                                           <Line
                                             type="monotone"
                                             dataKey="grade"
@@ -496,6 +480,7 @@ export default function Dashboard() {
   const { user, logout, apiFetch } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
   if (!user) {
     return (
       <div className="app-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
@@ -600,8 +585,6 @@ export default function Dashboard() {
     };
   }, [apiFetch, processAndStoreRecord]);
 
-  // A forecast run is persisted by the API.  Load the most recent one rather
-  // than manufacturing a projected grade from the student's historical grade.
   useEffect(() => {
     let isMounted = true;
     (async () => {
@@ -611,11 +594,10 @@ export default function Dashboard() {
         if (!res.ok) return;
         const data = await res.json();
         const forecastRun = (data.activities || []).find(
-          (activity) => activity.type === "forecast_run" && activity.forecast,
+          (activity) => activity.type === "forecast_run" && activity.forecast
         );
         if (isMounted) setLatestForecast(forecastRun || null);
       } catch (err) {
-        // The overview remains useful with recorded grades if history is unavailable.
         console.warn("Could not fetch the latest student forecast", err);
       }
     })();
@@ -645,15 +627,13 @@ export default function Dashboard() {
   const firstName = user?.fullName ? user.fullName.split(" ")[0] : "Student";
   const hasConnectionAccess = user?.role === "student" || user?.role === "professor";
 
-  // Historical points always reflect the student's current saved record. The
-  // ML result is used only for the next-term forecast point below.
   const trajectoryRecord = studentRecord || latestForecast?.record || null;
   const rawGradeNum = trajectoryRecord ? Number(trajectoryRecord.previousSemesterGrade) : null;
   const forecastedGrade = Number(latestForecast?.forecast?.predictedNextSemesterGrade);
   const hasForecast = Number.isFinite(forecastedGrade);
   const forecastRiskLevel = riskLevelFromForecast(
     latestForecast?.forecast?.riskLevel,
-    latestForecast?.forecast?.dropoutProbability,
+    latestForecast?.forecast?.dropoutProbability
   );
   const hasForecastRisk = Boolean(forecastRiskLevel);
   const forecastIsAtRisk = ["medium", "high"].includes(forecastRiskLevel);
@@ -663,7 +643,6 @@ export default function Dashboard() {
       ? evaluateGrade(rawGradeNum, latestForecast?.forecast?.gradeMaximum || trajectoryRecord?.gradeMaximum)
       : null;
 
-  // Build the student's dynamic trajectory according to their exact scale
   const studentTrajectoryData = gradeDetails
     ? [
         {
@@ -779,9 +758,7 @@ export default function Dashboard() {
               </p>
             </section>
 
-            {/* Dynamic Dashboard Cards */}
             <section className="dashboard-summary" aria-label="Advisor module objectives">
-              {/* Card 1: Dynamic Alert Status */}
               <article>
                 <span className={`summary-icon ${overviewIsAtRisk ? "amber" : "green"}`}>
                   <AlertTriangle size={19} />
@@ -804,7 +781,6 @@ export default function Dashboard() {
                 </div>
               </article>
 
-              {/* Card 2: Formatted Grade with Exact Scale */}
               <article>
                 <span className="summary-icon blue">
                   <BarChart3 size={19} />
@@ -821,7 +797,6 @@ export default function Dashboard() {
                 </div>
               </article>
 
-              {/* Card 3: Unit Completion Ratio */}
               <article>
                 <span className="summary-icon green">
                   <TrendingUp size={19} />
@@ -841,7 +816,6 @@ export default function Dashboard() {
               </article>
             </section>
 
-            {/* Individual Trajectory Graph */}
             <section className="workspace-section" style={{ marginTop: "1.4rem" }}>
               <div className="section-heading">
                 <div>
@@ -916,18 +890,56 @@ export default function Dashboard() {
                   </div>
                 </div>
               ) : (
-                <div className="empty-state" style={{ minHeight: "180px" }}>
-                  <div className="empty-illustration">
-                    <TrendingUp size={24} />
-                  </div>
-                  <div>
-                    <h3>No Trajectory Available Yet</h3>
-                    <p>
-                      Enter your latest term grades and completed credit units in the Data Workspace to plot your historical trajectory and predictive forecast.
-                    </p>
-                    <NavLink to="/dashboard/data" className="dashboard-action">
-                      Enter Academic Record
-                    </NavLink>
+                <div
+                  className="empty-state"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    minHeight: "220px",
+                    padding: "2.5rem 1.5rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "1.25rem",
+                      maxWidth: "540px",
+                      textAlign: "left",
+                    }}
+                  >
+                    <div
+                      className="empty-illustration"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "56px",
+                        height: "56px",
+                        minWidth: "56px",
+                        borderRadius: "50%",
+                        backgroundColor: "#e8effc",
+                        color: "#0c5bb4",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <TrendingUp size={28} strokeWidth={2.2} />
+                    </div>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: "1.1rem", color: "#1e293b" }}>
+                        No Trajectory Available Yet
+                      </h3>
+                      <p style={{ margin: "0.35rem 0 0 0", lineHeight: 1.5, color: "#64748b" }}>
+                        Enter your latest term grades and completed credit units in the Data Workspace to plot your historical trajectory and predictive forecast.
+                      </p>
+                      <div style={{ marginTop: "0.85rem" }}>
+                        <NavLink to="/dashboard/data" className="dashboard-action">
+                          Enter Academic Record
+                        </NavLink>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

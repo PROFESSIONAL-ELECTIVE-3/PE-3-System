@@ -38,7 +38,7 @@ export default function HistoryView({ user }) {
 
   const deleteEntry = async () => {
     const entry = entryPendingDeletion;
-    const id = entry.id || entry._id;
+    const id = entry?.id || entry?._id;
     if (!id) return;
 
     setDeletingId(id);
@@ -121,9 +121,6 @@ export default function HistoryView({ user }) {
           <h2>Record & Forecast Timeline</h2>
         </div>
       </div>
-      <p className="dashboard-subtext">
-        A chronological timeline of updates to your academic profile and retention risk forecasts.
-      </p>
 
       {state.error && (
         <div className="login-alert" role="alert">
@@ -132,15 +129,42 @@ export default function HistoryView({ user }) {
       )}
 
       {!state.error && state.activities.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-illustration">
-            <HistoryIcon size={28} />
-          </div>
-          <div>
-            <h3>No activity logged yet</h3>
-            <p>
-              Save your academic data in the Data Workspace or generate an academic forecast to begin tracking your timeline.
-            </p>
+        <div
+          className="empty-state"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            minHeight: "220px",
+            padding: "2rem 1.5rem",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "1.25rem",
+              maxWidth: "540px",
+            }}
+          >
+            <div
+              className="empty-illustration"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <HistoryIcon size={32} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: "1.1rem" }}>No activity logged yet</h3>
+              <p style={{ margin: "0.35rem 0 0 0", lineHeight: 1.5 }}>
+                Save your academic data in the Data Workspace or generate an academic forecast to begin tracking your timeline.
+              </p>
+            </div>
           </div>
         </div>
       ) : (
@@ -229,10 +253,20 @@ export default function HistoryView({ user }) {
               </p>
             </div>
             <div className="history-delete-warning__actions">
-              <button type="button" className="history-delete-cancel" onClick={() => setEntryPendingDeletion(null)} disabled={Boolean(deletingId)}>
+              <button
+                type="button"
+                className="history-delete-cancel"
+                onClick={() => setEntryPendingDeletion(null)}
+                disabled={Boolean(deletingId)}
+              >
                 Keep entry
               </button>
-              <button type="button" className="history-delete-confirm" onClick={deleteEntry} disabled={Boolean(deletingId)}>
+              <button
+                type="button"
+                className="history-delete-confirm"
+                onClick={deleteEntry}
+                disabled={Boolean(deletingId)}
+              >
                 <Trash2 size={15} />
                 {deletingId ? "Deleting…" : "Delete permanently"}
               </button>

@@ -462,8 +462,8 @@ const Register = () => {
                           setErrors((prev) => ({ ...prev, terms: "" }));
                       }}
                     />
-                    I agree to the <a href="#terms">Terms of Service</a> and{" "}
-                    <a href="#privacy">Privacy Policy</a>
+                    I agree to the <a href="terms">Terms of Service</a> and{" "}
+                    <a href="privacy">Privacy Policy</a>
                   </label>
                 </div>
                 {errors.terms && (

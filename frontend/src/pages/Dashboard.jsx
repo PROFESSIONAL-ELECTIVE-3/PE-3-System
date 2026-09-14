@@ -37,18 +37,12 @@ import { useAuth } from "../context/AuthContext";
 import BrandLogo from "../components/BrandLogo";
 import "../styles/Dashboard.css";
 
-import AdminDashboardView from "./AdminDashboardView.jsx";
 import HistoryView from "./HistoryView.jsx";
 import StudentDataForm from "./StudentDataForm.jsx";
 import ConnectionManager from "../components/ConnectionManager.jsx";
 import StudentInsights from "./StudentInsights.jsx";
 
 const NEXT_STEPS_BY_ROLE = {
-  administrator: {
-    label: "Prepare student data",
-    detail: "Upload a validated institutional data file to begin creating an overview.",
-    action: "Prepare data",
-  },
   professor: {
     label: "Review student caseload",
     detail: "Automated alerts flag students at immediate risk of attrition or probation.",
@@ -670,7 +664,7 @@ export default function Dashboard() {
           <DashboardNavLink tab="overview" currentTab={activeTab}>
             <LayoutDashboard size={18} /> Overview
           </DashboardNavLink>
-          {user?.role !== "professor" && user?.role !== "administrator" && (
+          {user?.role !== "professor" && (
             <>
               <DashboardNavLink tab="data" currentTab={activeTab}>
                 <Database size={18} /> Data Workspace
@@ -685,7 +679,7 @@ export default function Dashboard() {
               <UsersRound size={18} /> {user.role === "student" ? "My Professor" : "Students"}
             </DashboardNavLink>
           )}
-          {user?.role !== "professor" && user?.role !== "administrator" && (
+          {user?.role !== "professor" && (
             <DashboardNavLink tab="history" currentTab={activeTab}>
               <HistoryIcon size={18} /> History
             </DashboardNavLink>
@@ -719,7 +713,7 @@ export default function Dashboard() {
         <nav className="mobile-dashboard-nav" aria-label="Mobile navigation">
           <DashboardNavLink tab="overview" currentTab={activeTab}>Overview</DashboardNavLink>
           
-          {user?.role !== "professor" && user?.role !== "administrator" && (
+          {user?.role !== "professor" && (
             <>
               <DashboardNavLink tab="data" currentTab={activeTab}>Data</DashboardNavLink>
               <DashboardNavLink tab="insights" currentTab={activeTab}>Insights</DashboardNavLink>
@@ -732,17 +726,13 @@ export default function Dashboard() {
             </DashboardNavLink>
           )}
 
-          {user?.role !== "professor" && user?.role !== "administrator" && (
+          {user?.role !== "professor" && (
             <DashboardNavLink tab="history" currentTab={activeTab}>History</DashboardNavLink>
           )}
         </nav>
 
         {(user?.role === "professor" || user?.role === "advisor") && activeTab === "overview" && (
           <AdvisorDashboardModule user={user} students={cohort} />
-        )}
-
-        {user?.role === "administrator" && activeTab === "overview" && (
-          <AdminDashboardView user={user} nextStep={nextStep} activeTab={activeTab} />
         )}
 
         {user?.role === "student" && activeTab === "overview" && (

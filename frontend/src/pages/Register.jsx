@@ -23,12 +23,6 @@ const ROLES = [
     description: "Monitor class performance and flag at-risk students.",
     icon: "📚",
   },
-  {
-    value: "administrator",
-    title: "Administrator",
-    description: "Oversee department or university-wide analytics.",
-    icon: "🏛️",
-  },
 ];
 
 const Register = () => {
@@ -229,7 +223,7 @@ const Register = () => {
           </p>
           <ul className="login-brand-points">
             <li>Set up in minutes, no data science team required</li>
-            <li>Built for students, professors, and administrators</li>
+            <li>Built for students and professors</li>
             <li>Secure, institution-level access controls</li>
           </ul>
         </div>

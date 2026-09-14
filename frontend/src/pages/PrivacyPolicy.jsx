@@ -92,8 +92,7 @@ const PrivacyPolicy = () => {
               </li>
               <li>
                 <strong>Data Subject</strong> — the individual whose personal
-                information is processed (e.g., a student, professor, or
-                administrator).
+                information is processed (e.g., a student or professor).
               </li>
               <li>
                 <strong>Processing</strong> — any operation performed on
@@ -110,7 +109,7 @@ const PrivacyPolicy = () => {
               <li>
                 <strong>Account &amp; identity data:</strong> full name,
                 institutional email address, institution name, role (Student,
-                Professor, or Administrator).
+                or Professor).
               </li>
               <li>
                 <strong>Academic data:</strong> grades, GPA history, course
@@ -172,8 +171,7 @@ const PrivacyPolicy = () => {
                 forecasts;
               </li>
               <li>
-                To provide dashboards and reports to authorized professors and
-                administrators;
+                To provide dashboards and reports to authorized professors;
               </li>
               <li>To create, authenticate, and manage user accounts;</li>
               <li>
@@ -201,7 +199,7 @@ const PrivacyPolicy = () => {
             <ul>
               <li>
                 <strong>Your institution&apos;s authorized personnel</strong>{" "}
-                (e.g., professors and administrators), limited to what is
+                (e.g., professors), limited to what is
                 necessary for their role;
               </li>
               <li>
@@ -366,7 +364,7 @@ const PrivacyPolicy = () => {
               To exercise your data privacy rights or to ask questions about
               this Policy, contact our Data Protection Officer through the Help
               &amp; Support link in the footer, or your institution&apos;s
-              Retainify administrator.
+              Retainify support team.
             </p>
             <p>
               If you believe your concern has not been adequately addressed, you

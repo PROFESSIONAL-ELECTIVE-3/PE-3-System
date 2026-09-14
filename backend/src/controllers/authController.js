@@ -37,7 +37,7 @@ const publicUser = (user) => ({
 
 const createVerificationEmail = (verifyUrl) => `
   <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
-    <h1 style="color: #0d47a1;">Verify your EduForecaster email</h1>
+    <h1 style="color: #0d47a1;">Verify your Retainify email</h1>
     <p>Confirm your email address to activate your account and sign in.</p>
     <p>
       <a href="${verifyUrl}" style="display: inline-block; padding: 12px 20px; background: #0d47a1; color: #ffffff; border-radius: 4px; text-decoration: none; font-weight: 600;">
@@ -66,10 +66,10 @@ const sendVerificationEmail = async (user, token) => {
     {
       sender: {
         email: process.env.BREVO_SENDER_EMAIL,
-        name: process.env.BREVO_SENDER_NAME || 'EduForecaster',
+        name: process.env.BREVO_SENDER_NAME || 'Retainify',
       },
       to: [{ email: user.email, name: user.fullName }],
-      subject: 'Verify your EduForecaster email address',
+      subject: 'Verify your Retainify email address',
       htmlContent: createVerificationEmail(verifyUrl),
     },
     {
@@ -103,7 +103,7 @@ exports.register = async (req, res, next) => {
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       return res.status(400).json({ message: 'Enter a valid email address.' });
     }
-    if (!['student', 'professor', 'administrator'].includes(role)) {
+    if (!['student', 'professor'].includes(role)) {
       return res.status(400).json({ message: 'Select a valid account role.' });
     }
 
@@ -160,6 +160,12 @@ exports.login = async (req, res, next) => {
     const user = await User.findOne({ email: email.toLowerCase() }).select(
       '+password'
     );
+
+    // Accounts with a retired role can no longer access the application.
+    // They must be reassigned to a supported role first.
+    if (user && !['student', 'professor'].includes(user.role)) {
+      return res.status(403).json({ message: 'This account role is no longer supported.' });
+    }
     if (!user) {
       return res.status(401).json(invalidMsg);
     }
@@ -265,7 +271,7 @@ const RESET_TOKEN_LIFETIME_MS = 60 * 60 * 1000;
 
 const createResetEmail = (resetUrl) => `
   <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
-    <h1 style="color: #0d47a1;">Reset your EduForecaster password</h1>
+    <h1 style="color: #0d47a1;">Reset your Retainify password</h1>
     <p>We received a request to reset your password.</p>
     <p>
       <a href="${resetUrl}" style="display: inline-block; padding: 12px 20px; background: #e74c3c; color: #ffffff; border-radius: 4px; text-decoration: none; font-weight: 600;">
@@ -311,10 +317,10 @@ exports.forgotPassword = async (req, res, next) => {
           {
             sender: {
               email: process.env.BREVO_SENDER_EMAIL,
-              name: process.env.BREVO_SENDER_NAME || 'EduForecaster',
+              name: process.env.BREVO_SENDER_NAME || 'Retainify',
             },
             to: [{ email: user.email, name: user.fullName }],
-            subject: 'Reset your EduForecaster password',
+            subject: 'Reset your Retainify password',
             htmlContent: createResetEmail(resetUrl),
           },
           {

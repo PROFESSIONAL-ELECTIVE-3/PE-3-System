@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema(
     institution: { type: String, trim: true },
     role: {
       type: String,
-      enum: ['student', 'professor', 'administrator'],
+      enum: ['student', 'professor'],
       default: 'student',
     },
     password: {

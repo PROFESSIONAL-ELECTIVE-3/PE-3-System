@@ -19,6 +19,9 @@ const protect = async (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Not authorized, user not found.' });
     }
+    if (!['student', 'professor'].includes(req.user.role)) {
+      return res.status(403).json({ message: 'This account role is no longer supported.' });
+    }
     next();
   } catch (err) {
     return res.status(401).json({ message: 'Not authorized, invalid token.' });

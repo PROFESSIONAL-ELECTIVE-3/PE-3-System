@@ -45,7 +45,7 @@ const TermsOfService = () => {
             of the Student Academic Attrition Risk Classification &amp;
             Performance Forecasting System (&quot;EduForecaster,&quot; &quot;the
             System,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) by
-            students, professors, administrators, and any other authorized user
+            students, professors, and any other authorized user
             (&quot;you&quot; or &quot;User&quot;). By creating an account or
             otherwise using the System, you agree to be bound by these Terms. If
             you do not agree, do not use the System.
@@ -67,14 +67,14 @@ const TermsOfService = () => {
             <h2>2. Eligibility &amp; Accounts</h2>
             <p>
               EduForecaster is intended for use by <strong>students</strong>,{" "}
-              <strong>professors</strong>, and <strong>administrators</strong>{" "}
+              <strong>professors</strong>{" "}
               affiliated with a participating academic institution. When you
               register, you agree to:
             </p>
             <ul>
               <li>Provide accurate, current, and complete information;</li>
               <li>
-                Select the role (Student, Professor, or Administrator) that
+                Select the role (Student or Professor) that
                 correctly reflects your relationship to your institution;
               </li>
               <li>
@@ -97,8 +97,8 @@ const TermsOfService = () => {
             <p>
               EduForecaster provides predictive analytics tools, including
               attrition risk classification, academic performance forecasting,
-              and data visualization dashboards, intended to support educators
-              and administrators in identifying at-risk students and planning
+              and data visualization dashboards, intended to help professors
+              identify at-risk students and plan
               interventions. Features available to you depend on your assigned
               role and your institution&apos;s configuration.
             </p>
@@ -248,7 +248,7 @@ const TermsOfService = () => {
             <h2>14. Contact Us</h2>
             <p>
               Questions about these Terms can be directed to your
-              institution&apos;s EduForecaster administrator, or to our support
+              institution&apos;s designated support contact, or to our support
               team through the Help &amp; Support link in the footer.
             </p>
           </section>

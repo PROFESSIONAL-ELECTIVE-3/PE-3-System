@@ -33,8 +33,6 @@ export default function Home() {
       <header className="home-header">
         <BrandLogo />
         <nav className="home-nav" aria-label="Primary navigation">
-          <a href="#features">Platform</a>
-          <a href="#responsible">Responsible use</a>
         </nav>
         <div className="home-actions">
            {!isAuthenticated && (

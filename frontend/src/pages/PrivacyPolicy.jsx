@@ -1,17 +1,20 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import "../styles/Legal.css";
 import BrandLogo from "../components/BrandLogo";
 
 const LAST_UPDATED = "August 20, 2026";
 
 const PrivacyPolicy = () => {
+  const [searchParams] = useSearchParams();
+  const isEmbedded = searchParams.get("embed") === "1";
+
   return (
     <div className="legal-page">
       <header className="legal-header">
         <BrandLogo className="legal-logo" />
         <Link to="/" className="legal-back-link">
-          Back to home
+          ← Back to home
         </Link>
       </header>
 

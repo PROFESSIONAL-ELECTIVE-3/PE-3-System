@@ -499,14 +499,7 @@ export default function Dashboard() {
   }
 
   const [cohort, setCohort] = useState(INITIAL_COHORT);
-  const [studentRecord, setStudentRecord] = useState(() => {
-    try {
-      const saved = localStorage.getItem("retainify_student_record");
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [studentRecord, setStudentRecord] = useState(null);
   const [latestForecast, setLatestForecast] = useState(null);
 
   const activeTab = TAB_BY_PATH[location.pathname] || "overview";
@@ -517,12 +510,6 @@ export default function Dashboard() {
     if (!record || record.previousSemesterGrade === undefined || record.previousSemesterGrade === "") return;
 
     setStudentRecord(record);
-    try {
-      localStorage.setItem("retainify_student_record", JSON.stringify(record));
-    } catch (e) {
-      console.warn("Could not write to localStorage", e);
-    }
-
     const rawGradeNum = Number(record.previousSemesterGrade) || 0;
     const { isAtRisk, label } = evaluateGrade(rawGradeNum, record.gradeMaximum);
 
@@ -573,6 +560,12 @@ export default function Dashboard() {
     });
   }, [user]);
 
+  // Remove the legacy shared cache. Student records are account-specific and
+  // must only be loaded from the authenticated API.
+  useEffect(() => {
+    localStorage.removeItem("retainify_student_record");
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     (async () => {
@@ -581,8 +574,9 @@ export default function Dashboard() {
         const res = await apiFetch("/api/students/me");
         if (res.ok) {
           const data = await res.json();
-          if (isMounted && data?.record) {
-            processAndStoreRecord(data.record);
+        if (isMounted) {
+          if (data?.record) processAndStoreRecord(data.record);
+          else setStudentRecord(null);
           }
         }
       } catch (err) {

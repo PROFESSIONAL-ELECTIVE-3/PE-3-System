@@ -25,17 +25,33 @@ const ROLES = [
   },
 ];
 
+const REGISTER_DRAFT_KEY = "retainify_registration_draft";
+const EMPTY_FORM_DATA = {
+  fullName: "",
+  email: "",
+  institution: "",
+  role: "",
+  password: "",
+  confirmPassword: "",
+};
+
+const getRegistrationDraft = () => {
+  try {
+    const draft = JSON.parse(sessionStorage.getItem(REGISTER_DRAFT_KEY));
+    return {
+      formData: { ...EMPTY_FORM_DATA, ...(draft?.formData || {}) },
+      institutionId: draft?.institutionId || "",
+    };
+  } catch {
+    return { formData: EMPTY_FORM_DATA, institutionId: "" };
+  }
+};
+
 const Register = () => {
   const navigate = useNavigate();
+  const registrationDraft = useRef(getRegistrationDraft());
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    institution: "",
-    role: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [formData, setFormData] = useState(registrationDraft.current.formData);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
@@ -44,8 +60,20 @@ const Register = () => {
   const [institutionResults, setInstitutionResults] = useState([]);
   const [isSearchingInstitutions, setIsSearchingInstitutions] = useState(false);
   const [isInstitutionMenuOpen, setIsInstitutionMenuOpen] = useState(false);
-  const [selectedInstitutionId, setSelectedInstitutionId] = useState("");
+  const [selectedInstitutionId, setSelectedInstitutionId] = useState(registrationDraft.current.institutionId);
+  const [isCheckingName, setIsCheckingName] = useState(false);
+  const [legalRead, setLegalRead] = useState({ terms: false, privacy: false });
+  const [activeLegalDocument, setActiveLegalDocument] = useState(null);
   const institutionSearchController = useRef(null);
+
+  useEffect(() => {
+    // Persist progress between registration steps without storing passwords.
+    const { password, confirmPassword, ...safeFormData } = formData;
+    sessionStorage.setItem(
+      REGISTER_DRAFT_KEY,
+      JSON.stringify({ formData: safeFormData, institutionId: selectedInstitutionId }),
+    );
+  }, [formData, selectedInstitutionId]);
 
   useEffect(() => {
     const query = formData.institution.trim();
@@ -142,12 +170,44 @@ const Register = () => {
     return newErrors;
   };
 
-  const goNext = () => {
+  const checkNameAvailability = async () => {
+    setIsCheckingName(true);
+    try {
+      const response = await fetch("/api/auth/check-name", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName: formData.fullName }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || "Could not validate this full name.");
+      }
+      if (!data.available) {
+        setErrors((previous) => ({
+          ...previous,
+          fullName: "An account with this full name already exists.",
+        }));
+        return false;
+      }
+      return true;
+    } catch (error) {
+      setErrors((previous) => ({
+        ...previous,
+        fullName: error.message || "Could not validate this full name.",
+      }));
+      return false;
+    } finally {
+      setIsCheckingName(false);
+    }
+  };
+
+  const goNext = async () => {
     const stepErrors = validateStep(step);
     if (Object.keys(stepErrors).length > 0) {
       setErrors(stepErrors);
       return;
     }
+    if (step === 1 && !(await checkNameAvailability())) return;
     setErrors({});
     setStep((prev) => Math.min(prev + 1, STEPS.length));
   };
@@ -190,6 +250,7 @@ const Register = () => {
       }
 
       await response.json();
+      sessionStorage.removeItem(REGISTER_DRAFT_KEY);
       navigate("/login", {
         state: {
           successMessage: "Account created. Check your email, verify your address, then log in.",
@@ -206,9 +267,31 @@ const Register = () => {
     // Enter should advance the step instead of submitting early, except on the final step
     if (e.key === "Enter" && step < STEPS.length) {
       e.preventDefault();
-      goNext();
+      void goNext();
     }
   };
+
+  const markLegalDocumentRead = (documentName) => {
+    setLegalRead((previous) => ({ ...previous, [documentName]: true }));
+  };
+
+  const handleLegalFrameLoad = (event) => {
+    const frame = event.currentTarget;
+    const detectScrollEnd = () => {
+      const document = frame.contentDocument;
+      const scrollRoot = document?.scrollingElement;
+      if (
+        scrollRoot &&
+        scrollRoot.scrollTop + scrollRoot.clientHeight >= scrollRoot.scrollHeight - 4
+      ) {
+        markLegalDocumentRead(activeLegalDocument);
+      }
+    };
+    frame.contentWindow?.addEventListener("scroll", detectScrollEnd, { passive: true });
+    window.setTimeout(detectScrollEnd, 0);
+  };
+
+  const canAgreeToLegal = legalRead.terms && legalRead.privacy;
 
   return (
     <div className="login-page">
@@ -450,16 +533,26 @@ const Register = () => {
                     <input
                       type="checkbox"
                       checked={agreedToTerms}
+                      disabled={!canAgreeToLegal}
                       onChange={(e) => {
                         setAgreedToTerms(e.target.checked);
                         if (errors.terms)
                           setErrors((prev) => ({ ...prev, terms: "" }));
                       }}
                     />
-                    I agree to the <a href="#terms">Terms of Service</a> and{" "}
-                    <a href="#privacy">Privacy Policy</a>
+                    I agree to the{" "}
+                    <button type="button" className="legal-inline-link" onClick={() => setActiveLegalDocument("terms")}>
+                      Terms of Service
+                    </button>{" "}
+                    and{" "}
+                    <button type="button" className="legal-inline-link" onClick={() => setActiveLegalDocument("privacy")}>
+                      Privacy Policy
+                    </button>
                   </label>
                 </div>
+                {!canAgreeToLegal && (
+                  <p className="legal-read-hint">Open and scroll to the end of both documents to enable agreement.</p>
+                )}
                 {errors.terms && (
                   <span className="field-error">{errors.terms}</span>
                 )}
@@ -481,9 +574,10 @@ const Register = () => {
                 <button
                   type="button"
                   className="btn-login-submit"
-                  onClick={goNext}
+                  onClick={() => void goNext()}
+                  disabled={isCheckingName}
                 >
-                  Continue
+                  {isCheckingName ? "Checking name…" : "Continue"}
                 </button>
               ) : (
                 <button
@@ -506,6 +600,24 @@ const Register = () => {
           </Link>
         </div>
       </div>
+      {activeLegalDocument && (
+        <div className="legal-modal-backdrop" role="presentation">
+          <section className="legal-modal" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title">
+            <header className="legal-modal-header">
+              <h3 id="legal-modal-title">{activeLegalDocument === "terms" ? "Terms of Service" : "Privacy Policy"}</h3>
+              <button type="button" onClick={() => setActiveLegalDocument(null)} aria-label="Close legal document">×</button>
+            </header>
+            <iframe
+              title={activeLegalDocument === "terms" ? "Terms of Service" : "Privacy Policy"}
+              src={activeLegalDocument === "terms" ? "/terms?embed=1" : "/privacy?embed=1"}
+              onLoad={handleLegalFrameLoad}
+            />
+            <footer className="legal-modal-footer">
+              {legalRead[activeLegalDocument] ? "Read to the end" : "Scroll to the end to mark this document as read"}
+            </footer>
+          </section>
+        </div>
+      )}
     </div>
   );
 };

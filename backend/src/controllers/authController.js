@@ -7,6 +7,9 @@ const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_TIME_MS = 15 * 60 * 1000; // 15 minutes
 const VERIFICATION_TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
+const normalizeFullName = (value) => String(value || '').trim().replace(/\s+/g, ' ');
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const getClientUrl = () => {
   // CLIENT_ORIGIN may contain several comma-separated origins for CORS. A
   // verification email, however, must contain one public URL only.
@@ -86,7 +89,7 @@ const sendVerificationEmail = async (user, token) => {
 // @route   POST /api/auth/register
 exports.register = async (req, res, next) => {
   try {
-    const fullName = String(req.body.fullName || '').trim();
+    const fullName = normalizeFullName(req.body.fullName);
     const email = String(req.body.email || '').trim().toLowerCase();
     const institution = String(req.body.institution || '').trim();
     const role = String(req.body.role || '').trim();
@@ -107,8 +110,15 @@ exports.register = async (req, res, next) => {
       return res.status(400).json({ message: 'Select a valid account role.' });
     }
 
-    const existing = await User.findOne({ email });
-    if (existing) {
+    const existingName = await User.findOne({
+      fullName: new RegExp(`^${escapeRegExp(fullName)}$`, 'i'),
+    });
+    if (existingName) {
+      return res.status(409).json({ message: 'An account with this full name already exists.' });
+    }
+
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
       return res
         .status(409)
         .json({ message: 'An account with this email already exists.' });
@@ -136,6 +146,24 @@ exports.register = async (req, res, next) => {
     }
 
     res.status(201).json({ message: 'Account created. Check your email to verify your address before signing in.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Check whether a full name is available during registration
+// @route   POST /api/auth/check-name
+exports.checkNameAvailability = async (req, res, next) => {
+  try {
+    const fullName = normalizeFullName(req.body.fullName);
+    if (!fullName) {
+      return res.status(400).json({ message: 'Full name is required.' });
+    }
+
+    const existingName = await User.exists({
+      fullName: new RegExp(`^${escapeRegExp(fullName)}$`, 'i'),
+    });
+    return res.status(200).json({ available: !existingName });
   } catch (err) {
     next(err);
   }

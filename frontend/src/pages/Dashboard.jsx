@@ -42,7 +42,36 @@ import StudentDataForm from "./StudentDataForm.jsx";
 import ConnectionManager from "../components/ConnectionManager.jsx";
 import StudentInsights from "./StudentInsights.jsx";
 
+// Inline fallback for the Admin view so Vite doesn't fail if the file is absent
+function AdminDashboardView({ user, nextStep }) {
+  return (
+    <section className="workspace-section" id="admin-overview">
+      <div className="section-heading">
+        <div>
+          <p className="dashboard-eyebrow">Institutional Administration</p>
+          <h2>Admin Command Center</h2>
+        </div>
+      </div>
+      <p className="dashboard-subtext">
+        Manage institutional cohorts, review overall attrition datasets, and configure system rules.
+      </p>
+      {nextStep && (
+        <div className="dashboard-guidance">
+          <p>
+            <strong>Next Step:</strong> {nextStep.detail}
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
 const NEXT_STEPS_BY_ROLE = {
+  administrator: {
+    label: "Prepare student data",
+    detail: "Upload a validated institutional data file to begin creating an overview.",
+    action: "Prepare data",
+  },
   professor: {
     label: "Review student caseload",
     detail: "Automated alerts flag students at immediate risk of attrition or probation.",
@@ -74,8 +103,10 @@ const riskLevelFromForecast = (riskLevel, dropoutProbability) => {
   return "low";
 };
 
-const riskLabel = (riskLevel) => (riskLevel ? `${riskLevel[0].toUpperCase()}${riskLevel.slice(1)} Risk` : "Forecast Pending");
-const percentage = (value) => (Number.isFinite(Number(value)) ? `${Math.round(Number(value) * 100)}%` : "—");
+const riskLabel = (riskLevel) =>
+  riskLevel ? `${riskLevel[0].toUpperCase()}${riskLevel.slice(1)} Risk` : "Forecast Pending";
+const percentage = (value) =>
+  Number.isFinite(Number(value)) ? `${Math.round(Number(value) * 100)}%` : "—";
 
 const INITIAL_COHORT = [
   {
@@ -227,7 +258,7 @@ function AdvisorDashboardModule({ user }) {
       const dropoutProbability = Number(forecast?.dropoutProbability);
 
       return {
-        id: String(student.id),
+        id: String(student.id || student._id),
         name: student.fullName || "Unknown Student",
         gpa: record ? `${record.previousSemesterGrade} / ${record.gradeMaximum}` : "N/A",
         attendance: record ? (record.attendance === "day" ? "Day" : "Night") : "N/A",
@@ -240,7 +271,8 @@ function AdvisorDashboardModule({ user }) {
 
   const forecastedStudents = formattedStudents.filter((student) => student.riskLevel);
   const riskCount = (level) => forecastedStudents.filter((student) => student.riskLevel === level).length;
-  const riskShare = (level) => (forecastedStudents.length ? percentage(riskCount(level) / forecastedStudents.length) : "—");
+  const riskShare = (level) =>
+    forecastedStudents.length ? percentage(riskCount(level) / forecastedStudents.length) : "—";
 
   const filteredStudents = useMemo(() => {
     return formattedStudents.filter((stu) => {
@@ -264,7 +296,9 @@ function AdvisorDashboardModule({ user }) {
       <section className="dashboard-intro">
         <p className="dashboard-eyebrow">{user.institution || "Advisory Caseload Workspace"}</p>
         <h1>Advisor Command Center</h1>
-        <p>Monitor cohort risk levels, review pending requests, and inspect academic trajectories for connected students.</p>
+        <p>
+          Monitor cohort risk levels, review pending requests, and inspect academic trajectories for connected students.
+        </p>
       </section>
 
       <section className="advisor-summary-grid">
@@ -328,7 +362,7 @@ function AdvisorDashboardModule({ user }) {
           </div>
         </div>
 
-        <div className="caseload-controls" style={{ marginBottom: "1rem" }}>
+        <div className="caseload-controls">
           <div className="search-box">
             <Search size={15} />
             <input
@@ -352,7 +386,9 @@ function AdvisorDashboardModule({ user }) {
         {formattedStudents.length === 0 ? (
           <div className="connected-students-empty">
             <BookOpen size={20} />
-            <p>No connected students from {user.institution || "your institution"} yet. Approve connection requests to view student records here.</p>
+            <p>
+              No connected students from {user.institution || "your institution"} yet. Approve connection requests to view student records here.
+            </p>
           </div>
         ) : (
           <div className="tabular-student-container">
@@ -367,18 +403,18 @@ function AdvisorDashboardModule({ user }) {
                 </tr>
               </thead>
               <tbody>
-                {filteredStudents.map((student) => {
+                {filteredStudents.map((student, idx) => {
                   const isExpanded = expandedStudentId === student.id;
                   return (
                     <React.Fragment key={student.id}>
                       <tr className={isExpanded ? "row-expanded" : ""}>
-                        <td>{filteredStudents.indexOf(student) + 1}</td>
+                        <td>{idx + 1}</td>
                         <td>
                           <strong>{student.name}</strong>
                         </td>
                         <td><strong>{student.gpa}</strong></td>
                         <td>
-                          <span className={`risk-pill ${student.riskLevel}`}>
+                          <span className={`risk-pill ${student.riskLevel || "pending"}`}>
                             {student.riskScore} {student.riskLevel ? `· ${riskLabel(student.riskLevel)}` : "· Forecast pending"}
                           </span>
                         </td>
@@ -406,17 +442,17 @@ function AdvisorDashboardModule({ user }) {
                         return (
                           <tr className="trajectory-expansion-row">
                             <td colSpan={5}>
-                              <div className="expanded-trajectory-wrapper" style={{ padding: "1.2rem", backgroundColor: "#f8fafc", borderRadius: "8px" }}>
-                                <div className="trajectory-header" style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+                              <div className="expanded-trajectory-wrapper">
+                                <div className="trajectory-header">
                                   <TrendingUp size={18} color="#0c5bb4" />
-                                  <h4 style={{ margin: 0, fontSize: "1rem", color: "#1e293b" }}>
+                                  <h4>
                                     Academic Performance Trajectory Forecast ({gradeScale} Scale)
                                   </h4>
                                 </div>
 
-                                <div className="trajectory-content" style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1.5rem", width: "100%" }}>
-                                  <div className="trajectory-chart-box" style={{ backgroundColor: "#ffffff", padding: "1rem", borderRadius: "8px", border: "1px solid #e2e8f0", width: "100%", boxSizing: "border-box" }}>
-                                    <div style={{ width: "100%", height: 220 }}>
+                                <div className="trajectory-content">
+                                  <div className="trajectory-chart-box">
+                                    <div className="trajectory-chart">
                                       <ResponsiveContainer width="100%" height="100%">
                                         <LineChart
                                           data={[
@@ -477,7 +513,10 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className="app-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+      <div
+        className="app-shell"
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}
+      >
         <p>Loading dashboard...</p>
       </div>
     );
@@ -530,7 +569,7 @@ export default function Dashboard() {
       trajectory: [
         { term: "Prior Term", gpa: rawGradeNum },
         { term: "Current Term", gpa: rawGradeNum },
-        { term: "Next (Proj)", gpa: isAtRisk ? rawGradeNum : rawGradeNum },
+        { term: "Next (Proj)", gpa: rawGradeNum },
       ],
     };
 
@@ -626,9 +665,16 @@ export default function Dashboard() {
   const hasForecastRisk = Boolean(forecastRiskLevel);
   const forecastIsAtRisk = ["medium", "high"].includes(forecastRiskLevel);
   const dropoutProbability = Number(latestForecast?.forecast?.dropoutProbability);
+  
+  const gradeScaleType = latestForecast?.forecast?.gradeMaximum || trajectoryRecord?.gradeMaximum;
   const gradeDetails =
     rawGradeNum !== null && !Number.isNaN(rawGradeNum)
-      ? evaluateGrade(rawGradeNum, latestForecast?.forecast?.gradeMaximum || trajectoryRecord?.gradeMaximum)
+      ? evaluateGrade(rawGradeNum, gradeScaleType)
+      : null;
+
+  const projectedGradeDetails =
+    hasForecast
+      ? evaluateGrade(forecastedGrade, gradeScaleType)
       : null;
 
   const studentTrajectoryData = gradeDetails
@@ -642,6 +688,7 @@ export default function Dashboard() {
           : []),
       ]
     : [];
+
   const forecastPeriod = latestForecast?.createdAt
     ? new Date(latestForecast.createdAt).toLocaleDateString()
     : null;
@@ -658,7 +705,7 @@ export default function Dashboard() {
           <DashboardNavLink tab="overview" currentTab={activeTab}>
             <LayoutDashboard size={18} /> Overview
           </DashboardNavLink>
-          {user?.role !== "professor" && (
+          {user?.role !== "professor" && user?.role !== "administrator" && (
             <>
               <DashboardNavLink tab="data" currentTab={activeTab}>
                 <Database size={18} /> Data Workspace
@@ -673,7 +720,7 @@ export default function Dashboard() {
               <UsersRound size={18} /> {user.role === "student" ? "My Professor" : "Students"}
             </DashboardNavLink>
           )}
-          {user?.role !== "professor" && (
+          {user?.role !== "professor" && user?.role !== "administrator" && (
             <DashboardNavLink tab="history" currentTab={activeTab}>
               <HistoryIcon size={18} /> History
             </DashboardNavLink>
@@ -707,7 +754,7 @@ export default function Dashboard() {
         <nav className="mobile-dashboard-nav" aria-label="Mobile navigation">
           <DashboardNavLink tab="overview" currentTab={activeTab}>Overview</DashboardNavLink>
           
-          {user?.role !== "professor" && (
+          {user?.role !== "professor" && user?.role !== "administrator" && (
             <>
               <DashboardNavLink tab="data" currentTab={activeTab}>Data</DashboardNavLink>
               <DashboardNavLink tab="insights" currentTab={activeTab}>Insights</DashboardNavLink>
@@ -720,13 +767,17 @@ export default function Dashboard() {
             </DashboardNavLink>
           )}
 
-          {user?.role !== "professor" && (
+          {user?.role !== "professor" && user?.role !== "administrator" && (
             <DashboardNavLink tab="history" currentTab={activeTab}>History</DashboardNavLink>
           )}
         </nav>
 
         {(user?.role === "professor" || user?.role === "advisor") && activeTab === "overview" && (
-          <AdvisorDashboardModule user={user} students={cohort} />
+          <AdvisorDashboardModule user={user} />
+        )}
+
+        {user?.role === "administrator" && activeTab === "overview" && (
+          <AdminDashboardView user={user} nextStep={nextStep} activeTab={activeTab} />
         )}
 
         {user?.role === "student" && activeTab === "overview" && (
@@ -743,6 +794,7 @@ export default function Dashboard() {
             </section>
 
             <section className="dashboard-summary" aria-label="Advisor module objectives">
+              {/* Card 1: Dynamic Alert Status */}
               <article>
                 <span className={`summary-icon ${overviewIsAtRisk ? "amber" : "green"}`}>
                   <AlertTriangle size={19} />
@@ -765,6 +817,7 @@ export default function Dashboard() {
                 </div>
               </article>
 
+              {/* Card 2: Formatted Current Term Grade */}
               <article>
                 <span className="summary-icon blue">
                   <BarChart3 size={19} />
@@ -781,20 +834,21 @@ export default function Dashboard() {
                 </div>
               </article>
 
+              {/* Card 3: Next Semester Projected Grade (ML Output) */}
               <article>
-                <span className="summary-icon green">
+                <span className={`summary-icon ${projectedGradeDetails?.isAtRisk ? "amber" : "green"}`}>
                   <TrendingUp size={19} />
                 </span>
                 <div>
                   <strong>
-                    {studentRecord && studentRecord.previousSemesterUnitsApproved !== undefined
-                      ? `${studentRecord.previousSemesterUnitsApproved} of ${studentRecord.previousSemesterUnitsEnrolled} Units`
-                      : "Units Incomplete"}
+                    {projectedGradeDetails !== null
+                      ? projectedGradeDetails.label
+                      : "No Forecast"}
                   </strong>
                   <small>
-                    {studentRecord && studentRecord.previousSemesterUnitsApproved !== undefined
-                      ? "Approved course completion"
-                      : "Trajectory calculated upon entry"}
+                    {projectedGradeDetails !== null
+                      ? `Projected Next Term (${projectedGradeDetails.isAtRisk ? "Below Passing Cutoff" : "Satisfactory"})`
+                      : "Run a forecast in Insights to calculate"}
                   </small>
                 </div>
               </article>
@@ -874,56 +928,18 @@ export default function Dashboard() {
                   </div>
                 </div>
               ) : (
-                <div
-                  className="empty-state"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "100%",
-                    minHeight: "220px",
-                    padding: "2.5rem 1.5rem",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "1.25rem",
-                      maxWidth: "540px",
-                      textAlign: "left",
-                    }}
-                  >
-                    <div
-                      className="empty-illustration"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "56px",
-                        height: "56px",
-                        minWidth: "56px",
-                        borderRadius: "50%",
-                        backgroundColor: "#e8effc",
-                        color: "#0c5bb4",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <TrendingUp size={28} strokeWidth={2.2} />
-                    </div>
-                    <div>
-                      <h3 style={{ margin: 0, fontSize: "1.1rem", color: "#1e293b" }}>
-                        No Trajectory Available Yet
-                      </h3>
-                      <p style={{ margin: "0.35rem 0 0 0", lineHeight: 1.5, color: "#64748b" }}>
-                        Enter your latest term grades and completed credit units in the Data Workspace to plot your historical trajectory and predictive forecast.
-                      </p>
-                      <div style={{ marginTop: "0.85rem" }}>
-                        <NavLink to="/dashboard/data" className="dashboard-action">
-                          Enter Academic Record
-                        </NavLink>
-                      </div>
-                    </div>
+                <div className="empty-state" style={{ minHeight: "180px" }}>
+                  <div className="empty-illustration">
+                    <TrendingUp size={24} />
+                  </div>
+                  <div>
+                    <h3>No Trajectory Available Yet</h3>
+                    <p>
+                      Enter your latest term grades and completed credit units in the Data Workspace to plot your historical trajectory and predictive forecast.
+                    </p>
+                    <NavLink to="/dashboard/data" className="dashboard-action">
+                      Enter Academic Record
+                    </NavLink>
                   </div>
                 </div>
               )}

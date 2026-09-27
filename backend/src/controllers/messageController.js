@@ -50,8 +50,8 @@ exports.getMessages = async (req, res, next) => {
     const conversation = await Conversation.findOne(filter).populate('student', 'fullName').populate('professor', 'fullName');
     if (!conversation || conversation.state !== 'open') return res.status(404).json({ message: 'Conversation is not available.' });
     await Message.updateMany({ conversation: conversation._id, sender: { $ne: req.user._id }, readAt: null }, { $set: { readAt: new Date() } });
-    const messages = await Message.find({ conversation: conversation._id }).populate('sender', 'fullName role').sort({ createdAt: 1 }).lean();
-    res.json({ conversation: summary(conversation, req.user.role), messages: messages.map((message) => ({ id: message._id, body: message.body, createdAt: message.createdAt, sender: { id: message.sender._id, fullName: message.sender.fullName, role: message.sender.role }, readAt: message.readAt })) });
+    const messages = await Message.find({ conversation: conversation._id }).populate('sender', 'fullName role').populate({ path: 'replyTo', select: 'body sender', populate: { path: 'sender', select: 'fullName' } }).sort({ createdAt: 1 }).lean();
+    res.json({ conversation: summary(conversation, req.user.role), messages: messages.map((message) => ({ id: message._id, body: message.body, createdAt: message.createdAt, sender: { id: message.sender._id, fullName: message.sender.fullName, role: message.sender.role }, readAt: message.readAt, replyTo: message.replyTo ? { id: message.replyTo._id, body: message.replyTo.body, senderName: message.replyTo.sender?.fullName || 'Message' } : null })) });
   } catch (error) { next(error); }
 };
 
@@ -65,10 +65,13 @@ exports.sendMessage = async (req, res, next) => {
     if (!conversation) return res.status(404).json({ message: 'Conversation is not available.' });
     const connected = await StudentProfessorConnection.exists({ _id: conversation.connection, status: 'accepted' });
     if (!connected) return res.status(403).json({ message: 'This student connection is no longer active.' });
-    const message = await Message.create({ conversation: conversation._id, sender: req.user._id, body });
+    const replyToId = req.body.replyToId;
+    if (replyToId && !validId(replyToId)) return res.status(400).json({ message: 'Invalid reply target.' });
+    if (replyToId && !await Message.exists({ _id: replyToId, conversation: conversation._id })) return res.status(400).json({ message: 'Reply target is not in this conversation.' });
+    const message = await Message.create({ conversation: conversation._id, sender: req.user._id, body, replyTo: replyToId || null });
     conversation.lastMessageAt = message.createdAt;
     await conversation.save();
-    res.status(201).json({ message: { id: message._id, body: message.body, createdAt: message.createdAt, sender: { id: req.user._id, fullName: req.user.fullName, role: req.user.role } } });
+    res.status(201).json({ message: { id: message._id, body: message.body, createdAt: message.createdAt, sender: { id: req.user._id, fullName: req.user.fullName, role: req.user.role }, replyTo: null } });
   } catch (error) { next(error); }
 };
 

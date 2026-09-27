@@ -229,19 +229,25 @@
   flex-shrink: 0;
 }
 
-.summary-icon.blue {
-  color: #1762b9;
-  background: #e5f0ff;
+/* Distinct Risk Colors for Summary Cards */
+.summary-icon.red {
+  color: #dc2626 !important;
+  background: #fef2f2 !important;
 }
 
 .summary-icon.amber {
-  color: #a46c16;
-  background: #fff3d9;
+  color: #ea580c !important;
+  background: #fff7ed !important;
 }
 
 .summary-icon.green {
-  color: #147653;
-  background: #e4f8ef;
+  color: #16a34a !important;
+  background: #f0fdf4 !important;
+}
+
+.summary-icon.blue {
+  color: #1762b9 !important;
+  background: #e5f0ff !important;
 }
 
 .dashboard-summary strong {
@@ -493,18 +499,18 @@
 }
 
 .summary-card .card-icon.red {
-  color: #a63834;
-  background: #fff5f4;
+  color: #dc2626 !important;
+  background: #fef2f2 !important;
 }
 
 .summary-card .card-icon.amber {
-  color: #a46c16;
-  background: #fff3d9;
+  color: #ea580c !important;
+  background: #fff7ed !important;
 }
 
 .summary-card .card-icon.green {
-  color: #147653;
-  background: #e4f8ef;
+  color: #16a34a !important;
+  background: #f0fdf4 !important;
 }
 
 .summary-card .card-icon.silver { 
@@ -634,6 +640,7 @@
   border-radius: 7px;
   background: #fff;
   color: #70869b;
+  transition: all 0.2s ease;
 }
 
 .caseload-controls .filter-select select {
@@ -645,6 +652,52 @@
   font-size: 0.78rem;
   font-family: inherit;
   cursor: pointer;
+}
+
+/* ==========================================================================
+   FORCE RISK FILTER ICON COLORS (LOW: GREEN, MEDIUM: ORANGE, HIGH: RED)
+   ========================================================================== */
+
+/* HIGH RISK -> PURE RED */
+div.caseload-controls .filter-select[data-risk="high"],
+div.caseload-controls .filter-select.risk-high {
+  border-color: #dc2626 !important;
+}
+
+div.caseload-controls .filter-select[data-risk="high"] svg,
+div.caseload-controls .filter-select[data-risk="high"] svg *,
+div.caseload-controls .filter-select.risk-high svg,
+div.caseload-controls .filter-select.risk-high svg * {
+  color: #dc2626 !important;
+  stroke: #dc2626 !important;
+}
+
+/* MEDIUM RISK -> PURE ORANGE */
+div.caseload-controls .filter-select[data-risk="medium"],
+div.caseload-controls .filter-select.risk-medium {
+  border-color: #ea580c !important;
+}
+
+div.caseload-controls .filter-select[data-risk="medium"] svg,
+div.caseload-controls .filter-select[data-risk="medium"] svg *,
+div.caseload-controls .filter-select.risk-medium svg,
+div.caseload-controls .filter-select.risk-medium svg * {
+  color: #ea580c !important;
+  stroke: #ea580c !important;
+}
+
+/* LOW RISK -> PURE GREEN */
+div.caseload-controls .filter-select[data-risk="low"],
+div.caseload-controls .filter-select.risk-low {
+  border-color: #16a34a !important;
+}
+
+div.caseload-controls .filter-select[data-risk="low"] svg,
+div.caseload-controls .filter-select[data-risk="low"] svg *,
+div.caseload-controls .filter-select.risk-low svg,
+div.caseload-controls .filter-select.risk-low svg * {
+  color: #16a34a !important;
+  stroke: #16a34a !important;
 }
 
 /* ==========================================================================

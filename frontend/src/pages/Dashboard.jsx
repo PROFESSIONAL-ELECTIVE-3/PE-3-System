@@ -288,6 +288,13 @@ function AdvisorDashboardModule({ user }) {
     setExpandedStudentId((prev) => (prev === studentId ? null : studentId));
   };
 
+  const getFilterIconColor = () => {
+    if (filterRisk === "high") return "#dc2626";     // RED
+    if (filterRisk === "medium") return "#ea580c";   // ORANGE
+    if (filterRisk === "low") return "#16a34a";      // GREEN
+    return "#70869b";                                // DEFAULT
+  };
+
   if (loading) return <p className="connected-students-loading">Loading professor dashboard...</p>;
   if (error) return <p className="connected-students-error" role="alert">{error}</p>;
 
@@ -372,9 +379,24 @@ function AdvisorDashboardModule({ user }) {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="filter-select">
-            <Filter size={15} />
-            <select value={filterRisk} onChange={(e) => setFilterRisk(e.target.value)}>
+
+          <div
+            className={`filter-select ${filterRisk !== "all" ? `risk-${filterRisk}` : ""}`}
+            data-risk={filterRisk}
+          >
+            <Filter
+              size={15}
+              color={getFilterIconColor()}
+              stroke={getFilterIconColor()}
+              style={{
+                stroke: getFilterIconColor(),
+                color: getFilterIconColor(),
+              }}
+            />
+            <select
+              value={filterRisk}
+              onChange={(e) => setFilterRisk(e.target.value.toLowerCase())}
+            >
               <option value="all">Attrition Tiers</option>
               <option value="high">High Risk</option>
               <option value="medium">Medium Risk</option>
@@ -584,8 +606,6 @@ export default function Dashboard() {
     });
   }, [user]);
 
-  // Remove the legacy shared cache. Student records are account-specific and
-  // must only be loaded from the authenticated API.
   useEffect(() => {
     localStorage.removeItem("retainify_student_record");
   }, []);
@@ -598,9 +618,9 @@ export default function Dashboard() {
         const res = await apiFetch("/api/students/me");
         if (res.ok) {
           const data = await res.json();
-        if (isMounted) {
-          if (data?.record) processAndStoreRecord(data.record);
-          else setStudentRecord(null);
+          if (isMounted) {
+            if (data?.record) processAndStoreRecord(data.record);
+            else setStudentRecord(null);
           }
         }
       } catch (err) {
@@ -695,7 +715,17 @@ export default function Dashboard() {
   const trajectorySource = hasForecast
     ? `ML-service forecast generated ${forecastPeriod || "previously"}`
     : "Historical academic record (no ML forecast available)";
-  const overviewIsAtRisk = hasForecastRisk ? forecastIsAtRisk : gradeDetails?.isAtRisk;
+
+  // Dynamic alert card color: High -> Red, Medium -> Orange/Amber, Low/Safe -> Green
+  const alertCardColor = (() => {
+    if (hasForecastRisk) {
+      if (forecastRiskLevel === "high") return "red";
+      if (forecastRiskLevel === "medium") return "amber";
+      return "green";
+    }
+    if (gradeDetails?.isAtRisk) return "red";
+    return "green";
+  })();
 
   return (
     <div className="app-shell">
@@ -794,9 +824,9 @@ export default function Dashboard() {
             </section>
 
             <section className="dashboard-summary" aria-label="Advisor module objectives">
-              {/* Card 1: Dynamic Alert Status */}
+              {/* Card 1: Alert Status (Now supports RED for high risk) */}
               <article>
-                <span className={`summary-icon ${overviewIsAtRisk ? "amber" : "green"}`}>
+                <span className={`summary-icon ${alertCardColor}`}>
                   <AlertTriangle size={19} />
                 </span>
                 <div>

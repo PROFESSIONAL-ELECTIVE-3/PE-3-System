@@ -2,6 +2,7 @@ const StudentProfessorConnection = require('../models/StudentProfessorConnection
 const StudentRecord = require('../models/StudentRecord');
 const User = require('../models/User');
 const mongoose = require('mongoose');
+const Conversation = require('../models/Conversation');
 
 const sameInstitution = (first, second) => {
   const normalizedFirst = String(first || '').trim().toLocaleLowerCase();
@@ -200,6 +201,7 @@ exports.removeConnection = async (req, res, next) => {
 
     const connection = await StudentProfessorConnection.findOneAndDelete(filter);
     if (!connection) return res.status(404).json({ message: 'Connection not found.' });
+    await Conversation.updateMany({ connection: connection._id, state: 'open' }, { $set: { state: 'closed', closedAt: new Date() } });
     return res.status(200).json({ message: 'Connection removed.' });
   } catch (error) {
     next(error);

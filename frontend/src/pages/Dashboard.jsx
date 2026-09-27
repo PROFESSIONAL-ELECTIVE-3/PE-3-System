@@ -21,6 +21,7 @@ import {
   TrendingUp,
   UserCheck,
   UsersRound,
+  MessageCircle,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -41,6 +42,8 @@ import HistoryView from "./HistoryView.jsx";
 import StudentDataForm from "./StudentDataForm.jsx";
 import ConnectionManager from "../components/ConnectionManager.jsx";
 import StudentInsights from "./StudentInsights.jsx";
+import MessageCenter from "../components/MessageCenter.jsx";
+import ProfessorDashboardView from "./ProfessorDashboardView.jsx";
 
 // Inline fallback for the Admin view so Vite doesn't fail if the file is absent
 function AdminDashboardView({ user, nextStep }) {
@@ -90,6 +93,7 @@ const TAB_BY_PATH = {
   "/dashboard/insights": "insights",
   "/dashboard/history": "history",
   "/dashboard/connections": "connections",
+  "/dashboard/messages": "messages",
 };
 
 const riskLevelFromForecast = (riskLevel, dropoutProbability) => {
@@ -750,6 +754,11 @@ export default function Dashboard() {
               <UsersRound size={18} /> {user.role === "student" ? "My Professor" : "Students"}
             </DashboardNavLink>
           )}
+          {hasConnectionAccess && (
+            <DashboardNavLink tab="messages" currentTab={activeTab}>
+              <MessageCircle size={18} /> Messages
+            </DashboardNavLink>
+          )}
           {user?.role !== "professor" && user?.role !== "administrator" && (
             <DashboardNavLink tab="history" currentTab={activeTab}>
               <HistoryIcon size={18} /> History
@@ -796,6 +805,7 @@ export default function Dashboard() {
               {user?.role === "student" ? "Professor" : "Students"}
             </DashboardNavLink>
           )}
+          {hasConnectionAccess && <DashboardNavLink tab="messages" currentTab={activeTab}>Messages</DashboardNavLink>}
 
           {user?.role !== "professor" && user?.role !== "administrator" && (
             <DashboardNavLink tab="history" currentTab={activeTab}>History</DashboardNavLink>
@@ -1006,6 +1016,10 @@ export default function Dashboard() {
             <ConnectionManager />
           </section>
         )}
+
+        {hasConnectionAccess && activeTab === "messages" && <MessageCenter />}
+
+        {user?.role === "professor" && (activeTab === "data" || activeTab === "insights") && <ProfessorDashboardView user={user} activeTab={activeTab} />}
 
         {user?.role === "student" && activeTab === "insights" && (
           <StudentInsights onForecastComplete={handleForecastCompleted} />

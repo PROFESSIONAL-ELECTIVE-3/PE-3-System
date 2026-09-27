@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Ellipsis, MessageCircle, Reply, Send, Trash2, UserRoundPlus } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -21,6 +21,7 @@ export default function MessageCenter({ initialSelectedUser }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [selectedUser, setSelectedUser] = useState(initialSelectedUser || null);
+  const handledInitialTarget = useRef("");
 
   const load = async (background = false) => {
     if (!background) setLoading(true);
@@ -58,33 +59,37 @@ export default function MessageCenter({ initialSelectedUser }) {
   };
 
   useEffect(() => {
-  if (initialSelectedUser) {
-    setSelectedUser(initialSelectedUser);
-  }
+    if (initialSelectedUser) {
+      handledInitialTarget.current = "";
+      setSelectedUser(initialSelectedUser);
+    }
   }, [initialSelectedUser]);
 
   useEffect(() => {
-    if (!selectedUser) return;
+    if (!selectedUser || loading) return;
 
     const targetId = String(selectedUser.id || selectedUser._id || selectedUser.student?.id);
+    if (!targetId || handledInitialTarget.current === targetId) return;
 
-    // 1. Try to find an existing active conversation thread with this user
+    // Wait for both inbox and connection data. Then load an existing thread,
+    // or create one for this accepted connection before opening it.
     const existingConv = conversations.find(
       (conv) => String(conv.peer?.id || conv.peer?._id) === targetId
     );
 
     if (existingConv) {
+      handledInitialTarget.current = targetId;
       open(existingConv);
     } else if (students.length > 0) {
-      // 2. If no conversation exists yet, automatically create/open one using begin()
       const matchingStudent = students.find(
         (item) => String(item.student?.id || item.student?._id) === targetId
       );
       if (matchingStudent) {
+        handledInitialTarget.current = targetId;
         begin(matchingStudent.student.id);
       }
     }
-  }, [selectedUser, conversations, students]);
+  }, [selectedUser, conversations, students, loading]);
 
   useEffect(() => {
     if (!selected?.id) return undefined;

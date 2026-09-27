@@ -1433,6 +1433,7 @@ div.caseload-controls .filter-select.risk-low svg * {
 .message-center__layout aside button span:nth-child(2) { min-width:0; flex:1; }
 .message-center__layout aside strong, .message-center__layout aside small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .message-center__layout aside small { margin-top:.16rem; color:#718399; font-size:.7rem; }
+.chat-role { display:inline-block; padding:.08rem .3rem; border-radius:999px; color:#28537c; background:#dcecff; font-size:.6rem; font-weight:800; letter-spacing:.03em; text-transform:uppercase; vertical-align:middle; }
 .message-center__layout aside i { min-width:18px; padding:2px 4px; border-radius:999px; background:#0c5bb4; color:#fff; font-size:.65rem; font-style:normal; text-align:center; }
 .message-center__start { padding:.45rem; margin-bottom:.6rem; border-bottom:1px solid #dbe6ef; }
 .message-center__start strong { margin:.25rem; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; }

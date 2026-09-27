@@ -1274,8 +1274,8 @@ div.caseload-controls .filter-select.risk-low svg * {
 .connection-status--accepted { color: #176b38; background: #eaf9f0; }
 .connection-status--declined { color: #8a5050; background: #faeeee; }
 
-.connection-actions { display: flex; align-items: center; gap: 0.35rem; }
-.connection-button, .connection-remove { 
+.connection-actions { display: flex; align-items: center; gap: 0.65rem; }
+.connection-button, .connection-msg, .connection-remove { 
   display: inline-flex; 
   align-items: center; 
   justify-content: center; 
@@ -1289,8 +1289,9 @@ div.caseload-controls .filter-select.risk-low svg * {
 
 .connection-button { min-height: 30px; padding: 0 0.5rem; }
 .connection-button--accept { background: #eaf9f0; color: #176b38; }
+.connection-msg { background: #ddebfc; color: #0d4d9c; }
 .connection-button--decline, .connection-remove { background: #fff1f0; color: #a34440; }
-.connection-remove { width: 30px; height: 30px; }
+.connection-msg, .connection-remove { width: 30px; height: 30px; }
 .connection-button:disabled, .connection-remove:disabled { cursor: wait; opacity: 0.55; }
 
 .connected-students { margin-top: 1.4rem; }

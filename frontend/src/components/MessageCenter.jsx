@@ -8,7 +8,7 @@ const riskTier = (forecast) => {
   return ["low", "medium", "high"].includes(tier) ? tier : null;
 };
 
-export default function MessageCenter() {
+export default function MessageCenter({ initialSelectedUser }) {
   const { apiFetch, user } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [students, setStudents] = useState([]);
@@ -20,6 +20,7 @@ export default function MessageCenter() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [selectedUser, setSelectedUser] = useState(initialSelectedUser || null);
 
   const load = async (background = false) => {
     if (!background) setLoading(true);
@@ -55,6 +56,35 @@ export default function MessageCenter() {
       setConversations((current) => current.map((item) => item.id === conversation.id ? { ...item, unreadCount: 0 } : item));
     } catch (err) { setError(err.message || "Could not open this conversation."); }
   };
+
+  useEffect(() => {
+  if (initialSelectedUser) {
+    setSelectedUser(initialSelectedUser);
+  }
+  }, [initialSelectedUser]);
+
+  useEffect(() => {
+    if (!selectedUser) return;
+
+    const targetId = String(selectedUser.id || selectedUser._id || selectedUser.student?.id);
+
+    // 1. Try to find an existing active conversation thread with this user
+    const existingConv = conversations.find(
+      (conv) => String(conv.peer?.id || conv.peer?._id) === targetId
+    );
+
+    if (existingConv) {
+      open(existingConv);
+    } else if (students.length > 0) {
+      // 2. If no conversation exists yet, automatically create/open one using begin()
+      const matchingStudent = students.find(
+        (item) => String(item.student?.id || item.student?._id) === targetId
+      );
+      if (matchingStudent) {
+        begin(matchingStudent.student.id);
+      }
+    }
+  }, [selectedUser, conversations, students]);
 
   useEffect(() => {
     if (!selected?.id) return undefined;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Clock3, Link2, Search, Trash2, UserPlus, X } from "lucide-react";
+import { Check, Clock3, Link2, MessageCircle, Search, Trash2, UserPlus, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const statusLabel = {
@@ -8,7 +8,7 @@ const statusLabel = {
   declined: "Not accepted",
 };
 
-export default function ConnectionManager() {
+export default function ConnectionManager({ onNavigateTab }) {
   const { user, apiFetch } = useAuth();
   const [connections, setConnections] = useState([]);
   const [query, setQuery] = useState("");
@@ -165,7 +165,25 @@ export default function ConnectionManager() {
               <span className={`connection-status connection-status--${connection.status}`}><Clock3 size={13} />{statusLabel[connection.status]}</span>
               <div className="connection-actions">
                 {!isStudent && connection.status === "pending" && <><button type="button" className="connection-button connection-button--accept" onClick={() => respond(connection.id, "accept")} disabled={isSaving}><Check size={15} />Accept</button><button type="button" className="connection-button connection-button--decline" onClick={() => respond(connection.id, "decline")} disabled={isSaving}><X size={15} />Decline</button></>}
-                {(isStudent || connection.status === "accepted") && <button type="button" className="connection-remove" onClick={() => remove(connection.id)} disabled={isSaving} aria-label={`Remove connection with ${person.fullName}`}><Trash2 size={16} /></button>}
+                {(isStudent || connection.status === "accepted") && (
+                  <>
+                    <button 
+                      type="button" 
+                      className="connection-msg" 
+                      onClick={() => {
+                        if (onNavigateTab) {
+                          onNavigateTab("messages", { selectedUser: person });
+                        }
+                      }}
+                      aria-label={`Message ${person.fullName}`}
+                    >
+                      <MessageCircle size={16} />
+                    </button>
+                    <button type="button" className="connection-remove" onClick={() => remove(connection.id)} disabled={isSaving} aria-label={`Remove connection with ${person.fullName}`}>
+                      <Trash2 size={16} />
+                    </button>
+                  </>
+                )}
               </div>
             </li>;
           })}

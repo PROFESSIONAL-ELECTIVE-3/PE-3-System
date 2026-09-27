@@ -1013,11 +1013,18 @@ export default function Dashboard() {
                 </h2>
               </div>
             </div>
-            <ConnectionManager />
+            <ConnectionManager 
+              onNavigateTab={(tab, data) => {
+                // Navigate using React Router while preserving state/shell context
+                navigate(`/dashboard/${tab}`, { state: data });
+              }} 
+            />
           </section>
         )}
 
-        {hasConnectionAccess && activeTab === "messages" && <MessageCenter />}
+        {hasConnectionAccess && activeTab === "messages" && (
+          <MessageCenter initialSelectedUser={location.state?.selectedUser} />
+        )}
 
         {user?.role === "professor" && (activeTab === "data" || activeTab === "insights") && <ProfessorDashboardView user={user} activeTab={activeTab} />}
 

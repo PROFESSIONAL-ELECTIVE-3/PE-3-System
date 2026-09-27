@@ -3,6 +3,7 @@ import { BarChart3, Play, RefreshCw, ShieldCheck, Sparkles, Loader2 } from "luci
 import { useAuth } from "../context/AuthContext";
 
 const scheduleToApi = (attendance) => (attendance === "day" ? "day" : "night");
+const TRACER_ANIMATION_DURATION_MS = 3000; // 3.0s exact full-perimeter trace
 
 export default function StudentInsights({ onForecastComplete }) {
   const { apiFetch } = useAuth();
@@ -67,10 +68,23 @@ export default function StudentInsights({ onForecastComplete }) {
   const getSupportInsight = async () => {
     setGettingInsight(true);
     setError("");
+
+    // Timer promise that resolves exactly when the outline finishes filling
+    const animationPromise = new Promise((resolve) =>
+      setTimeout(resolve, TRACER_ANIMATION_DURATION_MS)
+    );
+
+    // API fetch promise
+    const fetchPromise = apiFetch("/api/insights/student-support", { method: "POST" })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Support suggestions could not be generated.");
+        return data;
+      });
+
     try {
-      const response = await apiFetch("/api/insights/student-support", { method: "POST" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Support suggestions could not be generated.");
+      // Wait for BOTH the perimeter line to complete 100% and the API call
+      const [, data] = await Promise.all([animationPromise, fetchPromise]);
       setInsight(data.insight);
     } catch (requestError) {
       setError(requestError.message || "Support suggestions could not be generated.");

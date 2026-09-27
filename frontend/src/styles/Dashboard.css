@@ -261,6 +261,101 @@
   box-shadow: 0 0 0 1.5px rgba(22, 163, 74, 0.25), 0 12px 24px rgba(22, 163, 74, 0.16) !important;
 }
 
+/* Left Numerical Percentage Display (Tabular Monospace Font) */
+.risk-stat-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 62px;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  flex-shrink: 0;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.dashboard-summary article:hover .risk-stat-badge {
+  transform: scale(1.05);
+}
+
+.risk-stat-badge .risk-stat-number {
+  font-family: "SF Mono", "Consolas", "Roboto Mono", "Fira Code", monospace;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.risk-stat-badge .risk-stat-caption {
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.15rem;
+  line-height: 1;
+}
+
+.risk-stat-badge.red {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.risk-stat-badge.amber {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+}
+
+.risk-stat-badge.green {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.summary-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* Distinct Risk Colors for Summary Card Icons */
+.summary-icon.red {
+  color: #dc2626 !important;
+  background: #fef2f2 !important;
+}
+
+.summary-icon.amber {
+  color: #ea580c !important;
+  background: #fff7ed !important;
+}
+
+.summary-icon.green {
+  color: #16a34a !important;
+  background: #f0fdf4 !important;
+}
+
+.summary-icon.blue {
+  color: #1762b9 !important;
+  background: #e5f0ff !important;
+}
+
+.dashboard-summary strong {
+  display: block;
+  font-size: 1rem;
+  color: #1c334a;
+}
+
+.dashboard-summary small {
+  color: #718399;
+  font-size: 0.76rem;
+}
+
 /* ==========================================================================
    5-Second Balloon Inflation & Pop Animation
    ========================================================================== */
@@ -436,101 +531,6 @@
   color: #1e293b;
 }
 
-/* Left Numerical Percentage Display (Tabular Monospace Font) */
-.risk-stat-badge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 62px;
-  padding: 0.4rem 0.5rem;
-  border-radius: 8px;
-  flex-shrink: 0;
-  text-align: center;
-  transition: transform 0.2s ease;
-}
-
-.dashboard-summary article:hover .risk-stat-badge {
-  transform: scale(1.05);
-}
-
-.risk-stat-badge .risk-stat-number {
-  font-family: "SF Mono", "Consolas", "Roboto Mono", "Fira Code", monospace;
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-}
-
-.risk-stat-badge .risk-stat-caption {
-  font-size: 0.58rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-top: 0.15rem;
-  line-height: 1;
-}
-
-.risk-stat-badge.red {
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
-}
-
-.risk-stat-badge.amber {
-  background: #fff7ed;
-  color: #ea580c;
-  border: 1px solid #fed7aa;
-}
-
-.risk-stat-badge.green {
-  background: #f0fdf4;
-  color: #16a34a;
-  border: 1px solid #bbf7d0;
-}
-
-.summary-icon {
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-/* Distinct Risk Colors for Summary Card Icons */
-.summary-icon.red {
-  color: #dc2626 !important;
-  background: #fef2f2 !important;
-}
-
-.summary-icon.amber {
-  color: #ea580c !important;
-  background: #fff7ed !important;
-}
-
-.summary-icon.green {
-  color: #16a34a !important;
-  background: #f0fdf4 !important;
-}
-
-.summary-icon.blue {
-  color: #1762b9 !important;
-  background: #e5f0ff !important;
-}
-
-.dashboard-summary strong {
-  display: block;
-  font-size: 1rem;
-  color: #1c334a;
-}
-
-.dashboard-summary small {
-  color: #718399;
-  font-size: 0.76rem;
-}
-
 /* ==========================================================================
    Fill-Up SVG Perimeter Loading Tracer (Fills until Complete)
    ========================================================================== */
@@ -541,7 +541,7 @@
   transition: all 0.3s ease;
 }
 
-/* The SVG overlay matching the container perimeter */
+/* Perimeter fill tracer overlay */
 .insights-border-fill-tracer {
   position: absolute;
   inset: 0;
@@ -552,7 +552,7 @@
   overflow: visible;
 }
 
-/* Progressive perimeter fill-up: starts empty at bottom and draws completely */
+/* Exact timed perimeter trace (3.0s matches TRACER_ANIMATION_DURATION_MS) */
 .insights-border-fill-tracer rect {
   fill: none;
   stroke: #0c5bb4;
@@ -561,15 +561,15 @@
   stroke-dasharray: 100 100;
   stroke-dashoffset: 100;
   filter: drop-shadow(0 0 6px #0c5bb4) drop-shadow(0 0 12px rgba(12, 91, 180, 0.45));
-  animation: fillBorderPerimeter 3.5s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+  animation: fillBorderPerimeter 3s cubic-bezier(0.25, 1, 0.3, 1) forwards;
 }
 
 @keyframes fillBorderPerimeter {
   0% {
-    stroke-dashoffset: 100; /* completely empty */
+    stroke-dashoffset: 100;
   }
   100% {
-    stroke-dashoffset: 0;   /* completely full around perimeter */
+    stroke-dashoffset: 0;
   }
 }
 
@@ -1081,7 +1081,6 @@ div.caseload-controls .filter-select.risk-low svg * {
 .student-metrics-table {
   width: 100%;
   border-collapse: collapse;
-  text-align: left;
   font-size: 0.83rem;
 }
 
@@ -1623,8 +1622,8 @@ div.caseload-controls .filter-select.risk-low svg * {
 .connection-status--accepted { color: #176b38; background: #eaf9f0; }
 .connection-status--declined { color: #8a5050; background: #faeeee; }
 
-.connection-actions { display: flex; align-items: center; gap: 0.35rem; }
-.connection-button, .connection-remove { 
+.connection-actions { display: flex; align-items: center; gap: 0.65rem; }
+.connection-button, .connection-msg, .connection-remove { 
   display: inline-flex; 
   align-items: center; 
   justify-content: center; 
@@ -1638,8 +1637,9 @@ div.caseload-controls .filter-select.risk-low svg * {
 
 .connection-button { min-height: 30px; padding: 0 0.5rem; }
 .connection-button--accept { background: #eaf9f0; color: #176b38; }
+.connection-msg { background: #ddebfc; color: #0d4d9c; }
 .connection-button--decline, .connection-remove { background: #fff1f0; color: #a34440; }
-.connection-remove { width: 30px; height: 30px; }
+.connection-msg, .connection-remove { width: 30px; height: 30px; }
 .connection-button:disabled, .connection-remove:disabled { cursor: wait; opacity: 0.55; }
 
 .connected-students { margin-top: 1.4rem; }
@@ -1792,8 +1792,8 @@ div.caseload-controls .filter-select.risk-low svg * {
 .message-center > header h2 { margin: 0.2rem 0; color: #18324b; }
 .message-center > header p:not(.dashboard-eyebrow) { margin: 0; color: #61768a; font-size: .9rem; }
 .message-risk-note { display:block; margin-top:.55rem; color:#61768a; font-size:.72rem; line-height:1.4; }
-.message-center__layout { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(0, 2fr); margin-top: 1.2rem; min-height: 510px; border: 1px solid #dbe6ef; border-radius: 12px; overflow: hidden; background: #fff; }
-.message-center__layout aside { padding: .65rem; border-right: 1px solid #dbe6ef; background: #f7faff; }
+.message-center__layout { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(0, 2fr); margin-top: 1.2rem; height: clamp(500px, calc(100vh - 220px), 680px); border: 1px solid #dbe6ef; border-radius: 12px; overflow: hidden; background: #fff; }
+.message-center__layout aside { min-height: 0; padding: .65rem; overflow-y: auto; border-right: 1px solid #dbe6ef; background: #f7faff; }
 .message-center__layout aside > button, .message-center__start button { display:flex; width:100%; align-items:center; gap:.55rem; padding:.7rem; border:0; border-radius:8px; background:transparent; text-align:left; color:#29465f; cursor:pointer; }
 .message-center__layout aside > button:hover, .message-center__layout aside > button.is-selected { background:#e4f0ff; }
 .message-center__layout aside button span:nth-child(2) { min-width:0; flex:1; }
@@ -1801,15 +1801,16 @@ div.caseload-controls .filter-select.risk-low svg * {
 .message-center__layout aside small { margin-top:.16rem; color:#718399; font-size:.7rem; }
 .chat-role { display:inline-block; padding:.08rem .3rem; border-radius:999px; color:#28537c; background:#dcecff; font-size:.6rem; font-weight:800; letter-spacing:.03em; text-transform:uppercase; vertical-align:middle; }
 .message-center__layout aside i { min-width:18px; padding:2px 4px; border-radius:999px; background:#0c5bb4; color:#fff; font-size:.65rem; font-style:normal; text-align:center; }
+.message-center__layout aside i.message-unread-count { min-width:max-content; padding:3px 6px; font-size:.61rem; }
 .message-center__start { padding:.45rem; margin-bottom:.6rem; border-bottom:1px solid #dbe6ef; }
 .message-center__start strong { margin:.25rem; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; }
 .message-center__start button { margin-top:.2rem; background:#e7f1fc; font-size:.78rem; }
 .message-risk { display:inline-flex; width:max-content; margin-top:.22rem; padding:.12rem .36rem; border-radius:999px; font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.03em; }.message-risk--high { color:#9d2925; background:#fee2e1; }.message-risk--medium { color:#8a5a00; background:#fff0ca; }.message-risk--low { color:#176344; background:#dff5e9; }.message-risk--pending { color:#64788e; background:#e9eef3; }
-.message-center__thread { display:flex; flex-direction:column; min-width:0; }
+.message-center__thread { display:flex; flex-direction:column; min-width:0; min-height:0; overflow:hidden; }
 .message-center__thread-header { display:flex; align-items:center; gap:.6rem; padding:1rem; border-bottom:1px solid #dbe6ef; color:#0c5bb4; }
 .message-center__thread-header strong, .message-center__thread-header small { display:block; color:#29465f; }.message-center__thread-header small { margin-top:.1rem; color:#718399; font-size:.72rem; }
-.message-list { flex:1; display:flex; flex-direction:column; gap:.75rem; padding:1rem; overflow:auto; background:#fcfdff; }
-.message-list article { position:relative; max-width:78%; padding:.65rem .8rem; border-radius:10px; background:#eef3f7; color:#29465f; }.message-list article.mine { align-self:flex-end; background:#dcecff; }.message-list article p { margin:0; padding-right:1.2rem; white-space:pre-wrap; line-height:1.45; }.message-list article small { display:block; margin-top:.35rem; color:#6b8093; font-size:.67rem; }.message-menu-toggle { position:absolute; top:.45rem; right:.38rem; padding:.12rem; border:0; color:#587188; background:transparent; cursor:pointer; }.message-menu { position:absolute; z-index:2; top:1.9rem; right:.35rem; min-width:92px; padding:.25rem; border:1px solid #cfdeeb; border-radius:7px; background:#fff; box-shadow:0 6px 16px rgba(30,56,80,.16); }.message-menu button { display:flex; width:100%; align-items:center; gap:.35rem; padding:.38rem; border:0; border-radius:4px; background:transparent; color:#29465f; font:inherit; font-size:.72rem; cursor:pointer; }.message-menu button:hover { background:#eef5fb; }.message-menu .message-menu__delete { color:#a33430; }.message-reply-preview { display:flex; flex-direction:column; gap:.08rem; margin:0 1.3rem .45rem 0; padding:.32rem .45rem; border-left:3px solid #7fa9d8; border-radius:3px; background:rgba(255,255,255,.45); color:#526b82; font-size:.68rem; }.message-reply-preview span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.replying-to { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.5rem; padding:.38rem .5rem; border-left:3px solid #0c5bb4; background:#edf5ff; color:#526b82; font-size:.72rem; }.replying-to span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.replying-to button { border:0; background:transparent; color:#29465f; font-size:1.1rem; cursor:pointer; }
+.message-list { flex:1; min-height:0; display:flex; flex-direction:column; gap:.75rem; padding:1rem; overflow-y:auto; overflow-x:hidden; background:#fcfdff; }
+.message-list article { position:relative; max-width:78%; padding:.65rem .8rem; border-radius:10px; background:#eef3f7; color:#29465f; }.message-list article.mine { align-self:flex-end; background:#dcecff; }.message-list article p { margin:0; padding-right:1.2rem; white-space:pre-wrap; line-height:1.45; }.message-list article small { display:block; margin-top:.35rem; color:#6b8093; font-size:.67rem; }.message-read-state { margin-left:.4rem; color:#6b8093; }.message-read-state.is-read { color:#0c6c53; font-weight:700; }.message-menu-toggle { position:absolute; top:.45rem; right:.38rem; padding:.12rem; border:0; color:#587188; background:transparent; cursor:pointer; }.message-menu { position:absolute; z-index:2; top:1.9rem; right:.35rem; min-width:92px; padding:.25rem; border:1px solid #cfdeeb; border-radius:7px; background:#fff; box-shadow:0 6px 16px rgba(30,56,80,.16); }.message-menu button { display:flex; width:100%; align-items:center; gap:.35rem; padding:.38rem; border:0; border-radius:4px; background:transparent; color:#29465f; font:inherit; font-size:.72rem; cursor:pointer; }.message-menu button:hover { background:#eef5fb; }.message-menu .message-menu__delete { color:#a33430; }.message-reply-preview { display:flex; flex-direction:column; gap:.08rem; margin:0 1.3rem .45rem 0; padding:.32rem .45rem; border-left:3px solid #7fa9d8; border-radius:3px; background:rgba(255,255,255,.45); color:#526b82; font-size:.68rem; }.message-reply-preview span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.replying-to { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.5rem; padding:.38rem .5rem; border-left:3px solid #0c5bb4; background:#edf5ff; color:#526b82; font-size:.72rem; }.replying-to span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.replying-to button { border:0; background:transparent; color:#29465f; font-size:1.1rem; cursor:pointer; }
 .message-center__thread form { padding:.8rem; border-top:1px solid #dbe6ef; }.message-center__thread textarea { width:100%; min-height:72px; box-sizing:border-box; padding:.65rem; border:1px solid #c8d8e7; border-radius:8px; font:inherit; resize:vertical; }.message-center__thread form > div { display:flex; align-items:center; justify-content:space-between; margin-top:.35rem; }.message-center__thread form small { color:#718399; font-size:.7rem; }
 .message-template { margin-bottom:.5rem; border:0; padding:0; color:#0c5bb4; background:transparent; font:inherit; font-size:.76rem; font-weight:700; cursor:pointer; }
 .message-center__empty { padding:.7rem; color:#718399; font-size:.82rem; line-height:1.5; }.message-center__placeholder { margin:auto; padding:2rem; text-align:center; color:#718399; }.message-center__placeholder svg { color:#0c5bb4; }.message-center__placeholder h3 { margin:.7rem 0 .2rem; color:#29465f; }.message-center__placeholder p { margin:0; font-size:.86rem; }

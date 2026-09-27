@@ -312,7 +312,7 @@ export default function StudentDataForm({ onSaveRecord }) {
           <button
             type="button"
             className="calculate-action-btn"
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/dashboard/insights")}
           >
             <Calculator size={16} /> Calculate &amp; View Insights <ArrowRight size={16} />
           </button>
@@ -489,4 +489,4 @@ export default function StudentDataForm({ onSaveRecord }) {
       </div>
     </form>
   );
-}
+} 

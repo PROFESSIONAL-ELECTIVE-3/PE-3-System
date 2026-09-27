@@ -810,7 +810,7 @@ export default function Dashboard() {
       return {
         title: "Urgent: Academic Action Required",
         message: "You have triggered a high academic attrition risk threshold. Please immediately settle pending laboratory submissions, resolve unexcused absences, and book an academic advisement consultation with your program chair.",
-        action: "Schedule Intervention Meeting",
+        action: "Chat your professor",
       };
     }
     if (alertCardColor === "amber") {
@@ -952,7 +952,6 @@ export default function Dashboard() {
                 {hasForecastRisk ? (
                   <div className={`risk-stat-badge ${alertCardColor}`}>
                     <span className="risk-stat-number">{animatedPercentage}%</span>
-                    <span className="risk-stat-caption">Dropout Risk</span>
                   </div>
                 ) : (
                   <span className={`summary-icon ${alertCardColor}`}>

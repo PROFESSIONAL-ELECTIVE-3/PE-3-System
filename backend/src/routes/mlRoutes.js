@@ -36,10 +36,14 @@ router.post('/predict', protect, async (req, res, next) => {
       timeout: 10000,
     });
     if (req.user.role === 'student') {
+      // Keep forecast history snapshots compatible with saved-record history.
+      // The ML API expects studySchedule, while the application record uses
+      // attendance; store the latter as the canonical timeline field.
+      const { studySchedule, ...recordFields } = req.body;
       await StudentActivity.create({
         student: req.user._id,
         type: 'forecast_run',
-        record: req.body,
+        record: { ...recordFields, attendance: studySchedule },
         forecast: data,
       });
       try {

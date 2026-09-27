@@ -20,6 +20,7 @@ exports.listConversations = async (req, res, next) => {
       { $match: { ...owner, state: 'open' } },
       { $lookup: { from: 'users', localField: req.user.role === 'professor' ? 'student' : 'professor', foreignField: '_id', as: 'peer' } },
       { $lookup: { from: 'messages', let: { conversationId: '$_id' }, pipeline: [{ $match: { $expr: { $and: [{ $eq: ['$conversation', '$$conversationId'] }, { $ne: ['$sender', req.user._id] }, { $eq: ['$readAt', null] }] } } }, { $count: 'count' }], as: 'unread' } },
+      { $set: { unreadCount: { $ifNull: [{ $arrayElemAt: ['$unread.count', 0] }, 0] } } },
       { $unwind: '$peer' }, { $sort: { lastMessageAt: -1 } },
     ]);
     res.json({ conversations: conversations.map((item) => summary({ ...item, student: req.user.role === 'professor' ? item.peer : { _id: req.user._id }, professor: req.user.role === 'student' ? item.peer : { _id: req.user._id } }, req.user.role)) });

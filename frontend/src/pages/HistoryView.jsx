@@ -176,6 +176,10 @@ export default function HistoryView({ user }) {
             };
             const Icon = details.icon;
             const forecast = entry.forecast;
+            // Legacy forecast snapshots used studySchedule; saved records and
+            // new forecasts use attendance. Read either so old history is
+            // displayed correctly as well.
+            const attendance = entry.record?.attendance || entry.record?.studySchedule;
             const isHighRisk =
               forecast && Math.round((forecast.dropoutProbability || 0) * 100) > 50;
 
@@ -207,7 +211,7 @@ export default function HistoryView({ user }) {
                       </span>
                       <span>
                         Schedule:{" "}
-                        <strong>{entry.record.attendance === "day" ? "Daytime" : "Evening"}</strong>
+                          <strong>{attendance === "day" ? "Daytime" : attendance === "night" ? "Evening" : "Not recorded"}</strong>
                       </span>
                     </div>
                   )}

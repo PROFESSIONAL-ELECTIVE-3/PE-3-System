@@ -17,7 +17,6 @@ const connectionRoutes = require('./routes/connectionRoutes');
 const mlRoutes = require('./routes/mlRoutes');
 const insightRoutes = require('./routes/insightRoutes');
 const professorRoutes = require('./routes/professorRoutes');
-const supportPlanRoutes = require('./routes/supportPlanRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
@@ -75,7 +74,6 @@ app.use('/api/connections', connectionRoutes);
 app.use('/api/ml', mlRoutes);
 app.use('/api/insights', insightRoutes);
 app.use('/api/professor', professorRoutes);
-app.use('/api/support-plans', supportPlanRoutes);
 app.use('/api/messages', messageRoutes);
 
 app.use(notFound);

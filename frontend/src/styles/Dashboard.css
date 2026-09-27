@@ -1472,13 +1472,6 @@ div.caseload-controls .filter-select.risk-low svg * {
 .workflow-empty strong { color: #29465f; }
 .workflow-empty p { margin: 0.25rem 0 0; font-size: 0.8rem; line-height: 1.5; }
 
-.student-support-plans { margin: 1rem 0; padding: 0.9rem; border: 1px solid #d8e9de; border-radius: 8px; background: #f6fcf8; width: 100%; box-sizing: border-box; }
-.student-support-plans h3 { margin: 0 0 0.55rem; color: #25513e; font-size: 0.88rem; }
-.student-support-plans article { display: flex; gap: 0.55rem; padding: 0.55rem 0; border-top: 1px solid #deeee4; color: #2f6149; }
-.student-support-plans article:first-of-type { border-top: 0; }
-.student-support-plans svg { flex: none; margin-top: 0.1rem; }
-.student-support-plans strong, .student-support-plans small { font-size: 0.73rem; }
-.student-support-plans p { margin: 0.18rem 0; color: #476a59; font-size: 0.8rem; line-height: 1.45; }
 
 /* ==========================================================================
    Full-Width History Timeline (Audits & Forecast Runs)

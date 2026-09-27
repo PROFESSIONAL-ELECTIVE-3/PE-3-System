@@ -210,6 +210,7 @@
 }
 
 .dashboard-summary article {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.8rem;
@@ -218,7 +219,15 @@
   border: 1.5px solid #e3ebf2;
   border-radius: 9px;
   box-shadow: 0 1px 3px rgba(16, 43, 74, 0.02);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s ease;
+  cursor: pointer;
+}
+
+.dashboard-summary article:hover {
+  transform: translateY(-4px) scale(1.025);
+  box-shadow: 0 10px 22px rgba(16, 43, 74, 0.08);
 }
 
 /* Dynamic Outline / Border Colors for the Risk Summary Card */
@@ -227,9 +236,19 @@
   box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.15), 0 2px 8px rgba(220, 38, 38, 0.08) !important;
 }
 
+.dashboard-summary article.risk-card-red:hover {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 1.5px rgba(220, 38, 38, 0.25), 0 12px 24px rgba(220, 38, 38, 0.16) !important;
+}
+
 .dashboard-summary article.risk-card-amber {
   border-color: #ea580c !important;
   box-shadow: 0 0 0 1px rgba(234, 88, 12, 0.15), 0 2px 8px rgba(234, 88, 12, 0.08) !important;
+}
+
+.dashboard-summary article.risk-card-amber:hover {
+  border-color: #ea580c !important;
+  box-shadow: 0 0 0 1.5px rgba(234, 88, 12, 0.25), 0 12px 24px rgba(234, 88, 12, 0.16) !important;
 }
 
 .dashboard-summary article.risk-card-green {
@@ -237,17 +256,225 @@
   box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.15), 0 2px 8px rgba(22, 163, 74, 0.08) !important;
 }
 
-/* Left Numerical Percentage Display (Unique Display Font) */
+.dashboard-summary article.risk-card-green:hover {
+  border-color: #16a34a !important;
+  box-shadow: 0 0 0 1.5px rgba(22, 163, 74, 0.25), 0 12px 24px rgba(22, 163, 74, 0.16) !important;
+}
+
+/* ==========================================================================
+   5-Second Balloon Inflation & Pop Animation
+   ========================================================================== */
+
+@keyframes balloonInflate {
+  0% {
+    transform: translateY(-4px) scale(1.025);
+  }
+  30% {
+    transform: translateY(-6px) scale(1.06);
+  }
+  60% {
+    transform: translateY(-8px) scale(1.10);
+  }
+  85% {
+    transform: translateY(-10px) scale(1.15) rotate(-1deg);
+  }
+  95% {
+    transform: translateY(-11px) scale(1.18) rotate(1.5deg);
+  }
+  100% {
+    transform: translateY(-11px) scale(1.2) rotate(-1deg);
+  }
+}
+
+.dashboard-summary article.balloon-inflating {
+  animation: balloonInflate 5s ease-in forwards !important;
+  z-index: 10;
+}
+
+@keyframes balloonExplode {
+  0% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  40% {
+    transform: scale(1.35);
+    opacity: 0.6;
+    filter: blur(2px);
+  }
+  100% {
+    transform: scale(0.7);
+    opacity: 0;
+    filter: blur(8px);
+  }
+}
+
+.dashboard-summary article.balloon-popped {
+  animation: balloonExplode 0.35s ease-out forwards !important;
+}
+
+/* Shard particles flying out upon explosion */
+.balloon-shards {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.shard {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  opacity: 0.9;
+}
+
+.s1 { top: 20%; left: 30%; background: #dc2626; animation: shardMove1 0.4s ease-out forwards; }
+.s2 { top: 60%; left: 70%; background: #ea580c; animation: shardMove2 0.4s ease-out forwards; }
+.s3 { top: 40%; left: 80%; background: #dc2626; animation: shardMove3 0.4s ease-out forwards; }
+.s4 { top: 75%; left: 20%; background: #ea580c; animation: shardMove4 0.4s ease-out forwards; }
+
+@keyframes shardMove1 { to { transform: translate(-45px, -45px) scale(0); opacity: 0; } }
+@keyframes shardMove2 { to { transform: translate(50px, 45px) scale(0); opacity: 0; } }
+@keyframes shardMove3 { to { transform: translate(55px, -35px) scale(0); opacity: 0; } }
+@keyframes shardMove4 { to { transform: translate(-45px, 50px) scale(0); opacity: 0; } }
+
+/* ==========================================================================
+   Post-Pop Message Modal
+   ========================================================================== */
+
+.risk-pop-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  background: rgba(16, 43, 74, 0.45);
+  backdrop-filter: blur(4px);
+  padding: 1.5rem;
+  animation: popBackdropFade 0.2s ease-out forwards;
+}
+
+@keyframes popBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.risk-pop-modal {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.8rem 1.6rem 1.6rem;
+  box-shadow: 0 20px 45px rgba(16, 43, 74, 0.22);
+  text-align: center;
+  box-sizing: border-box;
+  animation: popModalBounce 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popModalBounce {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.risk-pop-modal.border-red { border-top: 5px solid #dc2626; }
+.risk-pop-modal.border-amber { border-top: 5px solid #ea580c; }
+.risk-pop-modal.border-green { border-top: 5px solid #16a34a; }
+
+.risk-pop-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  background: transparent;
+  border: 0;
+  color: #718399;
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 5px;
+}
+
+.risk-pop-close:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.risk-pop-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 0.9rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.risk-pop-icon.red { background: #fee2e2; color: #dc2626; }
+.risk-pop-icon.amber { background: #ffedd5; color: #ea580c; }
+.risk-pop-icon.green { background: #dcfce7; color: #16a34a; }
+
+.risk-pop-modal h3 {
+  margin: 0 0 0.5rem;
+  color: #18324b;
+  font-size: 1.15rem;
+}
+
+.risk-pop-modal p {
+  margin: 0 0 1.4rem;
+  color: #475569;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.risk-pop-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.risk-pop-action-btn {
+  padding: 0.7rem 1.1rem;
+  border: 0;
+  border-radius: 7px;
+  font-weight: 700;
+  font-size: 0.84rem;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.risk-pop-action-btn.red { background: #dc2626; }
+.risk-pop-action-btn.amber { background: #ea580c; }
+.risk-pop-action-btn.green { background: #16a34a; }
+.risk-pop-action-btn:hover { opacity: 0.9; }
+
+.risk-pop-dismiss-btn {
+  padding: 0.6rem;
+  background: transparent;
+  border: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.risk-pop-dismiss-btn:hover {
+  color: #1e293b;
+}
+
+/* Left Numerical Percentage Display (Tabular Monospace Font) */
 .risk-stat-badge {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 60px;
+  min-width: 62px;
   padding: 0.4rem 0.5rem;
   border-radius: 8px;
   flex-shrink: 0;
   text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.dashboard-summary article:hover .risk-stat-badge {
+  transform: scale(1.05);
 }
 
 .risk-stat-badge .risk-stat-number {

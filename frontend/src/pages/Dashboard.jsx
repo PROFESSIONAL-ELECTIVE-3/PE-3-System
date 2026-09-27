@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   AlertTriangle,
   BarChart3,
@@ -22,6 +22,8 @@ import {
   UserCheck,
   UsersRound,
   MessageCircle,
+  X,
+  AlertOctagon,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -45,8 +47,8 @@ import StudentInsights from "./StudentInsights.jsx";
 import MessageCenter from "../components/MessageCenter.jsx";
 import ProfessorDashboardView from "./ProfessorDashboardView.jsx";
 
-// Smooth count-up hook from 0 to target percentage
-function useCountUp(target, duration = 1200) {
+// Route-aware count-up hook
+function useCountUp(target, triggerKey, duration = 1200) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -55,34 +57,38 @@ function useCountUp(target, duration = 1200) {
       return;
     }
 
-    let start = 0;
     const finalVal = Math.round(target);
     if (finalVal === 0) {
       setCount(0);
       return;
     }
 
+    setCount(0);
+
+    let animationFrameId;
     const startTime = performance.now();
 
     const updateCount = (currentTime) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease-out cubic formula
       const easeOut = 1 - Math.pow(1 - progress, 3);
       setCount(Math.round(easeOut * finalVal));
 
       if (progress < 1) {
-        requestAnimationFrame(updateCount);
+        animationFrameId = requestAnimationFrame(updateCount);
       }
     };
 
-    requestAnimationFrame(updateCount);
-  }, [target, duration]);
+    animationFrameId = requestAnimationFrame(updateCount);
+
+    return () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
+  }, [target, triggerKey, duration]);
 
   return count;
 }
 
-// Inline fallback for the Admin view so Vite doesn't fail if the file is absent
 function AdminDashboardView({ user, nextStep }) {
   return (
     <section className="workspace-section" id="admin-overview">
@@ -330,10 +336,10 @@ function AdvisorDashboardModule({ user }) {
   };
 
   const getFilterIconColor = () => {
-    if (filterRisk === "high") return "#dc2626";     // RED
-    if (filterRisk === "medium") return "#ea580c";   // ORANGE
-    if (filterRisk === "low") return "#16a34a";      // GREEN
-    return "#70869b";                                // DEFAULT SLATE
+    if (filterRisk === "high") return "#dc2626";
+    if (filterRisk === "medium") return "#ea580c";
+    if (filterRisk === "low") return "#16a34a";
+    return "#70869b";
   };
 
   if (loading) return <p className="connected-students-loading">Loading professor dashboard...</p>;
@@ -589,6 +595,12 @@ export default function Dashboard() {
   const [studentRecord, setStudentRecord] = useState(null);
   const [latestForecast, setLatestForecast] = useState(null);
 
+  // 5-second balloon pop states
+  const [isInflating, setIsInflating] = useState(false);
+  const [isPopped, setIsPopped] = useState(false);
+  const [showPopModal, setShowPopModal] = useState(false);
+  const popTimerRef = useRef(null);
+
   const activeTab = TAB_BY_PATH[location.pathname] || "overview";
   const nextStep = NEXT_STEPS_BY_ROLE[user?.role] ?? NEXT_STEPS_BY_ROLE.student;
   const roleLabel = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User";
@@ -727,11 +739,11 @@ export default function Dashboard() {
   const forecastIsAtRisk = ["medium", "high"].includes(forecastRiskLevel);
   const dropoutProbability = Number(latestForecast?.forecast?.dropoutProbability);
   
-  // Calculate target numerical percentage for count-up
   const exactDropoutPercent = Number.isFinite(dropoutProbability)
     ? Math.round(dropoutProbability * 100)
     : 0;
-  const animatedPercentage = useCountUp(exactDropoutPercent);
+
+  const animatedPercentage = useCountUp(exactDropoutPercent, location.pathname);
 
   const gradeScaleType = latestForecast?.forecast?.gradeMaximum || trajectoryRecord?.gradeMaximum;
   const gradeDetails =
@@ -763,7 +775,6 @@ export default function Dashboard() {
     ? `ML-service forecast generated ${forecastPeriod || "previously"}`
     : "Historical academic record (no ML forecast available)";
 
-  // Dynamic alert card color: High -> Red, Medium -> Orange/Amber, Low/Safe -> Green
   const alertCardColor = (() => {
     if (hasForecastRisk) {
       if (forecastRiskLevel === "high") return "red";
@@ -773,6 +784,50 @@ export default function Dashboard() {
     if (gradeDetails?.isAtRisk) return "red";
     return "green";
   })();
+
+  // Balloon Hover & Pop Handlers
+  const handleMouseEnterRisk = () => {
+    setIsInflating(true);
+    popTimerRef.current = setTimeout(() => {
+      setIsPopped(true);
+      setTimeout(() => {
+        setShowPopModal(true);
+        setIsInflating(false);
+        setIsPopped(false);
+      }, 350);
+    }, 5000);
+  };
+
+  const handleMouseLeaveRisk = () => {
+    if (popTimerRef.current) {
+      clearTimeout(popTimerRef.current);
+    }
+    setIsInflating(false);
+  };
+
+  const getPopModalContent = () => {
+    if (alertCardColor === "red") {
+      return {
+        title: "Urgent: Academic Action Required",
+        message: "You have triggered a high academic attrition risk threshold. Please immediately settle pending laboratory submissions, resolve unexcused absences, and book an academic advisement consultation with your program chair.",
+        action: "Schedule Intervention Meeting",
+      };
+    }
+    if (alertCardColor === "amber") {
+      return {
+        title: "Advisory: Moderate Risk Notice",
+        message: "Your trajectory indicates potential probationary standing if courses are not completed this semester. Review course requirements and connect with your professors.",
+        action: "Open Student Messages",
+      };
+    }
+    return {
+      title: "Good Standing: On Track",
+      message: "Your academic standing and retention probability are within institutional compliance. Keep up your regular class participation!",
+      action: "Continue to Dashboard",
+    };
+  };
+
+  const popContent = getPopModalContent();
 
   return (
     <div className="app-shell">
@@ -877,11 +932,27 @@ export default function Dashboard() {
             </section>
 
             <section className="dashboard-summary" aria-label="Advisor module objectives">
-              {/* Card 1: Alert Status (With Count-Up Percentage Badge on the Left) */}
-              <article className={`risk-card-${alertCardColor}`}>
+              {/* Card 1: 5-Second Hover Balloon Pop Container */}
+              <article 
+                className={`risk-card-${alertCardColor} ${isInflating ? "balloon-inflating" : ""} ${isPopped ? "balloon-popped" : ""}`}
+                onMouseEnter={handleMouseEnterRisk}
+                onMouseLeave={handleMouseLeaveRisk}
+                title="Hold hover for 5 seconds to inspect action directives"
+              >
+                {/* Visual explosion particles on pop */}
+                {isPopped && (
+                  <div className="balloon-shards">
+                    <span className="shard s1" />
+                    <span className="shard s2" />
+                    <span className="shard s3" />
+                    <span className="shard s4" />
+                  </div>
+                )}
+
                 {hasForecastRisk ? (
                   <div className={`risk-stat-badge ${alertCardColor}`}>
                     <span className="risk-stat-number">{animatedPercentage}%</span>
+                    <span className="risk-stat-caption">Dropout Risk</span>
                   </div>
                 ) : (
                   <span className={`summary-icon ${alertCardColor}`}>
@@ -942,6 +1013,54 @@ export default function Dashboard() {
                 </div>
               </article>
             </section>
+
+            {/* Balloon Pop Modal Directives */}
+            {showPopModal && (
+              <div className="risk-pop-backdrop" onClick={() => setShowPopModal(false)}>
+                <div 
+                  className={`risk-pop-modal border-${alertCardColor}`} 
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button 
+                    type="button" 
+                    className="risk-pop-close" 
+                    onClick={() => setShowPopModal(false)}
+                    aria-label="Close modal"
+                  >
+                    <X size={18} />
+                  </button>
+
+                  <div className={`risk-pop-icon ${alertCardColor}`}>
+                    <AlertOctagon size={28} />
+                  </div>
+
+                  <h3>{popContent.title}</h3>
+                  <p>{popContent.message}</p>
+
+                  <div className="risk-pop-actions">
+                    <button 
+                      type="button" 
+                      className={`risk-pop-action-btn ${alertCardColor}`}
+                      onClick={() => {
+                        setShowPopModal(false);
+                        if (alertCardColor === "red" || alertCardColor === "amber") {
+                          navigate("/dashboard/messages");
+                        }
+                      }}
+                    >
+                      {popContent.action}
+                    </button>
+                    <button 
+                      type="button" 
+                      className="risk-pop-dismiss-btn"
+                      onClick={() => setShowPopModal(false)}
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <section className="workspace-section" style={{ marginTop: "1.4rem" }}>
               <div className="section-heading">

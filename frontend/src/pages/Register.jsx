@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { BookOpen, GraduationCap } from "lucide-react";
 import "../styles/Login.css";
 import "../styles/Register.css";
 import BrandLogo from "../components/BrandLogo";
@@ -15,13 +16,13 @@ const ROLES = [
     value: "student",
     title: "Student",
     description: "Save your academic record, run personal forecasts, and message connected professors.",
-    icon: "🎓",
+    icon: <GraduationCap size={22} strokeWidth={2.1} />,
   },
   {
     value: "professor",
     title: "Professor",
     description: "Review connected student context and message students you support.",
-    icon: "📚",
+    icon: <BookOpen size={22} strokeWidth={2.1} />,
   },
 ];
 

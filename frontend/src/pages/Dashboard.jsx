@@ -595,6 +595,9 @@ export default function Dashboard() {
   const [studentRecord, setStudentRecord] = useState(null);
   const [latestForecast, setLatestForecast] = useState(null);
 
+  // Unread messages state for sidebar badge
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+
   // 5-second balloon pop states
   const [isInflating, setIsInflating] = useState(false);
   const [isPopped, setIsPopped] = useState(false);
@@ -604,6 +607,34 @@ export default function Dashboard() {
   const activeTab = TAB_BY_PATH[location.pathname] || "overview";
   const nextStep = NEXT_STEPS_BY_ROLE[user?.role] ?? NEXT_STEPS_BY_ROLE.student;
   const roleLabel = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User";
+
+  // Unread messages polling
+  useEffect(() => {
+    let isMounted = true;
+    const fetchUnread = async () => {
+      try {
+        if (!apiFetch) return;
+        const res = await apiFetch("/api/messages");
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && isMounted && Array.isArray(data.conversations)) {
+          const totalUnread = data.conversations.reduce(
+            (acc, conv) => acc + (conv.unreadCount || 0),
+            0
+          );
+          setUnreadMessagesCount(totalUnread);
+        }
+      } catch {
+        // Silently catch background poll issues
+      }
+    };
+
+    fetchUnread();
+    const interval = window.setInterval(fetchUnread, 8000);
+    return () => {
+      isMounted = false;
+      window.clearInterval(interval);
+    };
+  }, [apiFetch, location.pathname]);
 
   const processAndStoreRecord = useCallback((record) => {
     if (!record || record.previousSemesterGrade === undefined || record.previousSemesterGrade === "") return;
@@ -852,11 +883,51 @@ export default function Dashboard() {
               <UsersRound size={18} /> {user.role === "student" ? "My Professor" : "Students"}
             </DashboardNavLink>
           )}
+          
+          {/* MESSAGES WITH UNREAD BADGE */}
           {hasConnectionAccess && (
             <DashboardNavLink tab="messages" currentTab={activeTab}>
-              <MessageCircle size={18} /> Messages
+              <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+                <MessageCircle size={18} />
+                {unreadMessagesCount > 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: "-3px",
+                      right: "-3px",
+                      width: "8px",
+                      height: "8px",
+                      backgroundColor: "#ef4444",
+                      borderRadius: "50%",
+                      border: "1.5px solid #1a2233",
+                    }}
+                    aria-hidden="true"
+                  />
+                )}
+              </div>
+              <span>Messages</span>
+              {unreadMessagesCount > 0 && (
+                <span
+                  style={{
+                    marginLeft: "auto",
+                    backgroundColor: "#ef4444",
+                    color: "#ffffff",
+                    fontSize: "0.72rem",
+                    fontWeight: "700",
+                    padding: "2px 7px",
+                    borderRadius: "9999px",
+                    lineHeight: "1",
+                    minWidth: "16px",
+                    textAlign: "center",
+                  }}
+                  aria-label={`${unreadMessagesCount} unread messages`}
+                >
+                  {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
+                </span>
+              )}
             </DashboardNavLink>
           )}
+
           {user?.role !== "professor" && user?.role !== "administrator" && (
             <DashboardNavLink tab="history" currentTab={activeTab}>
               <HistoryIcon size={18} /> History
@@ -903,7 +974,33 @@ export default function Dashboard() {
               {user?.role === "student" ? "Professor" : "Students"}
             </DashboardNavLink>
           )}
-          {hasConnectionAccess && <DashboardNavLink tab="messages" currentTab={activeTab}>Messages</DashboardNavLink>}
+
+          {/* MOBILE MESSAGES TAB WITH UNREAD BADGE */}
+          {hasConnectionAccess && (
+            <DashboardNavLink tab="messages" currentTab={activeTab}>
+              <span style={{ position: "relative" }}>
+                Messages
+                {unreadMessagesCount > 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: "-4px",
+                      right: "-12px",
+                      backgroundColor: "#ef4444",
+                      color: "#ffffff",
+                      fontSize: "0.65rem",
+                      fontWeight: "700",
+                      padding: "1px 5px",
+                      borderRadius: "9999px",
+                      lineHeight: "1",
+                    }}
+                  >
+                    {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
+                  </span>
+                )}
+              </span>
+            </DashboardNavLink>
+          )}
 
           {user?.role !== "professor" && user?.role !== "administrator" && (
             <DashboardNavLink tab="history" currentTab={activeTab}>History</DashboardNavLink>

@@ -1,5 +1,15 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, CircleHelp, GraduationCap, Landmark, Pencil, Save } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  ArrowRight,
+  Calculator,
+  CheckCircle2,
+  CircleHelp,
+  GraduationCap,
+  Landmark,
+  Pencil,
+  Save,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import "../styles/StudentDataForm.css";
 
@@ -40,6 +50,7 @@ const isCurrentRecord = (record) =>
   typeof record.scholarshipStatus === "boolean";
 
 export default function StudentDataForm({ onSaveRecord }) {
+  const navigate = useNavigate();
   const { apiFetch } = useAuth();
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
@@ -232,60 +243,81 @@ export default function StudentDataForm({ onSaveRecord }) {
       }).format(new Date(lastUpdatedAt));
 
     return (
-      <section className="student-data-summary" aria-labelledby="student-data-summary-title">
-        <div className="student-data-summary__header">
-          <div>
-            <p className="dashboard-eyebrow">Your saved record</p>
-            <h3 id="student-data-summary-title">Academic information saved</h3>
-            <p>{lastUpdated ? `Last updated ${lastUpdated}` : "Your information is up to date."}</p>
+      <div className="student-data-saved-view">
+        {/* Saved Record Details Summary */}
+        <section className="student-data-summary" aria-labelledby="student-data-summary-title">
+          <div className="student-data-summary__header">
+            <div>
+              <p className="dashboard-eyebrow">Your saved record</p>
+              <h3 id="student-data-summary-title">Academic information saved</h3>
+              <p>{lastUpdated ? `Last updated ${lastUpdated}` : "Your information is up to date."}</p>
+            </div>
+            <button
+              type="button"
+              className="student-data-edit"
+              onClick={() => {
+                setIsEditing(true);
+                setSavedAt(null);
+                setServerError("");
+              }}
+            >
+              <Pencil size={15} /> Edit information
+            </button>
+          </div>
+          <div className="student-data-summary__grid">
+            <div>
+              <span>Study schedule</span>
+              <strong>{savedRecord.attendance === "day" ? "Daytime" : "Evening/night"}</strong>
+            </div>
+            <div>
+              <span>Previous-semester grade</span>
+              <strong>
+                {savedRecord.previousSemesterGrade} / {savedRecord.gradeMaximum || 20}
+              </strong>
+            </div>
+            <div>
+              <span>Previous-semester units enrolled</span>
+              <strong>{savedRecord.previousSemesterUnitsEnrolled}</strong>
+            </div>
+            <div>
+              <span>Previous-semester units approved</span>
+              <strong>{savedRecord.previousSemesterUnitsApproved}</strong>
+            </div>
+          </div>
+          <div className="student-data-summary__details">
+            <p>
+              <span>Educational special needs</span>
+              <strong>{yesNoLabel(savedRecord.educationalSpecialNeeds)}</strong>
+            </p>
+            <p>
+              <span>Tuition-fee status</span>
+              <strong>{yesNoLabel(savedRecord.tuitionFeeStatus)}</strong>
+            </p>
+            <p>
+              <span>Scholarship status</span>
+              <strong>{yesNoLabel(savedRecord.scholarshipStatus)}</strong>
+            </p>
+          </div>
+        </section>
+
+        {/* Action card placed BELOW summary */}
+        <section className="student-data-calculate-card">
+          <div className="student-data-calculate-card__content">
+            <div className="student-data-calculate-card__badge">
+              <CheckCircle2 size={15} /> Next Step
+            </div>
+            <h4>Great! You filled out the required data form.</h4>
+            <p>Next, let's calculate your data and view your insights.</p>
           </div>
           <button
             type="button"
-            className="student-data-edit"
-            onClick={() => {
-              setIsEditing(true);
-              setSavedAt(null);
-              setServerError("");
-            }}
+            className="calculate-action-btn"
+            onClick={() => navigate("/dashboard/insights")}
           >
-            <Pencil size={15} /> Edit information
+            <Calculator size={16} /> Calculate &amp; View Insights <ArrowRight size={16} />
           </button>
-        </div>
-        <div className="student-data-summary__grid">
-          <div>
-            <span>Study schedule</span>
-            <strong>{savedRecord.attendance === "day" ? "Daytime" : "Evening/night"}</strong>
-          </div>
-          <div>
-            <span>Previous-semester grade</span>
-            <strong>
-              {savedRecord.previousSemesterGrade} / {savedRecord.gradeMaximum || 20}
-            </strong>
-          </div>
-          <div>
-            <span>Previous-semester units enrolled</span>
-            <strong>{savedRecord.previousSemesterUnitsEnrolled}</strong>
-          </div>
-          <div>
-            <span>Previous-semester units approved</span>
-            <strong>{savedRecord.previousSemesterUnitsApproved}</strong>
-          </div>
-        </div>
-        <div className="student-data-summary__details">
-          <p>
-            <span>Educational special needs</span>
-            <strong>{yesNoLabel(savedRecord.educationalSpecialNeeds)}</strong>
-          </p>
-          <p>
-            <span>Tuition-fee status</span>
-            <strong>{yesNoLabel(savedRecord.tuitionFeeStatus)}</strong>
-          </p>
-          <p>
-            <span>Scholarship status</span>
-            <strong>{yesNoLabel(savedRecord.scholarshipStatus)}</strong>
-          </p>
-        </div>
-      </section>
+        </section>
+      </div>
     );
   }
 
@@ -457,4 +489,4 @@ export default function StudentDataForm({ onSaveRecord }) {
       </div>
     </form>
   );
-}
+} 

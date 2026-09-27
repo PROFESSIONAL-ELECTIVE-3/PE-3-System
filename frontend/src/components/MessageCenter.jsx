@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MessageCircle, Send, UserRoundPlus } from "lucide-react";
+import { MessageCircle, Send, Trash2, UserRoundPlus } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const time = (value) => new Date(value).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
@@ -93,6 +93,17 @@ export default function MessageCenter() {
     finally { setSending(false); }
   };
 
+  const deleteMessage = async (messageId) => {
+    if (!selected || !window.confirm("Delete this message?")) return;
+    setError("");
+    try {
+      const response = await apiFetch(`/api/messages/${selected.id}/messages/${messageId}`, { method: "DELETE" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Could not delete this message.");
+      setMessages((current) => current.filter((message) => message.id !== messageId));
+    } catch (err) { setError(err.message || "Could not delete this message."); }
+  };
+
   const useCheckInTemplate = () => {
     const name = selected?.peer?.fullName?.split(" ")[0] || "there";
     setDraft(`Hi ${name}, I’d like to check in and see how this term is going. If coursework, attendance, timing, or something else is making study harder, we can look at practical support options together. Would you like to reply here or choose a time to meet? There is no penalty for declining or letting me know you do not need support right now.`);
@@ -113,7 +124,7 @@ export default function MessageCenter() {
         {availableStudents.length > 0 && <div className="message-center__start"><strong>{user.role === "professor" ? "Start supportive outreach" : "Start a conversation"}</strong>{availableStudents.map(({ student }) => <button type="button" onClick={() => begin(student.id)} key={student.id}><UserRoundPlus size={15} /><span>{student.fullName}{user.role === "professor" && riskBadge(student.id)}</span></button>)}</div>}
         {loading ? <p>Loading conversations…</p> : conversations.length ? conversations.map((conversation) => <button className={selected?.id === conversation.id ? "is-selected" : ""} type="button" onClick={() => open(conversation)} key={conversation.id}><span className="connection-avatar">{conversation.peer.fullName.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span><span><strong>{conversation.peer.fullName}</strong><small><span className="chat-role">{peerRole}</span> {time(conversation.lastMessageAt)}</small>{user.role === "professor" && riskBadge(conversation.peer.id)}</span>{conversation.unreadCount > 0 && <i aria-label={`${conversation.unreadCount} unread messages`}>{conversation.unreadCount}</i>}</button>) : <p className="message-center__empty">No messages yet.{user.role === "professor" ? " Start a supportive outreach with a connected student." : " Your professors can invite you to a support conversation."}</p>}
       </aside>
-      <div className="message-center__thread">{selected ? <><div className="message-center__thread-header"><MessageCircle size={18} /><div><strong>{selected.peer.fullName} <span className="chat-role">{peerRole}</span></strong><small>Connected academic support conversation</small>{user.role === "professor" && riskBadge(selected.peer.id)}</div></div><div className="message-list" aria-live="polite">{messages.length ? messages.map((message) => <article className={String(message.sender.id) === String(user._id || user.id) ? "mine" : "theirs"} key={message.id}><p>{message.body}</p><small>{message.sender.fullName} <span className="chat-role">{message.sender.role === "professor" ? "Professor" : "Student"}</span> · {time(message.createdAt)}</small></article>) : <p className="message-center__empty">Start with a supportive, practical invitation to talk.</p>}</div><form onSubmit={send}>{user.role === "professor" && <button className="message-template" type="button" onClick={useCheckInTemplate}>Use supportive check-in template</button>}<label className="sr-only" htmlFor="message-body">Message</label><textarea id="message-body" maxLength="2000" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Write a supportive message…" /><div><small>{draft.length}/2000</small><button className="dashboard-action" disabled={sending || !draft.trim()}><Send size={16} /> {sending ? "Sending…" : "Send message"}</button></div></form></> : <div className="message-center__placeholder"><MessageCircle size={30} /><h3>Select a conversation</h3><p>Messages are human-led and meant to offer practical academic support.</p></div>}</div>
+      <div className="message-center__thread">{selected ? <><div className="message-center__thread-header"><MessageCircle size={18} /><div><strong>{selected.peer.fullName} <span className="chat-role">{peerRole}</span></strong><small>Connected academic support conversation</small>{user.role === "professor" && riskBadge(selected.peer.id)}</div></div><div className="message-list" aria-live="polite">{messages.length ? messages.map((message) => { const isMine = String(message.sender.id) === String(user._id || user.id); return <article className={isMine ? "mine" : "theirs"} key={message.id}><p>{message.body}</p><small>{time(message.createdAt)}</small>{isMine && <button type="button" className="message-delete" onClick={() => deleteMessage(message.id)} aria-label="Delete message"><Trash2 size={13} /> Delete</button>}</article>; }) : <p className="message-center__empty">Start with a supportive, practical invitation to talk.</p>}</div><form onSubmit={send}>{user.role === "professor" && <button className="message-template" type="button" onClick={useCheckInTemplate}>Use supportive check-in template</button>}<label className="sr-only" htmlFor="message-body">Message</label><textarea id="message-body" maxLength="2000" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Write a supportive message…" /><div><small>{draft.length}/2000</small><button className="dashboard-action" disabled={sending || !draft.trim()}><Send size={16} /> {sending ? "Sending…" : "Send message"}</button></div></form></> : <div className="message-center__placeholder"><MessageCircle size={30} /><h3>Select a conversation</h3><p>Messages are human-led and meant to offer practical academic support.</p></div>}</div>
     </div>
   </section>;
 }

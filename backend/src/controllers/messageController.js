@@ -71,3 +71,20 @@ exports.sendMessage = async (req, res, next) => {
     res.status(201).json({ message: { id: message._id, body: message.body, createdAt: message.createdAt, sender: { id: req.user._id, fullName: req.user.fullName, role: req.user.role } } });
   } catch (error) { next(error); }
 };
+
+exports.deleteMessage = async (req, res, next) => {
+  try {
+    if (!validId(req.params.id) || !validId(req.params.messageId)) return res.status(400).json({ message: 'Invalid message.' });
+    const conversationFilter = req.user.role === 'professor'
+      ? { _id: req.params.id, professor: req.user._id, state: 'open' }
+      : { _id: req.params.id, student: req.user._id, state: 'open' };
+    const conversation = await Conversation.findOne(conversationFilter);
+    if (!conversation) return res.status(404).json({ message: 'Conversation is not available.' });
+    const message = await Message.findOneAndDelete({ _id: req.params.messageId, conversation: conversation._id, sender: req.user._id });
+    if (!message) return res.status(404).json({ message: 'You can only delete your own messages.' });
+    const latest = await Message.findOne({ conversation: conversation._id }).sort({ createdAt: -1 }).select('createdAt');
+    conversation.lastMessageAt = latest?.createdAt || conversation.createdAt;
+    await conversation.save();
+    res.json({ message: 'Message deleted.' });
+  } catch (error) { next(error); }
+};

@@ -1,7 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { protect } = require('../middleware/authMiddleware');
-const { listConversations, createConversation, getMessages, sendMessage } = require('../controllers/messageController');
+const { listConversations, createConversation, getMessages, sendMessage, deleteMessage } = require('../controllers/messageController');
 const router = express.Router();
 const sendMessageLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -15,4 +15,5 @@ router.get('/', listConversations);
 router.post('/', createConversation);
 router.get('/:id/messages', getMessages);
 router.post('/:id/messages', sendMessageLimiter, sendMessage);
+router.delete('/:id/messages/:messageId', deleteMessage);
 module.exports = router;

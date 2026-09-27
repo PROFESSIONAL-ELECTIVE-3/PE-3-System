@@ -11,6 +11,96 @@
   gap: 0.5rem;
 }
 
+/* Saved View Wrapper */
+.student-data-saved-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Calculate & Insights Callout Banner */
+.student-data-calculate-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.25rem 1.65rem;
+  border-radius: 11px;
+  border: 1px solid #c9def3;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e8f3ff 100%);
+  box-shadow: 0 2px 6px rgba(12, 91, 180, 0.06);
+  box-sizing: border-box;
+}
+
+.student-data-calculate-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.student-data-calculate-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #0c5bb4;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.student-data-calculate-card__badge svg {
+  color: #0c5bb4;
+}
+
+.student-data-calculate-card h4 {
+  margin: 0;
+  color: #18324b;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.student-data-calculate-card p {
+  margin: 0;
+  color: #556c82;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.calculate-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 0 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 7px;
+  background: #0c5bb4;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(12, 91, 180, 0.22);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+}
+
+.calculate-action-btn:hover {
+  background: #09488f;
+  box-shadow: 0 4px 12px rgba(12, 91, 180, 0.28);
+  transform: translateY(-1px);
+}
+
+.calculate-action-btn:focus-visible {
+  outline: 3px solid rgba(12, 91, 180, 0.3);
+  outline-offset: 2px;
+}
+
 /* Full-width container that occupies the entire workspace */
 .student-data-form {
   display: flex;
@@ -487,6 +577,18 @@
 
   .student-data-summary__details {
     grid-template-columns: 1fr;
+  }
+
+  .student-data-calculate-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.15rem;
+    padding: 1.15rem;
+  }
+
+  .calculate-action-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 

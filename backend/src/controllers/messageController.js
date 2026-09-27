@@ -28,13 +28,15 @@ exports.listConversations = async (req, res, next) => {
 
 exports.createConversation = async (req, res, next) => {
   try {
-    if (req.user.role !== 'professor') return res.status(403).json({ message: 'Only professors can begin an outreach conversation.' });
-    const studentId = String(req.body.studentId || '');
-    if (!validId(studentId)) return res.status(400).json({ message: 'Choose a valid student.' });
-    const connection = await StudentProfessorConnection.findOne({ student: studentId, professor: req.user._id, status: 'accepted' });
+    const recipientId = String(req.body.recipientId || req.body.studentId || '');
+    if (!validId(recipientId)) return res.status(400).json({ message: 'Choose a valid connected recipient.' });
+    const connectionFilter = req.user.role === 'professor'
+      ? { student: recipientId, professor: req.user._id, status: 'accepted' }
+      : { student: req.user._id, professor: recipientId, status: 'accepted' };
+    const connection = await StudentProfessorConnection.findOne(connectionFilter);
     if (!connection) return res.status(403).json({ message: 'Messaging is available only for accepted student connections.' });
     const conversation = await Conversation.findOneAndUpdate(
-      { connection: connection._id }, { $setOnInsert: { student: studentId, professor: req.user._id, connection: connection._id } },
+      { connection: connection._id }, { $setOnInsert: { student: connection.student, professor: connection.professor, connection: connection._id } },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     ).populate('student', 'fullName').populate('professor', 'fullName');
     res.status(201).json({ conversation: summary(conversation, req.user.role) });

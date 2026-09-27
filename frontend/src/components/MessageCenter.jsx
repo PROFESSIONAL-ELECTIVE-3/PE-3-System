@@ -24,12 +24,15 @@ export default function MessageCenter() {
     if (!background) setError("");
     try {
       const jobs = [apiFetch("/api/messages")];
-      if (user.role === "professor") jobs.push(apiFetch("/api/professor/students"));
+      jobs.push(apiFetch(user.role === "professor" ? "/api/professor/students" : "/api/connections"));
       const responses = await Promise.all(jobs);
       const inbox = await responses[0].json().catch(() => ({}));
       if (!responses[0].ok) throw new Error(inbox.message || "Could not load messages.");
       setConversations(inbox.conversations || []);
-      if (responses[1]?.ok) { const data = await responses[1].json(); setStudents(data.students || []); }
+      if (responses[1]?.ok) {
+        const data = await responses[1].json();
+        setStudents(user.role === "professor" ? (data.students || []) : (data.connections || []).filter((connection) => connection.status === "accepted").map((connection) => ({ student: connection.professor, forecast: null })));
+      }
     } catch (err) { setError(err.message || "Could not load messages."); }
     finally { if (!background) setLoading(false); }
   };
@@ -69,7 +72,7 @@ export default function MessageCenter() {
   const begin = async (studentId) => {
     setError("");
     try {
-      const response = await apiFetch("/api/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ studentId }) });
+      const response = await apiFetch("/api/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recipientId: studentId }) });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.message || "Could not start the conversation.");
       setConversations((current) => [data.conversation, ...current.filter((item) => item.id !== data.conversation.id)]);
@@ -106,7 +109,7 @@ export default function MessageCenter() {
     {error && <p className="connection-message connection-message--error" role="alert">{error}</p>}
     <div className="message-center__layout">
       <aside aria-label="Conversations">
-        {user.role === "professor" && availableStudents.length > 0 && <div className="message-center__start"><strong>Start supportive outreach</strong>{availableStudents.map(({ student }) => <button type="button" onClick={() => begin(student.id)} key={student.id}><UserRoundPlus size={15} /><span>{student.fullName}{riskBadge(student.id)}</span></button>)}</div>}
+        {availableStudents.length > 0 && <div className="message-center__start"><strong>{user.role === "professor" ? "Start supportive outreach" : "Start a conversation"}</strong>{availableStudents.map(({ student }) => <button type="button" onClick={() => begin(student.id)} key={student.id}><UserRoundPlus size={15} /><span>{student.fullName}{user.role === "professor" && riskBadge(student.id)}</span></button>)}</div>}
         {loading ? <p>Loading conversations…</p> : conversations.length ? conversations.map((conversation) => <button className={selected?.id === conversation.id ? "is-selected" : ""} type="button" onClick={() => open(conversation)} key={conversation.id}><span className="connection-avatar">{conversation.peer.fullName.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span><span><strong>{conversation.peer.fullName}</strong><small>{time(conversation.lastMessageAt)}</small>{user.role === "professor" && riskBadge(conversation.peer.id)}</span>{conversation.unreadCount > 0 && <i aria-label={`${conversation.unreadCount} unread messages`}>{conversation.unreadCount}</i>}</button>) : <p className="message-center__empty">No messages yet.{user.role === "professor" ? " Start a supportive outreach with a connected student." : " Your professors can invite you to a support conversation."}</p>}
       </aside>
       <div className="message-center__thread">{selected ? <><div className="message-center__thread-header"><MessageCircle size={18} /><div><strong>{selected.peer.fullName}</strong><small>Connected academic support conversation</small>{user.role === "professor" && riskBadge(selected.peer.id)}</div></div><div className="message-list" aria-live="polite">{messages.length ? messages.map((message) => <article className={String(message.sender.id) === String(user._id || user.id) ? "mine" : "theirs"} key={message.id}><p>{message.body}</p><small>{message.sender.fullName} · {time(message.createdAt)}</small></article>) : <p className="message-center__empty">Start with a supportive, practical invitation to talk.</p>}</div><form onSubmit={send}>{user.role === "professor" && <button className="message-template" type="button" onClick={useCheckInTemplate}>Use supportive check-in template</button>}<label className="sr-only" htmlFor="message-body">Message</label><textarea id="message-body" maxLength="2000" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Write a supportive message…" /><div><small>{draft.length}/2000</small><button className="dashboard-action" disabled={sending || !draft.trim()}><Send size={16} /> {sending ? "Sending…" : "Send message"}</button></div></form></> : <div className="message-center__placeholder"><MessageCircle size={30} /><h3>Select a conversation</h3><p>Messages are human-led and meant to offer practical academic support.</p></div>}</div>

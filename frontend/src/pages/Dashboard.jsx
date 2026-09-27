@@ -834,8 +834,8 @@ export default function Dashboard() {
             </section>
 
             <section className="dashboard-summary" aria-label="Advisor module objectives">
-              {/* Card 1: Alert Status (Now supports RED for high risk) */}
-              <article>
+              {/* Card 1: Alert Status (Container outline matches the risk color: Red / Orange / Green) */}
+              <article className={`risk-card-${alertCardColor}`}>
                 <span className={`summary-icon ${alertCardColor}`}>
                   <AlertTriangle size={19} />
                 </span>

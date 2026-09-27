@@ -215,9 +215,26 @@
   gap: 0.8rem;
   padding: 1.05rem 1.15rem;
   background: #fff;
-  border: 1px solid #e3ebf2;
+  border: 1.5px solid #e3ebf2;
   border-radius: 9px;
   box-shadow: 0 1px 3px rgba(16, 43, 74, 0.02);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Dynamic Outline / Border Colors for the Risk Summary Card */
+.dashboard-summary article.risk-card-red {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.15), 0 2px 8px rgba(220, 38, 38, 0.08) !important;
+}
+
+.dashboard-summary article.risk-card-amber {
+  border-color: #ea580c !important;
+  box-shadow: 0 0 0 1px rgba(234, 88, 12, 0.15), 0 2px 8px rgba(234, 88, 12, 0.08) !important;
+}
+
+.dashboard-summary article.risk-card-green {
+  border-color: #16a34a !important;
+  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.15), 0 2px 8px rgba(22, 163, 74, 0.08) !important;
 }
 
 .summary-icon {
@@ -229,7 +246,7 @@
   flex-shrink: 0;
 }
 
-/* Distinct Risk Colors for Summary Cards */
+/* Distinct Risk Colors for Summary Card Icons */
 .summary-icon.red {
   color: #dc2626 !important;
   background: #fef2f2 !important;

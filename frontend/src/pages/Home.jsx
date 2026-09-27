@@ -7,18 +7,18 @@ import "../styles/Home.css";
 const features = [
   {
     icon: <BarChart3 size={20} />,
-    title: "Review academic trends",
-    text: "Bring approved records into a single, accessible workspace.",
+    title: "Manage academic records",
+    text: "Students can save their academic information and review their personal forecast.",
   },
   {
     icon: <UsersRound size={20} />,
-    title: "Focus support efforts",
-    text: "Identify students who may benefit from a timely conversation.",
+    title: "Connect with academic support",
+    text: "Students and professors can create accepted connections and start private conversations.",
   },
   {
     icon: <ShieldCheck size={20} />,
-    title: "Keep people in control",
-    text: "Use forecasts as context—not as automatic academic decisions.",
+    title: "Use forecasts responsibly",
+    text: "Forecasts provide context for support; they do not make academic decisions.",
   },
 ];
 
@@ -53,11 +53,12 @@ export default function Home() {
       <main>
         <section className="home-hero">
           <div>
-            <p className="home-eyebrow">Student success, with better context</p>
-            <h1>Make earlier, more thoughtful academic support possible.</h1>
+            <p className="home-eyebrow">Academic information, in one place</p>
+            <h1>Understand academic progress and stay connected.</h1>
             <p>
-              Retainify helps authorized teams review academic trends and
-              use decision-support insights to guide the next conversation.
+              Retainify helps students manage their academic record and run a
+              personal forecast. Accepted student–professor connections can
+              also use private messages for academic support conversations.
             </p>
             <div className="home-hero-actions">
               <button
@@ -76,10 +77,10 @@ export default function Home() {
         <section className="home-features" id="features">
           <div className="home-section-heading">
             <p className="home-eyebrow">The platform</p>
-            <h2>A clear workspace for academic teams.</h2>
+            <h2>A focused workspace for students and professors.</h2>
             <p>
-              Designed around the real work of reviewing context, coordinating
-              support, and documenting thoughtful follow-through.
+              Built around academic records, personal forecasts, accepted
+              connections, and direct support messages.
             </p>
           </div>
           <div className="feature-grid">
@@ -105,7 +106,7 @@ export default function Home() {
           </div>
         </section>
         <section className="home-closing">
-          <h2>Ready to create a more proactive support practice?</h2>
+          <h2>Ready to get started?</h2>
           <button
             className="home-primary"
             onClick={() => navigate(destination)}

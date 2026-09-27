@@ -14,13 +14,13 @@ const ROLES = [
   {
     value: "student",
     title: "Student",
-    description: "Track your own academic progress and forecasts.",
+    description: "Save your academic record, run personal forecasts, and message connected professors.",
     icon: "🎓",
   },
   {
     value: "professor",
     title: "Professor",
-    description: "Monitor class performance and flag at-risk students.",
+    description: "Review connected student context and message students you support.",
     icon: "📚",
   },
 ];
@@ -299,15 +299,16 @@ const Register = () => {
       <div className="login-brand-panel">
         <div className="login-brand-content">
           <BrandLogo className="login-logo" inverse />
-          <h1>Bring predictive analytics to your institution.</h1>
+          <h1>Connect academic records, forecasts, and support.</h1>
           <p>
-            Create an account to start flagging at-risk students, forecasting
-            performance, and building dashboards your whole team can rely on.
+            Create an account to use the tools available to your role. Students
+            can manage their own records and forecasts; professors can connect
+            and communicate with students who accept their request.
           </p>
           <ul className="login-brand-points">
-            <li>Set up in minutes, no data science team required</li>
-            <li>Built for students and professors</li>
-            <li>Secure, institution-level access controls</li>
+            <li>Personal academic record and forecast tools</li>
+            <li>Student–professor connections</li>
+            <li>Private messages for accepted connections</li>
           </ul>
         </div>
       </div>
@@ -317,7 +318,7 @@ const Register = () => {
         <div className="login-form-wrapper register-wrapper">
           <div className="login-form-header">
             <h2>Create Your Account</h2>
-            <p>Get started with attrition risk and performance forecasting.</p>
+            <p>Create an account to access the academic tools for your role.</p>
           </div>
 
           {/* Progress Indicator */}

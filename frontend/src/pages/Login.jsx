@@ -104,15 +104,15 @@ const Login = () => {
       <div className="login-brand-panel">
         <div className="login-brand-content">
           <BrandLogo className="login-logo" inverse />
-          <h1>Welcome back to your academic command center.</h1>
+          <h1>Welcome back to Retainify.</h1>
           <p>
-            Sign in to access attrition risk models, performance forecasts, and
-            institutional dashboards built for data-driven student success.
+            Sign in to manage your academic information, review available
+            forecasts, and stay connected with your academic support contacts.
           </p>
           <ul className="login-brand-points">
-            <li>Real-time attrition risk flags</li>
-            <li>Predictive GPA &amp; course forecasting</li>
-            <li>University-wide analytics dashboards</li>
+            <li>Academic record and personal forecast tools</li>
+            <li>Professor–student connection requests</li>
+            <li>Private messages for accepted connections</li>
           </ul>
         </div>
       </div>

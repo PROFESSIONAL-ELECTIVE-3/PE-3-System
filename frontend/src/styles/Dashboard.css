@@ -266,24 +266,12 @@
    ========================================================================== */
 
 @keyframes balloonInflate {
-  0% {
-    transform: translateY(-4px) scale(1.025);
-  }
-  30% {
-    transform: translateY(-6px) scale(1.06);
-  }
-  60% {
-    transform: translateY(-8px) scale(1.10);
-  }
-  85% {
-    transform: translateY(-10px) scale(1.15) rotate(-1deg);
-  }
-  95% {
-    transform: translateY(-11px) scale(1.18) rotate(1.5deg);
-  }
-  100% {
-    transform: translateY(-11px) scale(1.2) rotate(-1deg);
-  }
+  0% { transform: translateY(-4px) scale(1.025); }
+  30% { transform: translateY(-6px) scale(1.06); }
+  60% { transform: translateY(-8px) scale(1.10); }
+  85% { transform: translateY(-10px) scale(1.15) rotate(-1deg); }
+  95% { transform: translateY(-11px) scale(1.18) rotate(1.5deg); }
+  100% { transform: translateY(-11px) scale(1.2) rotate(-1deg); }
 }
 
 .dashboard-summary article.balloon-inflating {
@@ -292,20 +280,9 @@
 }
 
 @keyframes balloonExplode {
-  0% {
-    transform: scale(1.2);
-    opacity: 1;
-  }
-  40% {
-    transform: scale(1.35);
-    opacity: 0.6;
-    filter: blur(2px);
-  }
-  100% {
-    transform: scale(0.7);
-    opacity: 0;
-    filter: blur(8px);
-  }
+  0% { transform: scale(1.2); opacity: 1; }
+  40% { transform: scale(1.35); opacity: 0.6; filter: blur(2px); }
+  100% { transform: scale(0.7); opacity: 0; filter: blur(8px); }
 }
 
 .dashboard-summary article.balloon-popped {
@@ -552,6 +529,102 @@
 .dashboard-summary small {
   color: #718399;
   font-size: 0.76rem;
+}
+
+/* ==========================================================================
+   Fill-Up SVG Perimeter Loading Tracer (Fills until Complete)
+   ========================================================================== */
+
+.insights-container {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* The SVG overlay matching the container perimeter */
+.insights-border-fill-tracer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 60;
+  overflow: visible;
+}
+
+/* Progressive perimeter fill-up: starts empty at bottom and draws completely */
+.insights-border-fill-tracer rect {
+  fill: none;
+  stroke: #0c5bb4;
+  stroke-width: 3.5px;
+  stroke-linecap: round;
+  stroke-dasharray: 100 100;
+  stroke-dashoffset: 100;
+  filter: drop-shadow(0 0 6px #0c5bb4) drop-shadow(0 0 12px rgba(12, 91, 180, 0.45));
+  animation: fillBorderPerimeter 3.5s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes fillBorderPerimeter {
+  0% {
+    stroke-dashoffset: 100; /* completely empty */
+  }
+  100% {
+    stroke-dashoffset: 0;   /* completely full around perimeter */
+  }
+}
+
+/* Blur overlay */
+.insights-blur-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeInOverlay 0.25s ease-out forwards;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.insights-loading-spinner-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 380px;
+}
+
+.insights-spin-icon {
+  color: #0c5bb4;
+  animation: insightsSpin 0.9s linear infinite;
+  margin-bottom: 0.8rem;
+}
+
+@keyframes insightsSpin {
+  to { transform: rotate(360deg); }
+}
+
+.insights-loading-spinner-box h3 {
+  margin: 0 0 0.35rem;
+  color: #102b4a;
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.insights-loading-spinner-box p {
+  margin: 0;
+  color: #556980;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 /* Workspace Panels & Shared Elements */

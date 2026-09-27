@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Play, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
+import { BarChart3, Play, RefreshCw, ShieldCheck, Sparkles, Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-const scheduleToApi = (attendance) => attendance === "day" ? "day" : "night";
+const scheduleToApi = (attendance) => (attendance === "day" ? "day" : "night");
 
 export default function StudentInsights({ onForecastComplete }) {
   const { apiFetch } = useAuth();
@@ -24,17 +24,23 @@ export default function StudentInsights({ onForecastComplete }) {
         if (active) setRecord(data.record);
       } catch (requestError) {
         if (active) setError(requestError.message || "Your academic record could not be loaded.");
-      } finally { if (active) setLoadingRecord(false); }
+      } finally {
+        if (active) setLoadingRecord(false);
+      }
     })();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [apiFetch]);
 
   const runForecast = async () => {
     if (!record) return;
-    setRunning(true); setError("");
+    setRunning(true);
+    setError("");
     try {
       const response = await apiFetch("/api/ml/predict", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           educationalSpecialNeeds: record.educationalSpecialNeeds,
           tuitionFeeStatus: record.tuitionFeeStatus,
@@ -48,42 +54,172 @@ export default function StudentInsights({ onForecastComplete }) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || data.message || "Your forecast could not be generated.");
-      setPrediction(data); setInsight(null);
+      setPrediction(data);
+      setInsight(null);
       onForecastComplete?.({ forecast: data, record, createdAt: new Date().toISOString() });
-    } catch (requestError) { setError(requestError.message || "Your forecast could not be generated."); }
-    finally { setRunning(false); }
+    } catch (requestError) {
+      setError(requestError.message || "Your forecast could not be generated.");
+    } finally {
+      setRunning(false);
+    }
   };
 
   const getSupportInsight = async () => {
-    setGettingInsight(true); setError("");
+    setGettingInsight(true);
+    setError("");
     try {
       const response = await apiFetch("/api/insights/student-support", { method: "POST" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Support suggestions could not be generated.");
       setInsight(data.insight);
-    } catch (requestError) { setError(requestError.message || "Support suggestions could not be generated."); }
-    finally { setGettingInsight(false); }
+    } catch (requestError) {
+      setError(requestError.message || "Support suggestions could not be generated.");
+    } finally {
+      setGettingInsight(false);
+    }
   };
 
   if (loadingRecord) return <p className="student-data-loading">Loading your academic record…</p>;
-  if (!record) return <section className="workspace-section"><div className="section-heading"><div><p className="dashboard-eyebrow">Your forecast</p><h2>Add your semester record first</h2></div></div><p className="dashboard-subtext">Save your study schedule, units, and previous-semester grade in Data Workspace to generate a forecast.</p></section>;
+  if (!record) {
+    return (
+      <section className="workspace-section">
+        <div className="section-heading">
+          <div>
+            <p className="dashboard-eyebrow">Your forecast</p>
+            <h2>Add your semester record first</h2>
+          </div>
+        </div>
+        <p className="dashboard-subtext">
+          Save your study schedule, units, and previous-semester grade in Data Workspace to generate a forecast.
+        </p>
+      </section>
+    );
+  }
+
   const completionPercent = prediction && Math.round(prediction.completionRate * 100);
   const dropoutPercent = prediction && Math.round(prediction.dropoutProbability * 100);
 
-  return <section className="workspace-section" id="insights">
-    <div className="section-heading"><div><p className="dashboard-eyebrow">Your forecast</p><h2>{prediction ? "Next-semester outlook" : "Ready when you are"}</h2></div></div>
-    <p className="dashboard-subtext">Run a forecast from your saved academic record. Each completed forecast is added to your History so you can compare it later.</p>
-    {error && <div className="login-alert" role="alert">{error}</div>}
-    <button type="button" className="dashboard-action" onClick={runForecast} disabled={running}>{running ? <RefreshCw size={16} className="forecast-spin" /> : <Play size={16} />}{running ? "Running forecast…" : prediction ? "Run a new forecast" : "Run my forecast"}</button>
-    {prediction && <>
-      <div className="dashboard-summary forecast-results" aria-label="Forecast results">
-        <article><span className="summary-icon blue"><BarChart3 size={19} /></span><div><strong>{prediction.predictedNextSemesterGrade} / {prediction.gradeMaximum}</strong><small>Predicted next-semester grade</small></div></article>
-        <article><span className="summary-icon amber"><ShieldCheck size={19} /></span><div><strong>{dropoutPercent}%</strong><small>Estimated dropout probability</small></div></article>
-        <article><span className="summary-icon green"><BarChart3 size={19} /></span><div><strong>{completionPercent}%</strong><small>Previous-semester completion rate</small></div></article>
+  return (
+    <section
+      className={`workspace-section insights-container ${gettingInsight ? "insights-loading-active" : ""}`}
+      id="insights"
+    >
+      {/* Perimeter Progressive Fill SVG Tracer */}
+      {gettingInsight && (
+        <svg className="insights-border-fill-tracer" aria-hidden="true">
+          <rect
+            x="2"
+            y="2"
+            width="calc(100% - 4px)"
+            height="calc(100% - 4px)"
+            rx="10"
+            ry="10"
+            pathLength="100"
+          />
+        </svg>
+      )}
+
+      {/* Blurred Center Loading Overlay */}
+      {gettingInsight && (
+        <div className="insights-blur-overlay">
+          <div className="insights-loading-spinner-box">
+            <Loader2 size={38} className="insights-spin-icon" />
+            <h3>Analyzing Academic Profile</h3>
+            <p>Please wait while AI constructs personalized support recommendations...</p>
+          </div>
+        </div>
+      )}
+
+      <div className="section-heading">
+        <div>
+          <p className="dashboard-eyebrow">Your forecast</p>
+          <h2>{prediction ? "Next-semester outlook" : "Ready when you are"}</h2>
+        </div>
       </div>
-      <section className="dashboard-guidance"><ShieldCheck size={21} /><p><strong>{prediction.riskLevel[0].toUpperCase() + prediction.riskLevel.slice(1)} support risk.</strong> This is a forecast, not a decision or diagnosis. Discuss it with an adviser or professor to identify useful support early.</p></section>
-      <button type="button" className="dashboard-action support-insight-button" onClick={getSupportInsight} disabled={gettingInsight}>{gettingInsight ? <RefreshCw size={16} className="forecast-spin" /> : <Sparkles size={16} />}{gettingInsight ? "Creating suggestions…" : "Get support suggestions"}</button>
-      {insight && <section className="support-insight" aria-labelledby="support-insight-title"><h3 id="support-insight-title"><Sparkles size={18} /> Suggested next steps</h3><p>{insight.summary}</p>{insight.strengths?.length > 0 && <><h4>Strengths to build on</h4><ul>{insight.strengths.map((item) => <li key={item}>{item}</li>)}</ul></>}{insight.suggestedActions?.length > 0 && <><h4>Actions you can take</h4><ul>{insight.suggestedActions.map((item) => <li key={item}>{item}</li>)}</ul></>}<p className="support-insight__disclaimer">{insight.disclaimer}</p></section>}
-    </>}
-  </section>;
+      <p className="dashboard-subtext">
+        Run a forecast from your saved academic record. Each completed forecast is added to your History so you can compare it later.
+      </p>
+
+      {error && <div className="login-alert" role="alert">{error}</div>}
+
+      <button
+        type="button"
+        className="dashboard-action"
+        onClick={runForecast}
+        disabled={running || gettingInsight}
+      >
+        {running ? <RefreshCw size={16} className="forecast-spin" /> : <Play size={16} />}
+        {running ? "Running forecast…" : prediction ? "Run a new forecast" : "Run my forecast"}
+      </button>
+
+      {prediction && (
+        <>
+          <div className="dashboard-summary forecast-results" aria-label="Forecast results">
+            <article>
+              <span className="summary-icon blue"><BarChart3 size={19} /></span>
+              <div>
+                <strong>{prediction.predictedNextSemesterGrade} / {prediction.gradeMaximum}</strong>
+                <small>Predicted next-semester grade</small>
+              </div>
+            </article>
+            <article>
+              <span className="summary-icon amber"><ShieldCheck size={19} /></span>
+              <div>
+                <strong>{dropoutPercent}%</strong>
+                <small>Estimated dropout probability</small>
+              </div>
+            </article>
+            <article>
+              <span className="summary-icon green"><BarChart3 size={19} /></span>
+              <div>
+                <strong>{completionPercent}%</strong>
+                <small>Previous-semester completion rate</small>
+              </div>
+            </article>
+          </div>
+
+          <section className="dashboard-guidance">
+            <ShieldCheck size={21} />
+            <p>
+              <strong>{prediction.riskLevel[0].toUpperCase() + prediction.riskLevel.slice(1)} support risk.</strong> This is a forecast, not a decision or diagnosis. Discuss it with an adviser or professor to identify useful support early.
+            </p>
+          </section>
+
+          <button
+            type="button"
+            className="dashboard-action support-insight-button"
+            onClick={getSupportInsight}
+            disabled={gettingInsight}
+          >
+            {gettingInsight ? <RefreshCw size={16} className="forecast-spin" /> : <Sparkles size={16} />}
+            {gettingInsight ? "Creating suggestions…" : "Get support suggestions"}
+          </button>
+
+          {insight && (
+            <section className="support-insight" aria-labelledby="support-insight-title">
+              <h3 id="support-insight-title"><Sparkles size={18} /> Suggested next steps</h3>
+              <p>{insight.summary}</p>
+              {insight.strengths?.length > 0 && (
+                <>
+                  <h4>Strengths to build on</h4>
+                  <ul>
+                    {insight.strengths.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                </>
+              )}
+              {insight.suggestedActions?.length > 0 && (
+                <>
+                  <h4>Actions you can take</h4>
+                  <ul>
+                    {insight.suggestedActions.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                </>
+              )}
+              <p className="support-insight__disclaimer">{insight.disclaimer}</p>
+            </section>
+          )}
+        </>
+      )}
+    </section>
+  );
 }

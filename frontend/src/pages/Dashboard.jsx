@@ -45,6 +45,43 @@ import StudentInsights from "./StudentInsights.jsx";
 import MessageCenter from "../components/MessageCenter.jsx";
 import ProfessorDashboardView from "./ProfessorDashboardView.jsx";
 
+// Smooth count-up hook from 0 to target percentage
+function useCountUp(target, duration = 1200) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!Number.isFinite(target)) {
+      setCount(0);
+      return;
+    }
+
+    let start = 0;
+    const finalVal = Math.round(target);
+    if (finalVal === 0) {
+      setCount(0);
+      return;
+    }
+
+    const startTime = performance.now();
+
+    const updateCount = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic formula
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(easeOut * finalVal));
+
+      if (progress < 1) {
+        requestAnimationFrame(updateCount);
+      }
+    };
+
+    requestAnimationFrame(updateCount);
+  }, [target, duration]);
+
+  return count;
+}
+
 // Inline fallback for the Admin view so Vite doesn't fail if the file is absent
 function AdminDashboardView({ user, nextStep }) {
   return (
@@ -296,7 +333,7 @@ function AdvisorDashboardModule({ user }) {
     if (filterRisk === "high") return "#dc2626";     // RED
     if (filterRisk === "medium") return "#ea580c";   // ORANGE
     if (filterRisk === "low") return "#16a34a";      // GREEN
-    return "#70869b";                                // DEFAULT
+    return "#70869b";                                // DEFAULT SLATE
   };
 
   if (loading) return <p className="connected-students-loading">Loading professor dashboard...</p>;
@@ -690,6 +727,12 @@ export default function Dashboard() {
   const forecastIsAtRisk = ["medium", "high"].includes(forecastRiskLevel);
   const dropoutProbability = Number(latestForecast?.forecast?.dropoutProbability);
   
+  // Calculate target numerical percentage for count-up
+  const exactDropoutPercent = Number.isFinite(dropoutProbability)
+    ? Math.round(dropoutProbability * 100)
+    : 0;
+  const animatedPercentage = useCountUp(exactDropoutPercent);
+
   const gradeScaleType = latestForecast?.forecast?.gradeMaximum || trajectoryRecord?.gradeMaximum;
   const gradeDetails =
     rawGradeNum !== null && !Number.isNaN(rawGradeNum)
@@ -834,11 +877,17 @@ export default function Dashboard() {
             </section>
 
             <section className="dashboard-summary" aria-label="Advisor module objectives">
-              {/* Card 1: Alert Status (Container outline matches the risk color: Red / Orange / Green) */}
+              {/* Card 1: Alert Status (With Count-Up Percentage Badge on the Left) */}
               <article className={`risk-card-${alertCardColor}`}>
-                <span className={`summary-icon ${alertCardColor}`}>
-                  <AlertTriangle size={19} />
-                </span>
+                {hasForecastRisk ? (
+                  <div className={`risk-stat-badge ${alertCardColor}`}>
+                    <span className="risk-stat-number">{animatedPercentage}%</span>
+                  </div>
+                ) : (
+                  <span className={`summary-icon ${alertCardColor}`}>
+                    <AlertTriangle size={19} />
+                  </span>
+                )}
                 <div>
                   <strong>
                     {gradeDetails !== null
@@ -850,7 +899,7 @@ export default function Dashboard() {
                   <small>
                     {gradeDetails !== null
                       ? hasForecastRisk
-                        ? `${percentage(dropoutProbability)} estimated dropout probability (${riskLabel(forecastRiskLevel)})`
+                        ? `${animatedPercentage}% estimated dropout probability (${riskLabel(forecastRiskLevel)})`
                         : gradeDetails.isAtRisk ? `Grade below passing cutoff (${gradeDetails.passingCutoff})` : "Academic standing is satisfactory"
                       : "Go to Data Workspace to submit your grades"}
                   </small>
@@ -1013,18 +1062,11 @@ export default function Dashboard() {
                 </h2>
               </div>
             </div>
-            <ConnectionManager 
-              onNavigateTab={(tab, data) => {
-                // Navigate using React Router while preserving state/shell context
-                navigate(`/dashboard/${tab}`, { state: data });
-              }} 
-            />
+            <ConnectionManager />
           </section>
         )}
 
-        {hasConnectionAccess && activeTab === "messages" && (
-          <MessageCenter initialSelectedUser={location.state?.selectedUser} />
-        )}
+        {hasConnectionAccess && activeTab === "messages" && <MessageCenter />}
 
         {user?.role === "professor" && (activeTab === "data" || activeTab === "insights") && <ProfessorDashboardView user={user} activeTab={activeTab} />}
 

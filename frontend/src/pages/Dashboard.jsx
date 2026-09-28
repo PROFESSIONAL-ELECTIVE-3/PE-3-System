@@ -506,7 +506,9 @@ function AdvisorDashboardModule({ user }) {
                         const gradeScale = student.scale || student.gpa?.split("/")[1]?.trim() || "4.0";
                         const currentGradeNum = parseFloat(student.gpa) || 0;
                         const predictedGradeNum = parseFloat(student.predictedGrade) || 0;
-                        const { chartDomain, isReversed, passingCutoff } = evaluateGrade(currentGradeNum, gradeScale);
+                        const { isAtRisk, chartDomain, isReversed, passingCutoff } = evaluateGrade(currentGradeNum, gradeScale);
+                        
+                        
 
                         return (
                           <tr className="trajectory-expansion-row">
@@ -548,9 +550,9 @@ function AdvisorDashboardModule({ user }) {
                                           <Line
                                             type="monotone"
                                             dataKey="grade"
-                                            stroke={student.riskLevel === "high" ? "#d55752" : "#0c5bb4"}
+                                            stroke={isAtRisk ? "#d55752" : "#0c5bb4"}
                                             strokeWidth={2.5}
-                                            dot={{ r: 4, fill: student.riskLevel === "high" ? "#d55752" : "#0c5bb4" }}
+                                            dot={{ r: 4, fill: isAtRisk ? "#d55752" : "#0c5bb4" }}
                                             activeDot={{ r: 6 }}
                                           />
                                         </LineChart>

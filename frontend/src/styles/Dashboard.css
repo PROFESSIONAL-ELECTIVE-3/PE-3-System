@@ -1109,7 +1109,7 @@ div.caseload-controls .filter-select.risk-low svg * {
 
 .student-metrics-table th:nth-child(2), 
 .student-metrics-table td:nth-child(2) { 
-  text-align: left; 
+  text-align: center; 
   min-width: 190px;
 }
 
@@ -1185,7 +1185,6 @@ div.caseload-controls .filter-select.risk-low svg * {
   border-radius: 9px; 
   background: #ffffff;
   border: 1px solid #dce8f2;
-  border-left: 4px solid #0c5bb4;
   box-shadow: 0 2px 8px rgba(16, 43, 74, 0.04);
 }
 

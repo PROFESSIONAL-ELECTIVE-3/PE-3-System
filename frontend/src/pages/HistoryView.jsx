@@ -12,10 +12,10 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 const eventCopy = {
-  record_created: { label: "Academic record created", icon: FilePlus2 },
-  record_updated: { label: "Academic record updated", icon: FilePenLine },
-  forecast_run: { label: "Forecast prediction run", icon: BarChart3 },
-  insight_generated: { label: "Support suggestions generated", icon: Activity },
+  record_created: { label: "Academic Record Created", icon: FilePlus2 },
+  record_updated: { label: "Academic Record Updated", icon: FilePenLine },
+  forecast_run: { label: "Forecast Prediction run", icon: BarChart3 },
+  insight_generated: { label: "Support Suggestions Generated", icon: Activity },
 };
 
 const formatDate = (value) => {
@@ -28,6 +28,7 @@ const formatDate = (value) => {
 
 export default function HistoryView({ user }) {
   const { apiFetch } = useAuth();
+  const [selectedFilter, setSelectedFilter] = useState("all");
   const [state, setState] = useState({
     loading: user?.role === "student",
     error: "",
@@ -113,12 +114,55 @@ export default function HistoryView({ user }) {
     return <p className="student-data-loading">Loading your timeline history…</p>;
   }
 
+  const filteredActivities = state.activities.filter((entry) => {
+    if (selectedFilter === "all") return true;
+    if (selectedFilter === "system_event") {
+      // Handles unknown or explicit system_event types
+      return !eventCopy[entry.type] || entry.type === "system_event";
+    }
+    return entry.type === selectedFilter;
+  });
+
   return (
     <section className="workspace-section" id="history">
-      <div className="section-heading">
+      <div className="section-heading"
+        style={{ 
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: "space-between", 
+          width: "100%" 
+        }}
+      >
         <div>
           <p className="dashboard-eyebrow">Your Activity</p>
           <h2>Record & Forecast Timeline</h2>
+        </div>
+
+        {/* --- START OF NEW FILTER CONTROL --- */}
+        <div className="caseload-controls" 
+          style={{ 
+            margin: 0, 
+            width: "auto",      /* Overrides width: 100% from dashboard.css */
+            flex: "none",        /* Prevents flexbox from stretching the element */
+            marginLeft: "auto",  /* Forces it to the far right */
+            display: "flex", 
+              alignItems: "center"
+          }}
+        >
+          <div className="filter-select">
+            <select
+              value={selectedFilter}
+              onChange={(e) => setSelectedFilter(e.target.value)}
+              aria-label="Filter events by type"
+            >
+              <option value="all">All Events</option>
+              <option value="record_created">Academic Record Created</option>
+              <option value="record_updated">Academic Record Updated</option>
+              <option value="forecast_run">Forecast Prediction Run</option>
+              <option value="insight_generated">Support Suggestions Generated</option>
+              <option value="system_event">System Event</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -169,7 +213,7 @@ export default function HistoryView({ user }) {
         </div>
       ) : (
         <ul className="history-timeline history-timeline--live">
-          {state.activities.map((entry) => {
+          {filteredActivities.map((entry) => {
             const details = eventCopy[entry.type] || {
               label: "System Event",
               icon: Activity,

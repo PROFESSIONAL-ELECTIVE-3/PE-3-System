@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import "./styles/Global.css";
+import "./styles/Responsive.css";
 
 // This finds the <div id="root"> in your index.html and renders the app inside it
 ReactDOM.createRoot(document.getElementById("root")).render(

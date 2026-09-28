@@ -1,0 +1,99 @@
+/* Shared constraints and responsive overrides, loaded after page styles. */
+.message-back-button { display: none; }
+.message-center__layout aside,
+.message-center__thread-header > div,
+.workspace-section,
+.student-data-fieldset,
+.student-data-fieldset > *,
+.legal-main,
+.login-form-panel,
+.login-brand-panel { min-width: 0; }
+
+.message-list article p,
+.support-insight,
+.legal-main,
+.connection-message,
+.history-timeline-body,
+.account-menu strong { overflow-wrap: anywhere; }
+
+.message-center__thread form > div { gap: .75rem; flex-wrap: wrap; }
+.message-center__thread form button { flex-shrink: 0; }
+.message-center__thread-header { flex-wrap: wrap; }
+.message-center__thread-header > div { flex: 1; }
+.message-center__thread-header strong { overflow-wrap: anywhere; }
+.legal-modal { height: min(760px, 92dvh); }
+
+@media (min-width: 781px) and (max-width: 1100px) {
+  .app-main { padding-inline: 1.25rem; }
+  .message-center__layout { grid-template-columns: minmax(180px, .8fr) minmax(0, 1.2fr); }
+  .workflow-fields { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .legal-toc { flex-basis: auto; }
+  .legal-main { width: 100%; }
+}
+
+@media (max-width: 780px) {
+  .mobile-dashboard-nav a { display: inline-flex; align-items: center; min-height: 44px; }
+  .account-menu { min-width: 0; }
+  .account-menu > div { min-width: 0; }
+  .account-menu strong { max-width: 180px; }
+  .app-topbar { gap: 1rem; height: auto; min-height: 78px; padding-block: .75rem; }
+  .dashboard-action { white-space: normal; }
+  .caseload-controls { flex-wrap: wrap; }
+  .caseload-controls .search-box { min-width: 0; }
+  .student-data-fieldset { min-inline-size: 0; }
+  .message-center { padding-block: 1rem; }
+  .message-center__layout { grid-template-columns: minmax(0, 1fr); height: min(740px, 78dvh); min-height: 360px; }
+  .message-center__layout > aside { border-right: 0; }
+  .message-center__layout > .message-center__thread { display: none; }
+  .message-center__layout.is-thread-open > aside { display: none; }
+  .message-center__layout.is-thread-open > .message-center__thread { display: flex; }
+  .message-back-button { display: inline-flex; align-items: center; min-height: 44px; padding: .4rem .6rem; border: 1px solid #cbd8e5; border-radius: 6px; background: #fff; color: #0c5bb4; font: inherit; font-size: .8rem; cursor: pointer; }
+  .message-center__thread-header { gap: .5rem; padding: .6rem; }
+  .message-center__thread-header > svg { display: none; }
+  .message-center__thread textarea { min-height: 60px; max-height: 22dvh; }
+  .message-list { padding: .75rem; }
+  .message-list article { max-width: 90%; }
+  .message-menu-toggle { min-width: 32px; min-height: 32px; top: .1rem; right: .1rem; }
+  .message-list article p { padding-right: 1.8rem; }
+  .message-menu button { min-height: 40px; }
+  .message-center__thread form .dashboard-action { min-height: 44px; }
+}
+
+@media (max-width: 600px) {
+  .app-main { padding-inline: .75rem; }
+  .advisor-summary-grid,
+  .trajectory-metrics,
+  .connected-student-card__summary,
+  .student-data-summary__metrics-grid,
+  .student-data-grade-row { grid-template-columns: minmax(0, 1fr); }
+  .connected-students__heading { flex-wrap: wrap; }
+  .connected-student-card header > div { min-width: 0; overflow-wrap: anywhere; }
+  .connection-actions { flex-wrap: wrap; }
+  .section-heading, .panel-header { flex-wrap: wrap; }
+  .history-timeline-main, .history-timeline-record-meta { flex-wrap: wrap; }
+  .history-delete-warning__card, .risk-pop-modal { max-width: 100%; max-height: 90dvh; overflow-y: auto; }
+  .history-delete-warning__actions, .risk-pop-actions { flex-wrap: wrap; }
+  .login-brand-panel { padding: 2rem 1.25rem; }
+  .login-form-panel { padding: 2rem 1rem; }
+  .register-step-nav { flex-wrap: wrap; }
+  .register-step-nav > button { min-height: 44px; }
+  .legal-header { flex-wrap: wrap; gap: .75rem; }
+  .legal-content { padding: 1.5rem .75rem; gap: 1.5rem; }
+  .legal-main { padding: 1.5rem 1rem; }
+  .legal-main h1 { font-size: 1.8rem; }
+  .legal-modal-backdrop { padding: .5rem; }
+  .legal-modal-header, .legal-modal-footer { padding: .65rem; }
+  .legal-modal-footer { flex-wrap: wrap; }
+  /* Prevent automatic zoom on phone form focus. */
+  input, select, textarea,
+  .message-center__thread textarea { font-size: 16px; max-width: 100%; }
+}
+
+@media (max-width: 380px) {
+  .message-center__thread-header { align-items: flex-start; flex-direction: column; }
+  .message-center__thread form > div { align-items: stretch; flex-direction: column; }
+  .home-header { flex-wrap: wrap; height: auto; min-height: 68px; gap: .5rem; padding-block: .75rem; }
+}

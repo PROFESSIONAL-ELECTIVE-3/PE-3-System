@@ -45,6 +45,7 @@ import StudentDataForm from "./StudentDataForm.jsx";
 import ConnectionManager from "../components/ConnectionManager.jsx";
 import StudentInsights from "./StudentInsights.jsx";
 import MessageCenter from "../components/MessageCenter.jsx";
+import useAdaptivePolling from "../hooks/useAdaptivePolling.js";
 import ProfessorDashboardView from "./ProfessorDashboardView.jsx";
 
 // Route-aware count-up hook
@@ -610,33 +611,18 @@ export default function Dashboard() {
   const nextStep = NEXT_STEPS_BY_ROLE[user?.role] ?? NEXT_STEPS_BY_ROLE.student;
   const roleLabel = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User";
 
-  // Unread messages polling
-  useEffect(() => {
-    let isMounted = true;
-    const fetchUnread = async () => {
-      try {
-        if (!apiFetch) return;
-        const res = await apiFetch("/api/messages");
-        const data = await res.json().catch(() => ({}));
-        if (res.ok && isMounted && Array.isArray(data.conversations)) {
-          const totalUnread = data.conversations.reduce(
-            (acc, conv) => acc + (conv.unreadCount || 0),
-            0
-          );
-          setUnreadMessagesCount(totalUnread);
-        }
-      } catch {
-        // Silently catch background poll issues
-      }
-    };
+  const fetchUnread = useCallback(async () => {
+    const response = await apiFetch("/api/messages/unread-count");
+    if (!response.ok) return;
+    const data = await response.json().catch(() => ({}));
+    if (Number.isFinite(data.unreadCount)) setUnreadMessagesCount(data.unreadCount);
+  }, [apiFetch]);
 
-    fetchUnread();
-    const interval = window.setInterval(fetchUnread, 8000);
-    return () => {
-      isMounted = false;
-      window.clearInterval(interval);
-    };
-  }, [apiFetch, location.pathname]);
+  useAdaptivePolling(fetchUnread, {
+    intervalMs: 3000,
+    hiddenIntervalMs: 20000,
+    enabled: activeTab !== "messages",
+  });
 
   const processAndStoreRecord = useCallback((record) => {
     if (!record || record.previousSemesterGrade === undefined || record.previousSemesterGrade === "") return;
@@ -1283,7 +1269,9 @@ export default function Dashboard() {
           </section>
         )}
 
-        {hasConnectionAccess && activeTab === "messages" && <MessageCenter />}
+        {hasConnectionAccess && activeTab === "messages" && (
+          <MessageCenter onUnreadCountChange={setUnreadMessagesCount} />
+        )}
 
         {user?.role === "professor" && (activeTab === "data" || activeTab === "insights") && <ProfessorDashboardView user={user} activeTab={activeTab} />}
 

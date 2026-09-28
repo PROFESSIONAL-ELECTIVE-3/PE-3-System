@@ -6,6 +6,7 @@ const conversationSchema = new mongoose.Schema({
   connection: { type: mongoose.Schema.Types.ObjectId, ref: 'StudentProfessorConnection', required: true, unique: true },
   state: { type: String, enum: ['open', 'closed'], default: 'open', index: true },
   lastMessageAt: { type: Date, default: Date.now },
+  revision: { type: Number, default: 0 },
   closedAt: { type: Date, default: null },
 }, { timestamps: true });
 

@@ -69,7 +69,7 @@ const sendVerificationEmail = async (user, token) => {
     {
       sender: {
         email: process.env.BREVO_SENDER_EMAIL,
-        name: process.env.BREVO_SENDER_NAME || 'Retainify',
+        name: 'Retainify',
       },
       to: [{ email: user.email, name: user.fullName }],
       subject: 'Verify your Retainify email address',
@@ -364,7 +364,7 @@ exports.forgotPassword = async (req, res, next) => {
           {
             sender: {
               email: process.env.BREVO_SENDER_EMAIL,
-              name: process.env.BREVO_SENDER_NAME || 'Retainify',
+              name: 'Retainify',
             },
             to: [{ email: user.email, name: user.fullName }],
             subject: 'Reset your Retainify password',

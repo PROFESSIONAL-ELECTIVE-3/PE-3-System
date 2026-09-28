@@ -2012,6 +2012,14 @@ div.caseload-controls .filter-select.risk-low svg * {
 .chat-role { display:inline-block; padding:.08rem .3rem; border-radius:999px; color:#28537c; background:#dcecff; font-size:.6rem; font-weight:800; letter-spacing:.03em; text-transform:uppercase; vertical-align:middle; }
 .message-center__layout aside i { min-width:18px; padding:2px 4px; border-radius:999px; background:#0c5bb4; color:#fff; font-size:.65rem; font-style:normal; text-align:center; }
 .message-center__layout aside i.message-unread-count { min-width:max-content; padding:3px 6px; font-size:.61rem; }
+.message-center__layout aside > .conversation-row { margin-bottom:.25rem; padding:.85rem .7rem; border-left:3px solid transparent; }
+.message-center__layout aside > .conversation-row.is-selected { border-left-color:#0c5bb4; }
+.message-center__layout aside .conversation-row strong { font-size:.88rem; font-weight:500; color:#526b82; }
+.message-center__layout aside .conversation-row .conversation-preview { font-size:.78rem; line-height:1.5; color:#718399; font-weight:400; }
+.message-center__layout aside .conversation-row.is-unread strong,
+.message-center__layout aside .conversation-row.is-unread .conversation-preview { color:#18324b; font-weight:700; }
+.message-center__layout aside i.conversation-unread-dot { flex:0 0 9px; width:9px; height:9px; min-width:9px; padding:0; border-radius:50%; background:#0c5bb4; }
+.message-center__layout aside > .conversation-row:focus-visible { outline:2px solid #0c5bb4; outline-offset:-2px; }
 .message-center__start { padding:.45rem; margin-bottom:.6rem; border-bottom:1px solid #dbe6ef; }
 .message-center__start strong { margin:.25rem; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; }
 .message-center__start button { margin-top:.2rem; background:#e7f1fc; font-size:.78rem; }

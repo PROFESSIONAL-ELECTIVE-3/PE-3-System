@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Ellipsis, MessageCircle, Reply, Send, Trash2, UserRoundPlus } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import useAdaptivePolling from "../hooks/useAdaptivePolling.js";
 
 const time = (value) =>
   new Date(value).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
@@ -11,7 +12,7 @@ const riskTier = (forecast) => {
   return ["low", "medium", "high"].includes(tier) ? tier : null;
 };
 
-export default function MessageCenter({ initialSelectedUser }) {
+export default function MessageCenter({ initialSelectedUser, onUnreadCountChange }) {
   const location = useLocation();
   // Read from prop or directly from route state
   const effectiveUser = initialSelectedUser || location.state?.selectedUser || null;
@@ -20,6 +21,7 @@ export default function MessageCenter({ initialSelectedUser }) {
   const [conversations, setConversations] = useState([]);
   const [students, setStudents] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [showMobileThread, setShowMobileThread] = useState(false);
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState(null);
@@ -29,66 +31,116 @@ export default function MessageCenter({ initialSelectedUser }) {
   const [error, setError] = useState("");
   const [selectedUser, setSelectedUser] = useState(effectiveUser);
   const handledInitialTarget = useRef("");
+  const threadRequestId = useRef(0);
+  const threadRevision = useRef(null);
 
-  const load = async (background = false) => {
-    if (!background) setLoading(true);
-    if (!background) setError("");
-    try {
-      const jobs = [apiFetch("/api/messages")];
-      jobs.push(
-        apiFetch(
-          user.role === "professor" ? "/api/professor/students" : "/api/connections"
-        )
-      );
-      const responses = await Promise.all(jobs);
-      const inbox = await responses[0].json().catch(() => ({}));
-      if (!responses[0].ok) throw new Error(inbox.message || "Could not load messages.");
-      setConversations(inbox.conversations || []);
-
-      if (responses[1]?.ok) {
-        const data = await responses[1].json();
-        setStudents(
-          user.role === "professor"
-            ? data.students || []
-            : (data.connections || [])
-                .filter((connection) => connection.status === "accepted")
-                .map((connection) => ({
-                  student: connection.professor,
-                  forecast: null,
-                }))
-        );
-      }
-    } catch (err) {
-      setError(err.message || "Could not load messages.");
-    } finally {
-      if (!background) setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    load();
-    const refresh = window.setInterval(() => load(true), 8000);
-    return () => window.clearInterval(refresh);
+  const applyConversations = useCallback((nextConversations) => {
+    setConversations(nextConversations);
   }, []);
 
-  const open = async (conversation) => {
-    setError("");
-    setSelected(conversation);
-    setMessages([]);
+  useEffect(() => {
+    onUnreadCountChange?.(
+      conversations.reduce(
+        (total, conversation) => total + (conversation.unreadCount || 0),
+        0,
+      ),
+    );
+  }, [conversations, onUnreadCountChange]);
+
+  const refreshConversations = useCallback(async (surfaceError = false) => {
     try {
-      const response = await apiFetch(`/api/messages/${conversation.id}/messages`);
+      const response = await apiFetch("/api/messages");
+      const inbox = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(inbox.message || "Could not load messages.");
+      applyConversations(inbox.conversations || []);
+    } catch (err) {
+      if (surfaceError) setError(err.message || "Could not load messages.");
+    }
+  }, [apiFetch, applyConversations]);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const [inboxResponse, peopleResponse] = await Promise.all([
+          apiFetch("/api/messages"),
+          apiFetch(
+            user.role === "professor" ? "/api/professor/students" : "/api/connections",
+          ),
+        ]);
+        const inbox = await inboxResponse.json().catch(() => ({}));
+        if (!inboxResponse.ok) throw new Error(inbox.message || "Could not load messages.");
+        if (!active) return;
+        applyConversations(inbox.conversations || []);
+
+        if (peopleResponse.ok) {
+          const data = await peopleResponse.json();
+          if (!active) return;
+          setStudents(
+            user.role === "professor"
+              ? data.students || []
+              : (data.connections || [])
+                  .filter((connection) => connection.status === "accepted")
+                  .map((connection) => ({ student: connection.professor, forecast: null })),
+          );
+        }
+      } catch (err) {
+        if (active) setError(err.message || "Could not load messages.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [apiFetch, applyConversations, user.role]);
+
+  useAdaptivePolling(() => refreshConversations(false), {
+    intervalMs: 2500,
+    hiddenIntervalMs: 15000,
+    enabled: !loading,
+  });
+
+  const fetchThread = useCallback(async (conversation, surfaceError = false, useRevision = false) => {
+    const requestId = ++threadRequestId.current;
+    try {
+      const revisionQuery = useRevision && threadRevision.current !== null
+        ? `?revision=${encodeURIComponent(threadRevision.current)}`
+        : "";
+      const response = await apiFetch(
+        `/api/messages/${conversation.id}/messages${revisionQuery}`,
+      );
+      if (response.status === 204) return;
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.message || "Could not open this conversation.");
+      if (requestId !== threadRequestId.current) return;
+      threadRevision.current = data.conversation.revision;
       setSelected(data.conversation);
       setMessages(data.messages || []);
-      setConversations((current) =>
-        current.map((item) =>
-          item.id === conversation.id ? { ...item, unreadCount: 0 } : item
-        )
-      );
+      setConversations((current) => {
+        const next = current.map((item) =>
+          item.id === conversation.id ? { ...item, unreadCount: 0 } : item,
+        );
+        return next;
+      });
     } catch (err) {
-      setError(err.message || "Could not open this conversation.");
+      if (surfaceError && requestId === threadRequestId.current) {
+        setError(err.message || "Could not open this conversation.");
+      }
     }
+  }, [apiFetch, onUnreadCountChange]);
+
+  const open = async (conversation) => {
+    setShowMobileThread(true);
+    setError("");
+    threadRevision.current = null;
+    setSelected(conversation);
+    setMessages([]);
+    await fetchThread(conversation, true);
   };
 
   const begin = async (studentId) => {
@@ -144,20 +196,14 @@ export default function MessageCenter({ initialSelectedUser }) {
     }
   }, [selectedUser, conversations, students, loading]);
 
-  useEffect(() => {
-    if (!selected?.id) return undefined;
-    const refreshThread = async () => {
-      try {
-        const response = await apiFetch(`/api/messages/${selected.id}/messages`);
-        const data = await response.json().catch(() => ({}));
-        if (response.ok) setMessages(data.messages || []);
-      } catch {
-        // Silently ignore temporary network polling errors
-      }
-    };
-    const refresh = window.setInterval(refreshThread, 8000);
-    return () => window.clearInterval(refresh);
-  }, [apiFetch, selected?.id]);
+  useAdaptivePolling(
+    () => selected && fetchThread(selected, false, true),
+    {
+      intervalMs: 1500,
+      hiddenIntervalMs: 10000,
+      enabled: Boolean(selected?.id),
+    },
+  );
 
   const send = async (event) => {
     event.preventDefault();
@@ -172,15 +218,19 @@ export default function MessageCenter({ initialSelectedUser }) {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.message || "Could not send the message.");
-      setMessages((current) => [
-        ...current,
-        {
-          ...data.message,
-          replyTo: replyTo
-            ? { id: replyTo.id, body: replyTo.body, senderName: replyTo.sender.fullName }
-            : null,
-        },
-      ]);
+      threadRequestId.current += 1;
+      threadRevision.current = null;
+      const sentMessage = {
+        ...data.message,
+        replyTo: replyTo
+          ? { id: replyTo.id, body: replyTo.body, senderName: replyTo.sender.fullName }
+          : null,
+      };
+      setMessages((current) =>
+        current.some((message) => message.id === sentMessage.id)
+          ? current
+          : [...current, sentMessage],
+      );
       setDraft("");
       setReplyTo(null);
       setConversations((current) =>
@@ -188,6 +238,8 @@ export default function MessageCenter({ initialSelectedUser }) {
           item.id === selected.id ? { ...item, lastMessageAt: data.message.createdAt } : item
         )
       );
+      void refreshConversations(false);
+      void fetchThread(selected, false, false);
     } catch (err) {
       setError(err.message || "Could not send the message.");
     } finally {
@@ -211,8 +263,12 @@ export default function MessageCenter({ initialSelectedUser }) {
       );
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.message || "Could not delete this message.");
+      threadRequestId.current += 1;
+      threadRevision.current = null;
       setMessages((current) => current.filter((m) => m.id !== messageId));
       setOpenMenu(null);
+      void refreshConversations(false);
+      void fetchThread(selected, false, false);
     } catch (err) {
       setError(err.message || "Could not delete this message.");
     }
@@ -264,7 +320,7 @@ export default function MessageCenter({ initialSelectedUser }) {
         </p>
       )}
 
-      <div className="message-center__layout">
+      <div className={`message-center__layout ${showMobileThread && selected ? "is-thread-open" : ""}`}>
         <aside aria-label="Conversations">
           {availableStudents.length > 0 && (
             <div className="message-center__start">
@@ -294,8 +350,10 @@ export default function MessageCenter({ initialSelectedUser }) {
           ) : conversations.length ? (
             conversations.map((conversation) => (
               <button
-                className={selected?.id === conversation.id ? "is-selected" : ""}
+                className={`conversation-row ${selected?.id === conversation.id ? "is-selected" : ""} ${conversation.unreadCount > 0 ? "is-unread" : "is-read"}`}
                 type="button"
+                aria-current={selected?.id === conversation.id ? "true" : undefined}
+                aria-label={`${conversation.peer.fullName}, ${conversation.unreadCount > 0 ? `${conversation.unreadCount} unread messages` : "no unread messages"}`}
                 onClick={() => open(conversation)}
                 key={conversation.id}
               >
@@ -308,6 +366,11 @@ export default function MessageCenter({ initialSelectedUser }) {
                 </span>
                 <span>
                   <strong>{conversation.peer.fullName}</strong>
+                  <small className="conversation-preview">
+                    {conversation.lastMessage
+                      ? `${String(conversation.lastMessage.sender) === String(user._id || user.id) ? "You: " : ""}${conversation.lastMessage.body}`
+                      : "No messages yet"}
+                  </small>
                   <small>
                     <span className="chat-role">{peerRole}</span>{" "}
                     {time(conversation.lastMessageAt)}
@@ -316,10 +379,10 @@ export default function MessageCenter({ initialSelectedUser }) {
                 </span>
                 {conversation.unreadCount > 0 && (
                   <i
-                    className="message-unread-count"
-                    aria-label={`${conversation.unreadCount} new messages`}
+                    className="conversation-unread-dot"
+                    aria-hidden="true"
+                    title={`${conversation.unreadCount} unread messages`}
                   >
-                    {conversation.unreadCount} new
                   </i>
                 )}
               </button>
@@ -338,6 +401,13 @@ export default function MessageCenter({ initialSelectedUser }) {
           {selected ? (
             <>
               <div className="message-center__thread-header">
+                <button
+                  type="button"
+                  className="message-back-button"
+                  onClick={() => setShowMobileThread(false)}
+                >
+                  ← Conversations
+                </button>
                 <MessageCircle size={18} />
                 <div>
                   <strong>

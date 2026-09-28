@@ -22,23 +22,22 @@ export default function ConnectionManager({ onNavigateTab }) {
   const [error, setError] = useState("");
   const isStudent = user?.role === "student";
 
-  const loadConnections = async () => {
-    setIsLoading(true);
-    setError("");
+  const loadConnections = async (background = false) => {
+    if (!background) { setIsLoading(true); setError(""); }
     try {
       const response = await apiFetch("/api/connections");
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.message || "Could not load connections.");
       setConnections(data.connections || []);
     } catch (requestError) {
-      setError(requestError.message || "Could not load connections.");
+      if (!background) setError(requestError.message || "Could not load connections.");
     } finally {
-      setIsLoading(false);
+      if (!background) setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadConnections();
+    void loadConnections();
   }, [apiFetch]);
 
   useEffect(() => {
@@ -90,6 +89,8 @@ export default function ConnectionManager({ onNavigateTab }) {
       setMessage("Your connection request has been sent.");
     } catch (requestError) {
       setError(requestError.message || "Could not send the request.");
+      // Another tab may have created or accepted the request since this list loaded.
+      void loadConnections(true);
     } finally {
       setIsSaving(false);
     }
@@ -154,7 +155,7 @@ export default function ConnectionManager({ onNavigateTab }) {
         <div>
           <p className="dashboard-eyebrow">Professor connection</p>
           <h3 id="connection-title">
-            {isStudent ? "Connect with your professor" : "Student Connection Requests"}
+            {isStudent ? "Connect with professors" : "Student Connection Requests"}
           </h3>
         </div>
         {!isStudent && pendingCount > 0 && (
@@ -190,7 +191,12 @@ export default function ConnectionManager({ onNavigateTab }) {
           )}
           {professors.length > 0 && (
             <ul className="professor-search-results">
-              {professors.map((professor) => (
+              {professors.map((professor) => {
+                const existing = connections.find((connection) =>
+                  String(connection.professor?.id || connection.professor?._id) === String(professor.id)
+                  && ['accepted', 'pending'].includes(connection.status)
+                );
+                return (
                 <li key={professor.id}>
                   <span className="connection-avatar" aria-hidden="true">
                     {professor.fullName
@@ -205,15 +211,16 @@ export default function ConnectionManager({ onNavigateTab }) {
                   </div>
                   <button
                     type="button"
-                    className="connection-button connection-button--accept"
+                    className={`connection-button ${existing ? 'connection-button--existing' : 'connection-button--accept'}`}
                     onClick={() => sendRequest(professor.id)}
-                    disabled={isSaving}
+                    disabled={isSaving || isLoading || Boolean(existing)}
                   >
-                    <UserPlus size={15} />
-                    Connect
+                    {existing?.status === 'accepted' ? <Check size={15} /> : existing?.status === 'pending' ? <Clock3 size={15} /> : <UserPlus size={15} />}
+                    {existing?.status === 'accepted' ? 'Connected already' : existing?.status === 'pending' ? 'Request pending' : 'Connect'}
                   </button>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </div>

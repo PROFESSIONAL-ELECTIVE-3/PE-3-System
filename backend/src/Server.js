@@ -26,7 +26,10 @@ const app = express();
 
 
 app.use(helmet());
-app.use(express.json({ limit: '10kb' })); 
+app.use((req, res, next) => {
+  if (req.method === 'PATCH' && req.path === '/api/auth/me') return next();
+  return express.json({ limit: '10kb' })(req, res, next);
+});
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:3000')

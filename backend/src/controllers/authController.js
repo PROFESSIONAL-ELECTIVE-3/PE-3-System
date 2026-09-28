@@ -2,6 +2,10 @@ const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const crypto = require('crypto');
 const axios = require('axios');
+const mongoose = require('mongoose');
+const Connection = require('../models/StudentProfessorConnection');
+const Conversation = require('../models/Conversation');
+const { resolveInstitution } = require('./institutionController');
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_TIME_MS = 15 * 60 * 1000; // 15 minutes
@@ -35,6 +39,9 @@ const publicUser = (user) => ({
   email: user.email,
   role: user.role,
   institution: user.institution,
+  institutionId: user.institutionId || '',
+  bio: user.bio || '',
+  profileImage: user.profileImage || '',
   emailVerified: user.emailVerified,
 });
 
@@ -312,6 +319,74 @@ exports.resendVerification = async (req, res, next) => {
 // @access  Private
 exports.getCurrentUser = async (req, res) => {
   res.status(200).json({ user: publicUser(req.user) });
+};
+
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const { fullName, bio, profileImage } = req.body;
+    if (typeof fullName !== 'string' || typeof bio !== 'string' || typeof profileImage !== 'string') {
+      return res.status(400).json({ message: 'Provide a name, bio, and profile image.' });
+    }
+    const name = normalizeFullName(fullName);
+    if (!name || name.length > 100 || bio.trim().length > 500) {
+      return res.status(400).json({ message: 'Name is required (up to 100 characters). Bio must be at most 500 characters.' });
+    }
+    if (profileImage) {
+      const match = profileImage.match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/);
+      if (!match) return res.status(400).json({ message: 'Use a PNG, JPEG, or WebP photo.' });
+      const bytes = Buffer.from(match[2], 'base64');
+      const valid = match[1] === 'png'
+        ? bytes.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))
+        : match[1] === 'jpeg'
+          ? bytes.subarray(0, 3).equals(Buffer.from('ffd8ff', 'hex'))
+          : bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP';
+      if (!valid || bytes.length > 300 * 1024) {
+        return res.status(400).json({ message: 'Photo must be a valid image under 300 KB. Try selecting it again.' });
+      }
+    }
+    const duplicate = await User.exists({ _id: { $ne: req.user._id }, fullName: new RegExp(`^${escapeRegExp(name)}$`, 'i') });
+    if (duplicate) return res.status(409).json({ message: 'An account with this full name already exists.' });
+    const institution = req.body.institution === undefined ? req.user.institution : req.body.institution;
+    if (typeof institution !== 'string' || !institution.trim() || institution.length > 300) {
+      return res.status(400).json({ message: 'Select an institution from the directory.' });
+    }
+    const institutionChanged = institution !== req.user.institution;
+    let institutionId = req.user.institutionId || '';
+    if (institutionChanged) {
+      if (req.body.confirmInstitutionChange !== true) {
+        return res.status(400).json({ message: 'Confirm that changing institution ends existing connections and closes their conversations.' });
+      }
+      const verified = await resolveInstitution(req.body.institutionId, institution);
+      if (!verified) return res.status(400).json({ message: 'Select a valid institution from the directory results.' });
+      institutionId = verified.id;
+    }
+    let user;
+    const updates = { fullName: name, bio: bio.trim(), profileImage };
+    if (institutionChanged) {
+      const session = await mongoose.startSession();
+      try {
+        await session.withTransaction(async () => {
+          // Compare with the profile used for confirmation; concurrent edits must retry.
+          user = await User.findOneAndUpdate({ _id: req.user._id, institution: req.user.institution },
+            { $set: { ...updates, institution, institutionId } }, { new: true, runValidators: true, session });
+          if (!user) {
+            res.status(409);
+            throw new Error('Your institution changed in another session. Reload your profile and try again.');
+          }
+          const owner = req.user.role === 'professor' ? { professor: req.user._id } : { student: req.user._id };
+          await Connection.updateMany({ ...owner, status: { $in: ['pending', 'accepted'] } },
+            { $set: { status: 'declined' } }, { session });
+          await Conversation.updateMany({ ...owner, state: 'open' },
+            { $set: { state: 'closed', closedAt: new Date() }, $inc: { revision: 1 } }, { session });
+        });
+      } finally { await session.endSession(); }
+    } else {
+      user = await User.findByIdAndUpdate(req.user._id, { $set: updates }, { new: true, runValidators: true });
+    }
+    // A photo/name change must also invalidate the active message-header cache.
+    await Conversation.updateMany({ $or: [{ student: req.user._id }, { professor: req.user._id }], state: 'open' }, { $inc: { revision: 1 } });
+    res.json({ user: publicUser(user), institutionChanged });
+  } catch (error) { next(error); }
 };
 
 const RESET_TOKEN_LIFETIME_MS = 60 * 60 * 1000;

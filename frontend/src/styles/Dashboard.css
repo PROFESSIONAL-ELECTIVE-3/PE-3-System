@@ -1794,6 +1794,15 @@ div.caseload-controls .filter-select.risk-low svg * {
   background: #d8f5e3; 
 }
 
+.connection-button--existing,
+.connection-button--existing:hover {
+  background: #eef3f7;
+  border-color: #d8e2ea;
+  color: #526b82;
+}
+
+.connection-button--existing:disabled { cursor: default; opacity: 1; }
+
 .connection-msg { 
   width: 32px; 
   height: 32px; 
@@ -1999,6 +2008,9 @@ div.caseload-controls .filter-select.risk-low svg * {
 .support-workflow__notice svg { flex: none; color: #197154; }
 
 .message-center { padding: 1.75rem 0; }
+.profile-avatar { flex-shrink: 0; overflow: hidden; }
+.profile-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.message-list .message-author-avatar { width: 26px; height: 26px; margin-bottom: .4rem; font-size: .65rem; }
 .message-center > header h2 { margin: 0.2rem 0; color: #18324b; }
 .message-center > header p:not(.dashboard-eyebrow) { margin: 0; color: #61768a; font-size: .9rem; }
 .message-risk-note { display:block; margin-top:.55rem; color:#61768a; font-size:.72rem; line-height:1.4; }

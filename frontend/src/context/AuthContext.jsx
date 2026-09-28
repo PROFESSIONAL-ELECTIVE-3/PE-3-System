@@ -80,6 +80,14 @@ export function AuthProvider({ children }) {
     [logout, session?.token],
   );
 
+  const updateUser = useCallback((user) => {
+    const stored = getStoredSession();
+    if (!stored) return;
+    const updated = { ...stored.session, user };
+    stored.storage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    setSession(updated);
+  }, []);
+
   const value = useMemo(
     () => ({
       user: session?.user ?? null,
@@ -89,8 +97,9 @@ export function AuthProvider({ children }) {
       login,
       logout,
       apiFetch,
+      updateUser,
     }),
-    [apiFetch, isLoading, login, logout, session],
+    [apiFetch, isLoading, login, logout, session, updateUser],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

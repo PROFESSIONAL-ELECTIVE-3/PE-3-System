@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const StudentProfessorConnection = require('../models/StudentProfessorConnection');
+const { participantsShareInstitution } = require('../utils/institutionAccess');
 
 const validId = (id) => mongoose.isValidObjectId(id);
 const peer = (conversation, role) => role === 'professor' ? conversation.student : conversation.professor;
@@ -10,7 +11,7 @@ const summary = (conversation, role) => ({
   state: conversation.state,
   lastMessageAt: conversation.lastMessageAt,
   revision: conversation.revision || 0,
-  peer: { id: peer(conversation, role)._id, fullName: peer(conversation, role).fullName },
+  peer: { id: peer(conversation, role)._id, fullName: peer(conversation, role).fullName, profileImage: peer(conversation, role).profileImage || '' },
   unreadCount: conversation.unreadCount || 0,
   lastMessage: conversation.lastMessage || null,
 });
@@ -59,10 +60,11 @@ exports.createConversation = async (req, res, next) => {
       : { student: req.user._id, professor: recipientId, status: 'accepted' };
     const connection = await StudentProfessorConnection.findOne(connectionFilter);
     if (!connection) return res.status(403).json({ message: 'Messaging is available only for accepted student connections.' });
+    if (!await participantsShareInstitution(connection.student, connection.professor)) return res.status(403).json({ message: 'Messaging requires a connection at the same institution.' });
     const conversation = await Conversation.findOneAndUpdate(
-      { connection: connection._id }, { $setOnInsert: { student: connection.student, professor: connection.professor, connection: connection._id } },
+      { connection: connection._id }, { $set: { state: 'open', closedAt: null }, $setOnInsert: { student: connection.student, professor: connection.professor, connection: connection._id } },
       { new: true, upsert: true, setDefaultsOnInsert: true }
-    ).populate('student', 'fullName').populate('professor', 'fullName');
+    ).populate('student', 'fullName profileImage').populate('professor', 'fullName profileImage');
     res.status(201).json({ conversation: summary(conversation, req.user.role) });
   } catch (error) { next(error); }
 };
@@ -71,8 +73,10 @@ exports.getMessages = async (req, res, next) => {
   try {
     if (!validId(req.params.id)) return res.status(400).json({ message: 'Invalid conversation.' });
     const filter = req.user.role === 'professor' ? { _id: req.params.id, professor: req.user._id } : { _id: req.params.id, student: req.user._id };
-    const conversation = await Conversation.findOne(filter).populate('student', 'fullName').populate('professor', 'fullName');
+    const conversation = await Conversation.findOne(filter).populate('student', 'fullName profileImage').populate('professor', 'fullName profileImage');
     if (!conversation || conversation.state !== 'open') return res.status(404).json({ message: 'Conversation is not available.' });
+    const connected = await StudentProfessorConnection.exists({ _id: conversation.connection, status: 'accepted' });
+    if (!connected || !await participantsShareInstitution(conversation.student._id, conversation.professor._id)) return res.status(403).json({ message: 'This connection is no longer available at your institution.' });
     const requestedRevision = Number(req.query.revision);
     if (
       req.query.revision !== undefined &&
@@ -110,6 +114,7 @@ exports.sendMessage = async (req, res, next) => {
     if (!conversation) return res.status(404).json({ message: 'Conversation is not available.' });
     const connected = await StudentProfessorConnection.exists({ _id: conversation.connection, status: 'accepted' });
     if (!connected) return res.status(403).json({ message: 'This student connection is no longer active.' });
+    if (!await participantsShareInstitution(conversation.student, conversation.professor)) return res.status(403).json({ message: 'Messaging requires a connection at the same institution.' });
     const replyToId = req.body.replyToId;
     if (replyToId && !validId(replyToId)) return res.status(400).json({ message: 'Invalid reply target.' });
     if (replyToId && !await Message.exists({ _id: replyToId, conversation: conversation._id })) return res.status(400).json({ message: 'Reply target is not in this conversation.' });

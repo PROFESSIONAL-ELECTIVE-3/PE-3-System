@@ -45,6 +45,7 @@ import StudentDataForm from "./StudentDataForm.jsx";
 import ConnectionManager from "../components/ConnectionManager.jsx";
 import StudentInsights from "./StudentInsights.jsx";
 import MessageCenter from "../components/MessageCenter.jsx";
+import Profile from './Profile.jsx';
 import useAdaptivePolling from "../hooks/useAdaptivePolling.js";
 import ProfessorDashboardView from "./ProfessorDashboardView.jsx";
 
@@ -138,6 +139,7 @@ const TAB_BY_PATH = {
   "/dashboard/history": "history",
   "/dashboard/connections": "connections",
   "/dashboard/messages": "messages",
+  "/dashboard/profile": "profile",
 };
 
 const riskLevelFromForecast = (riskLevel, dropoutProbability) => {
@@ -868,7 +870,7 @@ export default function Dashboard() {
           )}
           {hasConnectionAccess && (
             <DashboardNavLink tab="connections" currentTab={activeTab}>
-              <UsersRound size={18} /> {user.role === "student" ? "My Professor" : "Students"}
+              <UsersRound size={18} /> {user.role === "student" ? "Professors" : "Students"}
             </DashboardNavLink>
           )}
           
@@ -921,6 +923,7 @@ export default function Dashboard() {
               <HistoryIcon size={18} /> History
             </DashboardNavLink>
           )}
+          <DashboardNavLink tab="profile" currentTab={activeTab}><UserCheck size={18} /> My profile</DashboardNavLink>
         </nav>
         <div className="sidebar-support">
           <ShieldCheck size={18} />
@@ -936,7 +939,7 @@ export default function Dashboard() {
         <header className="app-topbar">
           <BrandLogo className="mobile-brand" to="/dashboard" />
           <div className="account-menu">
-            <span className="user-initials">{userInitials}</span>
+            <NavLink to="/dashboard/profile" className="user-initials" aria-label="Open my profile">{user.profileImage ? <img src={user.profileImage} alt="" /> : userInitials}</NavLink>
             <div>
               <strong>{user?.fullName || "User"}</strong>
               <small>{roleLabel}</small>
@@ -948,6 +951,7 @@ export default function Dashboard() {
         </header>
 
         <nav className="mobile-dashboard-nav" aria-label="Mobile navigation">
+          <DashboardNavLink tab="profile" currentTab={activeTab}>Profile</DashboardNavLink>
           <DashboardNavLink tab="overview" currentTab={activeTab}>Overview</DashboardNavLink>
           
           {user?.role !== "professor" && user?.role !== "administrator" && (
@@ -959,7 +963,7 @@ export default function Dashboard() {
 
           {hasConnectionAccess && (
             <DashboardNavLink tab="connections" currentTab={activeTab}>
-              {user?.role === "student" ? "Professor" : "Students"}
+              {user?.role === "student" ? "Professors" : "Students"}
             </DashboardNavLink>
           )}
 
@@ -1261,7 +1265,7 @@ export default function Dashboard() {
               <div>
                 <p className="dashboard-eyebrow">Academic support</p>
                 <h2>
-                  {user.role === "student" ? "My Professor Connections" : "Manage Student Connections"}
+                  {user.role === "student" ? "Professors" : "Manage Student Connections"}
                 </h2>
               </div>
             </div>
@@ -1269,6 +1273,7 @@ export default function Dashboard() {
           </section>
         )}
 
+        {activeTab === 'profile' && <Profile />}
         {hasConnectionAccess && activeTab === "messages" && (
           <MessageCenter onUnreadCountChange={setUnreadMessagesCount} />
         )}

@@ -1,6 +1,7 @@
 const StudentProfessorConnection = require('../models/StudentProfessorConnection');
 const StudentRecord = require('../models/StudentRecord');
 const StudentActivity = require('../models/StudentActivity');
+const { sameInstitution } = require('../utils/institutionAccess');
 
 const ensureProfessor = (req, res) => {
   if (req.user.role === 'professor') return true;
@@ -23,8 +24,9 @@ const publicRecord = (record) => record && ({
 exports.listConnectedStudentWorkspace = async (req, res, next) => {
   try {
     if (!ensureProfessor(req, res)) return;
-    const connections = await StudentProfessorConnection.find({ professor: req.user._id, status: 'accepted' })
+    const candidates = await StudentProfessorConnection.find({ professor: req.user._id, status: 'accepted' })
       .populate('student', 'fullName institution').sort({ updatedAt: -1 });
+    const connections = candidates.filter(item => item.student && sameInstitution(item.student.institution, req.user.institution));
     const studentIds = connections.map((item) => item.student._id);
     const [records, forecasts] = await Promise.all([
       StudentRecord.find({ user: { $in: studentIds } }),

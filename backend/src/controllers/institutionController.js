@@ -95,3 +95,14 @@ exports.searchInstitutions = async (req, res, next) => {
     next(error);
   }
 };
+
+// Resolve against the server-owned directory, never a client-provided label.
+exports.resolveInstitution = async (id, name) => {
+  let result;
+  await exports.searchInstitutions(
+    { query: { query: name } },
+    { status() { return this; }, json(data) { result = data; } },
+    (error) => { throw error; },
+  );
+  return result?.institutions?.find((item) => item.id === id && item.name === name);
+};

@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { Ellipsis, MessageCircle, Reply, Send, Trash2, UserRoundPlus } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import useAdaptivePolling from "../hooks/useAdaptivePolling.js";
+import ProfileAvatar from './ProfileAvatar.jsx';
 
 const time = (value) =>
   new Date(value).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
@@ -114,6 +115,13 @@ export default function MessageCenter({ initialSelectedUser, onUnreadCountChange
       const response = await apiFetch(
         `/api/messages/${conversation.id}/messages${revisionQuery}`,
       );
+      if ([403, 404].includes(response.status) && requestId === threadRequestId.current) {
+        threadRequestId.current += 1;
+        threadRevision.current = null;
+        setSelected(null); setMessages([]); setReplyTo(null); setDraft(''); setShowMobileThread(false);
+        setError('This conversation is no longer available. Your connection or institution may have changed.');
+        return;
+      }
       if (response.status === 204) return;
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.message || "Could not open this conversation.");
@@ -357,13 +365,7 @@ export default function MessageCenter({ initialSelectedUser, onUnreadCountChange
                 onClick={() => open(conversation)}
                 key={conversation.id}
               >
-                <span className="connection-avatar">
-                  {conversation.peer.fullName
-                    .split(" ")
-                    .map((part) => part[0])
-                    .slice(0, 2)
-                    .join("")}
-                </span>
+                <ProfileAvatar person={conversation.peer} />
                 <span>
                   <strong>{conversation.peer.fullName}</strong>
                   <small className="conversation-preview">
@@ -408,7 +410,7 @@ export default function MessageCenter({ initialSelectedUser, onUnreadCountChange
                 >
                   ← Conversations
                 </button>
-                <MessageCircle size={18} />
+                <ProfileAvatar person={selected.peer} />
                 <div>
                   <strong>
                     {selected.peer.fullName}{" "}
@@ -426,6 +428,7 @@ export default function MessageCenter({ initialSelectedUser, onUnreadCountChange
                       String(msg.sender.id) === String(user._id || user.id);
                     return (
                       <article className={isMine ? "mine" : "theirs"} key={msg.id}>
+                        <ProfileAvatar person={isMine ? user : selected.peer} className="message-author-avatar" />
                         {msg.replyTo && (
                           <div className="message-reply-preview">
                             <strong>{msg.replyTo.senderName}</strong>

@@ -11,6 +11,7 @@ router.post('/login', login);
 router.post('/verify-email/:token', verifyEmail);
 router.post('/resend-verification', resendVerification);
 router.get('/me', protect, getCurrentUser);
+router.patch('/me', protect, require('express').json({ limit: '450kb' }), require('../controllers/authController').updateProfile);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password/:token', resetPassword);
 

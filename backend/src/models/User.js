@@ -12,6 +12,9 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
     institution: { type: String, trim: true },
+    institutionId: { type: String, default: '' },
+    bio: { type: String, trim: true, maxlength: 500, default: '' },
+    profileImage: { type: String, default: '' },
     role: {
       type: String,
       enum: ['student', 'professor'],

@@ -3,6 +3,7 @@ const StudentRecord = require('../models/StudentRecord');
 const User = require('../models/User');
 const mongoose = require('mongoose');
 const Conversation = require('../models/Conversation');
+const { participantsShareInstitution } = require('../utils/institutionAccess');
 
 const sameInstitution = (first, second) => {
   const normalizedFirst = String(first || '').trim().toLocaleLowerCase();
@@ -87,10 +88,11 @@ exports.listConnectedStudentData = async (req, res, next) => {
       return res.status(403).json({ message: 'Only professors can view connected student data.' });
     }
 
-    const connections = await StudentProfessorConnection.find({
+    const candidates = await StudentProfessorConnection.find({
       professor: req.user._id,
       status: 'accepted',
     }).populate('student', 'fullName email institution');
+    const connections = candidates.filter(item => item.student && sameInstitution(item.student.institution, req.user.institution));
     const studentIds = connections.map((connection) => connection.student._id);
     const records = await StudentRecord.find({ user: { $in: studentIds } });
     const recordsByStudentId = new Map(records.map((record) => [String(record.user), record]));
@@ -178,6 +180,9 @@ exports.respondToConnection = async (req, res, next) => {
       .populate('student', 'fullName email institution');
     if (!connection) return res.status(404).json({ message: 'Connection request not found.' });
     if (connection.status !== 'pending') return res.status(409).json({ message: 'This request has already been handled.' });
+    if (action === 'accept' && !await participantsShareInstitution(connection.student._id, req.user._id)) {
+      return res.status(403).json({ message: 'You can only accept students at your current institution.' });
+    }
 
     connection.status = action === 'accept' ? 'accepted' : 'declined';
     await connection.save();

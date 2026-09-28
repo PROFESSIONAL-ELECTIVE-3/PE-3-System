@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { createPortal } from 'react-dom';
 import '../styles/Profile.css';
 
 async function preparePhoto(file) {
@@ -24,7 +25,7 @@ async function preparePhoto(file) {
   }
 }
 
-export default function Profile() {
+export default function Profile({ onClose }) {
   const { user, apiFetch, updateUser } = useAuth();
   const [name, setName] = useState(user.fullName || '');
   const [bio, setBio] = useState(user.bio || '');
@@ -41,7 +42,35 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const fileInput = useRef(null);
+  const dialogRef = useRef(null);
   const role = user.role === 'professor' ? 'Professor' : 'Student';
+
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialogRef.current?.focus();
+    const handleKeys = (event) => {
+      if (event.key === 'Escape') { event.preventDefault(); onClose(); return; }
+      if (event.key !== 'Tab') return;
+      const focusable = [...dialogRef.current.querySelectorAll('button:not([disabled]), input:not([disabled]):not([hidden]), textarea:not([disabled]), select:not([disabled]), a[href]')]
+        .filter(element => element.getClientRects().length > 0);
+      if (!focusable.length) { event.preventDefault(); return; }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeys);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeys);
+      previousFocus?.focus?.();
+    };
+  }, [onClose]);
 
   useEffect(() => {
     if (!institutionChanged || institutionId || institution.trim().length < 2) {
@@ -96,9 +125,11 @@ export default function Profile() {
     finally { setBusy(false); }
   };
 
-  return <section className="workspace-section profile-page">
+  return createPortal(<div className="profile-modal-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+  <section className="workspace-section profile-page" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="profile-title" tabIndex={-1}>
+    <button type="button" className="profile-close" onClick={onClose} aria-label="Close profile">×</button>
     <p className="dashboard-eyebrow">Your account</p>
-    <h1>{role} profile</h1>
+    <h1 id="profile-title">{role} profile</h1>
     <p className="dashboard-subtext">Add a photo and a short introduction to make your profile your own.</p>
     {error && <p className="login-alert" role="alert">{error}</p>}
     {success && <p className="login-success" role="status">{success}</p>}
@@ -131,5 +162,5 @@ export default function Profile() {
         <button className="dashboard-action" type="submit">{busy ? 'Saving…' : 'Save profile'}</button>
       </fieldset>
     </form>
-  </section>;
+  </section></div>, document.body);
 }

@@ -139,7 +139,6 @@ const TAB_BY_PATH = {
   "/dashboard/history": "history",
   "/dashboard/connections": "connections",
   "/dashboard/messages": "messages",
-  "/dashboard/profile": "profile",
 };
 
 const riskLevelFromForecast = (riskLevel, dropoutProbability) => {
@@ -602,6 +601,8 @@ export default function Dashboard() {
 
   // Unread messages state for sidebar badge
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [showProfile, setShowProfile] = useState(false);
+  const closeProfile = useCallback(() => setShowProfile(false), []);
 
   // 5-second balloon pop states
   const [isInflating, setIsInflating] = useState(false);
@@ -610,6 +611,12 @@ export default function Dashboard() {
   const popTimerRef = useRef(null);
 
   const activeTab = TAB_BY_PATH[location.pathname] || "overview";
+  useEffect(() => {
+    if (location.pathname === '/dashboard/profile') {
+      setShowProfile(true);
+      navigate('/dashboard', { replace: true });
+    }
+  }, [location.pathname, navigate]);
   const nextStep = NEXT_STEPS_BY_ROLE[user?.role] ?? NEXT_STEPS_BY_ROLE.student;
   const roleLabel = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User";
 
@@ -923,7 +930,6 @@ export default function Dashboard() {
               <HistoryIcon size={18} /> History
             </DashboardNavLink>
           )}
-          <DashboardNavLink tab="profile" currentTab={activeTab}><UserCheck size={18} /> My profile</DashboardNavLink>
         </nav>
         <div className="sidebar-support">
           <ShieldCheck size={18} />
@@ -939,7 +945,7 @@ export default function Dashboard() {
         <header className="app-topbar">
           <BrandLogo className="mobile-brand" to="/dashboard" />
           <div className="account-menu">
-            <NavLink to="/dashboard/profile" className="user-initials" aria-label="Open my profile">{user.profileImage ? <img src={user.profileImage} alt="" /> : userInitials}</NavLink>
+            <button type="button" className="user-initials profile-trigger" onClick={() => setShowProfile(true)} aria-label="Open my profile" aria-haspopup="dialog">{user.profileImage ? <img src={user.profileImage} alt="" /> : userInitials}</button>
             <div>
               <strong>{user?.fullName || "User"}</strong>
               <small>{roleLabel}</small>
@@ -951,7 +957,6 @@ export default function Dashboard() {
         </header>
 
         <nav className="mobile-dashboard-nav" aria-label="Mobile navigation">
-          <DashboardNavLink tab="profile" currentTab={activeTab}>Profile</DashboardNavLink>
           <DashboardNavLink tab="overview" currentTab={activeTab}>Overview</DashboardNavLink>
           
           {user?.role !== "professor" && user?.role !== "administrator" && (
@@ -1273,7 +1278,6 @@ export default function Dashboard() {
           </section>
         )}
 
-        {activeTab === 'profile' && <Profile />}
         {hasConnectionAccess && activeTab === "messages" && (
           <MessageCenter onUnreadCountChange={setUnreadMessagesCount} />
         )}
@@ -1288,6 +1292,7 @@ export default function Dashboard() {
           <HistoryView user={user} nextStep={nextStep} />
         )}
       </main>
+      {showProfile && <Profile onClose={closeProfile} />}
     </div>
   );
 }

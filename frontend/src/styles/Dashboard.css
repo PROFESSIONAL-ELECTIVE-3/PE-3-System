@@ -1661,7 +1661,7 @@ div.caseload-controls .filter-select.risk-low svg * {
 .connection-list li { 
   display: flex; 
   align-items: center; 
-  gap: 0.95rem; 
+  gap: 0.65rem; 
   padding: 0.9rem 1.1rem; 
   border: 1px solid #e1eaf1; 
   border-radius: 10px; 
@@ -1754,7 +1754,7 @@ div.caseload-controls .filter-select.risk-low svg * {
 .connection-actions { 
   display: flex; 
   align-items: center; 
-  gap: 0.55rem; 
+  gap: 0.65rem; 
   flex-shrink: 0;
 }
 

@@ -169,6 +169,25 @@ exports.checkNameAvailability = async (req, res, next) => {
   }
 };
 
+// @desc    Check whether an email is available during registration
+// @route   POST /api/auth/check-email
+exports.checkEmailAvailability = async (req, res, next) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required.' });
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ message: 'Enter a valid email address.' });
+    }
+
+    const existingEmail = await User.exists({ email });
+    return res.status(200).json({ available: !existingEmail });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // @desc    Log in
 // @route   POST /api/auth/login
 exports.login = async (req, res, next) => {

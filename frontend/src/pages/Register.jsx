@@ -63,6 +63,7 @@ const Register = () => {
   const [isInstitutionMenuOpen, setIsInstitutionMenuOpen] = useState(false);
   const [selectedInstitutionId, setSelectedInstitutionId] = useState(registrationDraft.current.institutionId);
   const [isCheckingName, setIsCheckingName] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [legalRead, setLegalRead] = useState({ terms: false, privacy: false });
   const [activeLegalDocument, setActiveLegalDocument] = useState(null);
   const institutionSearchController = useRef(null);
@@ -202,13 +203,44 @@ const Register = () => {
     }
   };
 
+  const checkEmailAvailability = async () => {
+    setIsCheckingEmail(true);
+    try {
+      const response = await fetch("/api/auth/check-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || "Could not validate this email address.");
+      }
+      if (!data.available) {
+        setErrors((previous) => ({
+          ...previous,
+          email: "An account with this email already exists.",
+        }));
+        return false;
+      }
+      return true;
+    } catch (error) {
+      setErrors((previous) => ({
+        ...previous,
+        email: error.message || "Could not validate this email address.",
+      }));
+      return false;
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
+
   const goNext = async () => {
     const stepErrors = validateStep(step);
     if (Object.keys(stepErrors).length > 0) {
       setErrors(stepErrors);
       return;
     }
-    if (step === 1 && !(await checkNameAvailability())) return;
+    if (step === 1 && (!(await checkNameAvailability()) || !(await checkEmailAvailability()))) return;
     setErrors({});
     setStep((prev) => Math.min(prev + 1, STEPS.length));
   };
@@ -577,9 +609,9 @@ const Register = () => {
                   type="button"
                   className="btn-login-submit"
                   onClick={() => void goNext()}
-                  disabled={isCheckingName}
+                  disabled={isCheckingName || isCheckingEmail}
                 >
-                  {isCheckingName ? "Checking name…" : "Continue"}
+                  {isCheckingName || isCheckingEmail ? "Checking availability…" : "Continue"}
                 </button>
               ) : (
                 <button

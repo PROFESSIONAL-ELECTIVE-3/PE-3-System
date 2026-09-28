@@ -421,7 +421,7 @@ function AdvisorDashboardModule({ user }) {
             <Search size={15} />
             <input
               type="text"
-              placeholder="Search student name or ID..."
+              placeholder="Search student name"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />

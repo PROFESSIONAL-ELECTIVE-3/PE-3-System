@@ -543,7 +543,7 @@ function AdvisorDashboardModule({ user }) {
                                           <Tooltip formatter={(val) => [val, "Grade"]} />
                                           <ReferenceLine
                                             y={passingCutoff}
-                                            label={{ value: `Cutoff (${passingCutoff})`, fill: "#d55752", fontSize: 10 }}
+                                            label={{ value: `Cutoff (${passingCutoff})`, fill: "#d55752", fontSize: 10, x: 1100, dy: 18, position: "insideBottomRight"}}
                                             stroke="#d55752"
                                             strokeDasharray="3 3"
                                           />
